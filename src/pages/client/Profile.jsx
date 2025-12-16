@@ -198,6 +198,7 @@ const Profile = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
+                    placeholder="Enter your email"
                     required
                   />
                 </div>
@@ -208,6 +209,7 @@ const Profile = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
+                    placeholder="Enter your password"
                     required
                   />
                 </div>
@@ -223,6 +225,7 @@ const Profile = () => {
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
+                    placeholder="Enter your full name"
                     required
                   />
                 </div>
@@ -233,6 +236,7 @@ const Profile = () => {
                     name="email"
                     value={formData.email}
                     onChange={handleInputChange}
+                    placeholder="Enter your email"
                     required
                   />
                 </div>
@@ -243,6 +247,7 @@ const Profile = () => {
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
+                    placeholder="Create a password"
                     required
                   />
                 </div>
@@ -253,6 +258,7 @@ const Profile = () => {
                     name="phone"
                     value={formData.phone}
                     onChange={handleInputChange}
+                    placeholder="Enter 10-digit phone number"
                     required
                   />
                 </div>
@@ -263,6 +269,7 @@ const Profile = () => {
                     name="address.street"
                     value={formData.address.street}
                     onChange={handleInputChange}
+                    placeholder="Enter your street address"
                     required
                   />
                 </div>
@@ -274,6 +281,7 @@ const Profile = () => {
                       name="address.city"
                       value={formData.address.city}
                       onChange={handleInputChange}
+                      placeholder="City"
                       required
                     />
                   </div>
@@ -284,6 +292,7 @@ const Profile = () => {
                       name="address.state"
                       value={formData.address.state}
                       onChange={handleInputChange}
+                      placeholder="State"
                       required
                     />
                   </div>
@@ -294,6 +303,7 @@ const Profile = () => {
                       name="address.pincode"
                       value={formData.address.pincode}
                       onChange={handleInputChange}
+                      placeholder="6-digit pincode"
                       required
                     />
                   </div>
