@@ -20,14 +20,22 @@ const PORT = process.env.PORT || 3000;
 // Configure CORS to allow the frontend origin (set ALLOWED_ORIGIN in Render envs)
 const allowedOrigins = process.env.ALLOWED_ORIGIN
   ? process.env.ALLOWED_ORIGIN.split(',').map(s => s.trim())
-  : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000'];
+  : ['http://localhost:5173', 'http://localhost:3000', 'http://localhost:5000', 'https://expressbasket.vercel.app'];
+
+// Log allowed origins at startup for Render debugging
+console.log('CORS allowedOrigins:', allowedOrigins);
 
 const corsOptions = {
   origin: (origin, callback) => {
     // allow requests with no origin (like curl, server-to-server)
     if (!origin) return callback(null, true);
+    // if ALLOWED_ORIGIN contains '*' treat as allow all
+    if (allowedOrigins.indexOf('*') !== -1) return callback(null, true);
     if (allowedOrigins.length === 0 || allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
-    return callback(new Error('Not allowed by CORS'));
+    // Log blocked origins for easier debugging in Render logs
+    console.warn(`CORS: blocked origin ${origin}`);
+    // Do not throw an error here — return false so request proceeds without CORS headers
+    return callback(null, false);
   },
   credentials: true,
   optionsSuccessStatus: 200,
@@ -37,6 +45,24 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
+// Fallback middleware: ensure CORS headers are present even if cors() didn't run
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (!origin) return next();
+  if (allowedOrigins.indexOf('*') !== -1) {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+  } else if (allowedOrigins.indexOf(origin) !== -1) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+  } else {
+    // not allowed origin — header intentionally not set
+    return next();
+  }
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
+  if (req.method === 'OPTIONS') return res.sendStatus(200);
+  next();
+});
 // HTTP request logging for easier debugging in Render logs
 const morgan = require('morgan');
 app.use(morgan('combined'));
