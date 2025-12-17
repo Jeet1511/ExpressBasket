@@ -5,6 +5,147 @@
   justify-content: center;
   background: var(--gradient-primary);
   padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ========== Snowfall Animation ========== */
+.snowfall-bg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.snow {
+  position: absolute;
+  top: -20px;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 1em;
+  text-shadow: 0 0 5px rgba(255, 255, 255, 0.5);
+  animation: snowfall linear infinite;
+  opacity: 0.8;
+}
+
+@keyframes snowfall {
+  0% {
+    transform: translateY(-20px) rotate(0deg);
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(100vh) rotate(360deg);
+    opacity: 0.3;
+  }
+}
+
+.snow:nth-child(1) {
+  left: 5%;
+  animation-duration: 8s;
+  animation-delay: 0s;
+  font-size: 0.8em;
+}
+
+.snow:nth-child(2) {
+  left: 10%;
+  animation-duration: 12s;
+  animation-delay: 1s;
+  font-size: 1.2em;
+}
+
+.snow:nth-child(3) {
+  left: 20%;
+  animation-duration: 10s;
+  animation-delay: 2s;
+  font-size: 0.6em;
+}
+
+.snow:nth-child(4) {
+  left: 30%;
+  animation-duration: 14s;
+  animation-delay: 0.5s;
+  font-size: 1em;
+}
+
+.snow:nth-child(5) {
+  left: 40%;
+  animation-duration: 9s;
+  animation-delay: 3s;
+  font-size: 0.9em;
+}
+
+.snow:nth-child(6) {
+  left: 50%;
+  animation-duration: 11s;
+  animation-delay: 1.5s;
+  font-size: 1.1em;
+}
+
+.snow:nth-child(7) {
+  left: 60%;
+  animation-duration: 13s;
+  animation-delay: 2.5s;
+  font-size: 0.7em;
+}
+
+.snow:nth-child(8) {
+  left: 70%;
+  animation-duration: 10s;
+  animation-delay: 4s;
+  font-size: 1.3em;
+}
+
+.snow:nth-child(9) {
+  left: 80%;
+  animation-duration: 12s;
+  animation-delay: 0.8s;
+  font-size: 0.85em;
+}
+
+.snow:nth-child(10) {
+  left: 90%;
+  animation-duration: 9s;
+  animation-delay: 3.5s;
+  font-size: 1em;
+}
+
+.snow:nth-child(11) {
+  left: 15%;
+  animation-duration: 11s;
+  animation-delay: 1.2s;
+  font-size: 0.75em;
+}
+
+.snow:nth-child(12) {
+  left: 35%;
+  animation-duration: 10s;
+  animation-delay: 2.8s;
+  font-size: 0.95em;
+}
+
+.snow:nth-child(13) {
+  left: 55%;
+  animation-duration: 13s;
+  animation-delay: 0.3s;
+  font-size: 1.15em;
+}
+
+.snow:nth-child(14) {
+  left: 75%;
+  animation-duration: 8s;
+  animation-delay: 2.2s;
+  font-size: 0.65em;
+}
+
+.snow:nth-child(15) {
+  left: 95%;
+  animation-duration: 14s;
+  animation-delay: 1.8s;
+  font-size: 1.05em;
 }
 
 .admin-login-box {
@@ -17,6 +158,7 @@
   animation: slideUp 0.5s ease;
   border: 1px solid var(--border-color);
   position: relative;
+  z-index: 1;
 }
 
 @keyframes slideUp {
@@ -37,9 +179,9 @@
 }
 
 .admin-icon {
-  width: 80px;
-  height: 80px;
-  background: var(--btn-primary);
+  width: 90px;
+  height: 90px;
+  background: linear-gradient(135deg, var(--btn-primary), #20c997);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -47,6 +189,38 @@
   margin: 0 auto 20px;
   font-size: 36px;
   color: white;
+  animation: iconPulse 2s ease-in-out infinite;
+  box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+}
+
+@keyframes iconPulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+  }
+
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 12px 35px rgba(40, 167, 69, 0.6);
+  }
+}
+
+.admin-shield-icon {
+  animation: shieldBounce 1.5s ease-in-out infinite;
+}
+
+@keyframes shieldBounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
 }
 
 .admin-logo h1 {
@@ -93,20 +267,26 @@
 .form-group input[type="email"],
 .form-group input[type="password"] {
   width: 100%;
-  padding: 14px 15px;
+  padding: 14px 16px;
   border: 2px solid var(--input-border);
-  background-color: var(--input-bg);
-  color: var(--text-color);
-  border-radius: 8px;
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  border-radius: 10px;
   font-size: 16px;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
+}
+
+.form-group input[type="email"]::placeholder,
+.form-group input[type="password"]::placeholder {
+  color: var(--input-placeholder) !important;
+  opacity: 1;
 }
 
 .form-group input[type="email"]:focus,
 .form-group input[type="password"]:focus {
   outline: none;
   border-color: var(--input-focus-border);
-  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.1);
+  box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.15);
 }
 
 .remember-forgot {

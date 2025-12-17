@@ -47,14 +47,14 @@ const upload = multer({
     }
 });
 
-// Verify super admin
+// Verify super admin (highest level)
 const verifySuperAdmin = (req, res, next) => {
     const token = req.headers.authorization?.split(' ')[1];
     if (!token) return res.status(401).json({ message: 'Access denied' });
 
     try {
         const verified = jwt.verify(token, process.env.JWT_SECRET);
-        if (verified.role !== 'super_admin' && verified.role !== 'god') return res.status(403).json({ message: 'Super admin or God access required' });
+        if (verified.role !== 'super_admin') return res.status(403).json({ message: 'Super Admin access required' });
         req.admin = verified;
         next();
     } catch (error) {
@@ -114,9 +114,9 @@ router.put('/admins/:id', verifySuperAdmin, async (req, res) => {
 
         // Define role hierarchy levels
         const roleLevels = {
-            'admin': 1,
-            'super_admin': 2,
-            'god': 3
+            'vendor': 1,
+            'admin': 2,
+            'super_admin': 3
         };
 
         if (username) updateData.username = username;
@@ -425,7 +425,7 @@ router.post('/products', verifyAdmin, async (req, res) => {
 router.put('/products/:id', verifyAdmin, upload.single('image'), async (req, res) => {
     try {
         const { name, description, price, originalPrice, category, stock, unit, discount, isFeatured } = req.body;
-        
+
         const updateData = {
             name,
             description,
@@ -437,17 +437,17 @@ router.put('/products/:id', verifyAdmin, upload.single('image'), async (req, res
             discount: parseFloat(discount) || 0,
             isFeatured: isFeatured === 'true'
         };
-        
+
         if (req.file) {
             updateData.image = req.file.path; // Cloudinary URL
         }
-        
+
         const product = await Product.findByIdAndUpdate(req.params.id, updateData, { new: true }).populate('category');
-        
+
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
-        
+
         res.json(product);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -458,11 +458,11 @@ router.put('/products/:id', verifyAdmin, upload.single('image'), async (req, res
 router.delete('/products/:id', verifyAdmin, async (req, res) => {
     try {
         const product = await Product.findByIdAndDelete(req.params.id);
-        
+
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
-        
+
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -543,17 +543,17 @@ router.delete('/categories/:id', verifyAdmin, async (req, res) => {
     try {
         // Check if category has products
         const productCount = await Product.countDocuments({ category: req.params.id });
-        
+
         if (productCount > 0) {
             return res.status(400).json({ message: 'Cannot delete category with existing products' });
         }
-        
+
         const category = await Category.findByIdAndDelete(req.params.id);
-        
+
         if (!category) {
             return res.status(404).json({ message: 'Category not found' });
         }
-        
+
         res.json({ message: 'Category deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -575,7 +575,7 @@ router.put('/users/:id', verifyAdmin, async (req, res) => {
     try {
         const { name, email, phone, address } = req.body;
         const updateData = {};
-        
+
         if (name) updateData.name = name;
         if (email) updateData.email = email;
         if (phone) updateData.phone = phone;
@@ -726,6 +726,342 @@ router.delete('/users/:id', verifyAdmin, async (req, res) => {
         const user = await User.findByIdAndDelete(req.params.id);
         if (!user) return res.status(404).json({ message: 'User not found' });
         res.json({ message: 'User deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// ============ MEMBERSHIP MANAGEMENT ============
+// Middleware to check Admin/SuperAdmin with manage_memberships permission
+const verifyMembershipPermission = async (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'Access denied' });
+
+    try {
+        const verified = jwt.verify(token, process.env.JWT_SECRET);
+        const admin = await Admin.findById(verified.id);
+
+        if (!admin) {
+            return res.status(401).json({ message: 'Admin not found' });
+        }
+
+        // Super admins always have access
+        if (admin.role === 'super_admin') {
+            req.admin = verified;
+            return next();
+        }
+
+        // Vendors cannot access
+        if (admin.role === 'vendor') {
+            return res.status(403).json({ message: 'Vendors cannot access membership management' });
+        }
+
+        // Check for manage_memberships permission
+        if (!admin.permissions || !admin.permissions.includes('manage_memberships')) {
+            return res.status(403).json({ message: 'You do not have permission to manage memberships' });
+        }
+
+        req.admin = verified;
+        next();
+    } catch (error) {
+        res.status(400).json({ message: 'Invalid token' });
+    }
+};
+
+// Middleware to check Admin/SuperAdmin with manage_wallets permission
+const verifyWalletPermission = async (req, res, next) => {
+    const token = req.headers.authorization?.split(' ')[1];
+    if (!token) return res.status(401).json({ message: 'Access denied' });
+
+    try {
+        const verified = jwt.verify(token, process.env.JWT_SECRET);
+        const admin = await Admin.findById(verified.id);
+
+        if (!admin) {
+            return res.status(401).json({ message: 'Admin not found' });
+        }
+
+        // Super admins always have access
+        if (admin.role === 'super_admin') {
+            req.admin = verified;
+            return next();
+        }
+
+        // Vendors cannot access
+        if (admin.role === 'vendor') {
+            return res.status(403).json({ message: 'Vendors cannot access wallet management' });
+        }
+
+        // Check for manage_wallets permission
+        if (!admin.permissions || !admin.permissions.includes('manage_wallets')) {
+            return res.status(403).json({ message: 'You do not have permission to manage wallets' });
+        }
+
+        req.admin = verified;
+        next();
+    } catch (error) {
+        res.status(400).json({ message: 'Invalid token' });
+    }
+};
+
+// Get all users with membership info
+router.get('/memberships', verifyMembershipPermission, async (req, res) => {
+    try {
+        const users = await User.find()
+            .select('name email phone loyaltyBadge createdAt')
+            .sort({ 'loyaltyBadge.type': -1, createdAt: -1 });
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Get membership stats
+router.get('/memberships/stats', verifyMembershipPermission, async (req, res) => {
+    try {
+        const totalUsers = await User.countDocuments();
+        const silverMembers = await User.countDocuments({ 'loyaltyBadge.type': 'silver' });
+        const goldMembers = await User.countDocuments({ 'loyaltyBadge.type': 'gold' });
+        const platinumMembers = await User.countDocuments({ 'loyaltyBadge.type': 'platinum' });
+
+        res.json({
+            totalUsers,
+            silverMembers,
+            goldMembers,
+            platinumMembers,
+            totalMembers: silverMembers + goldMembers + platinumMembers
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Assign badge to user (Admin/Super Admin only)
+router.put('/memberships/:userId/badge', verifyMembershipPermission, async (req, res) => {
+    try {
+        const { badgeType } = req.body;
+
+        if (!['none', 'silver', 'gold', 'platinum'].includes(badgeType)) {
+            return res.status(400).json({ message: 'Invalid badge type' });
+        }
+
+        const user = await User.findById(req.params.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if (badgeType === 'none') {
+            // Remove badge
+            user.loyaltyBadge = {
+                type: 'none',
+                purchasedAt: null,
+                expiresAt: null,
+                assignedBy: null
+            };
+        } else {
+            // Set expiry date (1 year from now)
+            const expiresAt = new Date();
+            expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+
+            user.loyaltyBadge = {
+                type: badgeType,
+                purchasedAt: new Date(),
+                expiresAt: expiresAt,
+                assignedBy: req.admin.adminId
+            };
+        }
+
+        await user.save();
+
+        res.json({
+            message: badgeType === 'none'
+                ? 'Badge removed successfully'
+                : `${badgeType.charAt(0).toUpperCase() + badgeType.slice(1)} badge assigned successfully!`,
+            user: {
+                id: user._id,
+                name: user.name,
+                email: user.email,
+                loyaltyBadge: user.loyaltyBadge
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// ============ WALLET MANAGEMENT (Admin) ============
+
+// Search users for wallet management
+router.get('/users/search', verifyWalletPermission, async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q || q.length < 1) return res.json([]);
+
+        const users = await User.find({
+            $or: [
+                { name: { $regex: q, $options: 'i' } },
+                { email: { $regex: q, $options: 'i' } },
+                { phone: { $regex: q, $options: 'i' } }
+            ]
+        })
+            .select('name email phone walletBalance createdAt')
+            .limit(20);
+
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Get all users with wallet info
+router.get('/wallets', verifyWalletPermission, async (req, res) => {
+    try {
+        const users = await User.find()
+            .select('name email phone walletBalance createdAt')
+            .sort({ walletBalance: -1, createdAt: -1 });
+        res.json(users);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Get wallet stats
+router.get('/wallets/stats', verifyWalletPermission, async (req, res) => {
+    try {
+        const totalUsers = await User.countDocuments();
+        const usersWithBalance = await User.countDocuments({ walletBalance: { $gt: 0 } });
+
+        const aggregation = await User.aggregate([
+            { $group: { _id: null, totalBalance: { $sum: '$walletBalance' } } }
+        ]);
+
+        const totalBalance = aggregation[0]?.totalBalance || 0;
+
+        res.json({
+            totalUsers,
+            usersWithBalance,
+            totalBalance,
+            avgBalance: usersWithBalance > 0 ? (totalBalance / usersWithBalance).toFixed(2) : 0
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Deposit to user wallet
+router.post('/wallets/:userId/deposit', verifyWalletPermission, async (req, res) => {
+    try {
+        const { amount, description } = req.body;
+
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ message: 'Invalid amount' });
+        }
+
+        const user = await User.findById(req.params.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        user.walletBalance = (user.walletBalance || 0) + amount;
+        user.walletHistory = user.walletHistory || [];
+        user.walletHistory.push({
+            type: 'deposit',
+            amount: amount,
+            description: description || `Admin deposit of ₹${amount}`,
+            adminId: req.admin.adminId,
+            createdAt: new Date()
+        });
+
+        await user.save();
+
+        res.json({
+            message: `₹${amount} deposited successfully!`,
+            newBalance: user.walletBalance,
+            user: { id: user._id, name: user.name, email: user.email }
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Withdraw from user wallet
+router.post('/wallets/:userId/withdraw', verifyWalletPermission, async (req, res) => {
+    try {
+        const { amount, description } = req.body;
+
+        if (!amount || amount <= 0) {
+            return res.status(400).json({ message: 'Invalid amount' });
+        }
+
+        const user = await User.findById(req.params.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        if ((user.walletBalance || 0) < amount) {
+            return res.status(400).json({
+                message: 'Insufficient balance',
+                currentBalance: user.walletBalance || 0
+            });
+        }
+
+        user.walletBalance -= amount;
+        user.walletHistory = user.walletHistory || [];
+        user.walletHistory.push({
+            type: 'withdraw',
+            amount: -amount,
+            description: description || `Admin withdrawal of ₹${amount}`,
+            adminId: req.admin.adminId,
+            createdAt: new Date()
+        });
+
+        await user.save();
+
+        res.json({
+            message: `₹${amount} withdrawn successfully!`,
+            newBalance: user.walletBalance,
+            user: { id: user._id, name: user.name, email: user.email }
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Set user wallet balance directly
+router.put('/wallets/:userId', verifyWalletPermission, async (req, res) => {
+    try {
+        const { balance, description } = req.body;
+
+        if (balance === undefined || balance < 0) {
+            return res.status(400).json({ message: 'Invalid balance' });
+        }
+
+        const user = await User.findById(req.params.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const oldBalance = user.walletBalance || 0;
+        const diff = balance - oldBalance;
+
+        user.walletBalance = balance;
+        user.walletHistory = user.walletHistory || [];
+        user.walletHistory.push({
+            type: diff >= 0 ? 'deposit' : 'withdraw',
+            amount: diff,
+            description: description || `Admin set balance to ₹${balance}`,
+            adminId: req.admin.adminId,
+            createdAt: new Date()
+        });
+
+        await user.save();
+
+        res.json({
+            message: `Balance updated to ₹${balance}`,
+            oldBalance,
+            newBalance: user.walletBalance,
+            user: { id: user._id, name: user.name, email: user.email }
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

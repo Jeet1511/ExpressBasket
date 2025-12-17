@@ -101,18 +101,26 @@ const FormLabel = styled.label`
 
 const FormInput = styled.input`
   width: 100%;
-  padding: 12px 15px;
-  border: 2px solid var(--border-color);
-  border-radius: 8px;
+  padding: 14px 16px;
+  border: 2px solid var(--input-border);
+  border-radius: 10px;
   font-size: 16px;
-  transition: all 0.3s;
+  transition: all 0.3s ease;
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  
+  &::placeholder {
+    color: var(--input-placeholder) !important;
+    opacity: 1;
+  }
   
   &:focus {
     outline: none;
     border-color: var(--input-focus-border);
-    box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.08);
+    box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.15);
   }
 `;
+
 
 const SubmitButton = styled.button`
   width: 100%;
@@ -243,7 +251,7 @@ const LoginSignup = () => {
           password: formData.password
         });
 
-        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('userToken', response.data.token);
         localStorage.setItem('user', JSON.stringify(response.data.user));
 
         Swal.fire({

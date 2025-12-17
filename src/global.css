@@ -1,3 +1,4 @@
+/* Express Delivery - Global Styles with Animations */
 * {
   margin: 0;
   padding: 0;
@@ -22,9 +23,11 @@
   --btn-secondary-hover: #5a6268;
   --btn-danger: #dc3545;
   --btn-danger-hover: #c82333;
-  --input-bg: #fff;
+  --input-bg: #ffffff;
+  --input-text: #333333;
   --input-border: #ddd;
   --input-focus-border: #28a745;
+  --input-placeholder: #999;
   --nav-link-hover: #f0f0f0;
   --shadow: rgba(0, 0, 0, 0.1);
   --shadow-dark: rgba(0, 0, 0, 0.15);
@@ -45,7 +48,7 @@
 }
 
 [data-theme="dark"] {
-  /* Dark theme variables */
+  /* Dark theme variables - fixed input visibility */
   --bg-color: #1a1a1a;
   --text-color: #e0e0e0;
   --text-secondary: #b0b0b0;
@@ -62,9 +65,11 @@
   --btn-secondary-hover: #5a6268;
   --btn-danger: #dc3545;
   --btn-danger-hover: #c82333;
-  --input-bg: #333;
+  --input-bg: #3a3a3a;
+  --input-text: #ffffff;
   --input-border: #555;
   --input-focus-border: #28a745;
+  --input-placeholder: #888;
   --nav-link-hover: #3a3a3a;
   --shadow: rgba(0, 0, 0, 0.5);
   --shadow-dark: rgba(0, 0, 0, 0.7);
@@ -89,7 +94,7 @@ body {
   line-height: 1.6;
   color: var(--text-color);
   background-color: var(--bg-color);
-  transition: background-color 0.3s ease, color 0.3s ease;
+  transition: background-color 0.4s ease, color 0.4s ease;
 }
 
 a {
@@ -108,10 +113,52 @@ button {
   padding: 0 20px;
 }
 
+/* ========== Global Input Styles - FIXED VISIBILITY ========== */
+input,
+textarea,
+select {
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  border: 2px solid var(--input-border);
+  border-radius: 8px;
+  padding: 12px 15px;
+  font-size: 16px;
+  transition: all 0.3s ease;
+  width: 100%;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--input-placeholder) !important;
+  opacity: 1;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  outline: none;
+  border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15);
+}
+
+/* Force dark mode input text visibility */
+[data-theme="dark"] input,
+[data-theme="dark"] textarea,
+[data-theme="dark"] select {
+  background-color: #3a3a3a !important;
+  color: #ffffff !important;
+}
+
+[data-theme="dark"] input::placeholder,
+[data-theme="dark"] textarea::placeholder {
+  color: #888888 !important;
+}
+
+/* ========== Buttons ========== */
 .btn {
   padding: 10px 20px;
   border: none;
-  border-radius: 5px;
+  border-radius: 8px;
   font-weight: 500;
   transition: all 0.3s ease;
 }
@@ -123,6 +170,8 @@ button {
 
 .btn-primary:hover {
   background-color: var(--btn-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(40, 167, 69, 0.3);
 }
 
 .btn-secondary {
@@ -140,18 +189,19 @@ button {
 
 .form-control {
   width: 100%;
-  padding: 10px;
-  border: 1px solid var(--input-border);
-  border-radius: 5px;
+  padding: 12px 15px;
+  border: 2px solid var(--input-border);
+  border-radius: 8px;
   font-size: 16px;
-  background-color: var(--input-bg);
-  color: var(--text-color);
-  transition: border-color 0.3s ease;
+  background-color: var(--input-bg) !important;
+  color: var(--input-text) !important;
+  transition: all 0.3s ease;
 }
 
 .form-control:focus {
   outline: none;
   border-color: var(--input-focus-border);
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15);
 }
 
 .currency {
@@ -161,4 +211,433 @@ button {
 .currency::before {
   content: '₹';
   margin-right: 2px;
+}
+
+/* ========== Global Animations ========== */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes rocketFly {
+
+  0%,
+  100% {
+    transform: translateX(0) translateY(0) rotate(-45deg);
+  }
+
+  25% {
+    transform: translateX(3px) translateY(-3px) rotate(-45deg);
+  }
+
+  50% {
+    transform: translateX(0) translateY(-5px) rotate(-45deg);
+  }
+
+  75% {
+    transform: translateX(-3px) translateY(-3px) rotate(-45deg);
+  }
+}
+
+@keyframes rocketGlow {
+
+  0%,
+  100% {
+    filter: drop-shadow(0 0 3px rgba(40, 167, 69, 0.5));
+  }
+
+  50% {
+    filter: drop-shadow(0 0 8px rgba(40, 167, 69, 0.8));
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+@keyframes bounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* ========== Animated Theme Toggle ========== */
+.theme-toggle-animated {
+  position: relative;
+  width: 60px;
+  height: 30px;
+  background: linear-gradient(145deg, #e0e0e0, #f0f0f0);
+  border-radius: 30px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  overflow: hidden;
+}
+
+[data-theme="dark"] .theme-toggle-animated {
+  background: linear-gradient(145deg, #2a2a2a, #3a3a3a);
+}
+
+.theme-toggle-animated .toggle-ball {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  background: linear-gradient(145deg, #ffd700, #ff8c00);
+  border-radius: 50%;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  box-shadow: 0 2px 8px rgba(255, 215, 0, 0.5);
+}
+
+[data-theme="dark"] .theme-toggle-animated .toggle-ball {
+  left: calc(100% - 27px);
+  background: linear-gradient(145deg, #c0c0c0, #e0e0e0);
+  box-shadow: 0 2px 8px rgba(255, 255, 255, 0.3);
+}
+
+.theme-toggle-animated .toggle-icon {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  transition: all 0.3s ease;
+}
+
+.theme-toggle-animated .sun-icon {
+  left: 8px;
+  opacity: 1;
+}
+
+.theme-toggle-animated .moon-icon {
+  right: 8px;
+  opacity: 0.5;
+}
+
+[data-theme="dark"] .theme-toggle-animated .sun-icon {
+  opacity: 0.5;
+}
+
+[data-theme="dark"] .theme-toggle-animated .moon-icon {
+  opacity: 1;
+}
+
+/* ========== Rocket Logo Animation ========== */
+.rocket-logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.rocket-icon {
+  animation: rocketFly 2s ease-in-out infinite, rocketGlow 1.5s ease-in-out infinite;
+  color: var(--btn-primary);
+  font-size: 28px;
+}
+
+.rocket-trail {
+  position: absolute;
+  bottom: -5px;
+  left: -10px;
+  width: 20px;
+  height: 3px;
+  background: linear-gradient(90deg, transparent, rgba(255, 165, 0, 0.8), transparent);
+  animation: trailGlow 0.5s ease-in-out infinite alternate;
+  transform: rotate(-45deg);
+}
+
+@keyframes trailGlow {
+  from {
+    opacity: 0.3;
+    width: 15px;
+  }
+
+  to {
+    opacity: 0.8;
+    width: 25px;
+  }
+}
+
+/* ========== Page Transition Effects ========== */
+.page-enter {
+  animation: fadeInUp 0.4s ease forwards;
+}
+
+/* ========== Card Hover Effects ========== */
+.hover-lift {
+  transition: all 0.3s ease;
+}
+
+.hover-lift:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 15px 35px var(--shadow-dark);
+}
+
+/* ========== Loading Spinner ========== */
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top-color: var(--btn-primary);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ========== Toast Notifications ========== */
+.toast-container {
+  position: fixed;
+  top: 90px;
+  right: 20px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 350px;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: var(--card-bg);
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+  border-left: 4px solid var(--btn-primary);
+  animation: toastSlideIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.toast:hover {
+  transform: translateX(-5px);
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25);
+}
+
+@keyframes toastSlideIn {
+  0% {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+
+  100% {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.toast-cart {
+  border-left-color: #28a745;
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(40, 167, 69, 0.1) 100%);
+}
+
+.toast-success {
+  border-left-color: #28a745;
+}
+
+.toast-error {
+  border-left-color: #dc3545;
+}
+
+.toast-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  animation: iconBounce 0.5s ease-out 0.2s;
+}
+
+.toast-cart .toast-icon {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+}
+
+.toast-success .toast-icon {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  color: white;
+}
+
+.toast-error .toast-icon {
+  background: linear-gradient(135deg, #dc3545, #c82333);
+  color: white;
+}
+
+.toast-icon svg {
+  stroke: white;
+}
+
+@keyframes iconBounce {
+  0% {
+    transform: scale(0.5);
+  }
+
+  50% {
+    transform: scale(1.2);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+.toast-message {
+  flex: 1;
+  color: var(--text-color);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.toast-close:hover {
+  color: var(--text-color);
+}
+
+/* ========== Lucide Icon Animations ========== */
+.icon-bounce {
+  animation: iconBounce 1s ease-in-out infinite;
+}
+
+.icon-pulse {
+  animation: iconPulse 2s ease-in-out infinite;
+}
+
+.icon-spin-slow {
+  animation: iconSpinSlow 4s linear infinite;
+}
+
+@keyframes iconBounce {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes iconPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes iconSpinSlow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
 }

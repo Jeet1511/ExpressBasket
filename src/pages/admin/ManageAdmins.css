@@ -55,7 +55,7 @@
   background: white;
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   margin-bottom: 30px;
 }
 
@@ -167,7 +167,8 @@
   gap: 10px;
 }
 
-.edit-btn, .delete-btn {
+.edit-btn,
+.delete-btn {
   padding: 6px 12px;
   border: none;
   border-radius: 4px;
@@ -200,7 +201,7 @@
   overflow-x: auto;
   background: white;
   border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .admins-table {
@@ -208,7 +209,8 @@
   border-collapse: collapse;
 }
 
-.admins-table th, .admins-table td {
+.admins-table th,
+.admins-table td {
   padding: 12px;
   text-align: left;
   border-bottom: 1px solid var(--border-light);
@@ -240,13 +242,29 @@
 }
 
 .role {
-  background: var(--btn-primary);
   color: white;
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
   text-transform: uppercase;
   display: inline-block;
+  letter-spacing: 0.5px;
+}
+
+.role-super_admin {
+  background: linear-gradient(135deg, #f5af19, #f12711);
+  box-shadow: 0 2px 8px rgba(245, 175, 25, 0.3);
+}
+
+.role-admin {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+}
+
+.role-vendor {
+  background: linear-gradient(135deg, #11998e, #38ef7d);
+  box-shadow: 0 2px 8px rgba(17, 153, 142, 0.3);
 }
 
 .status {
@@ -271,7 +289,8 @@
   white-space: nowrap;
 }
 
-.edit-btn, .delete-btn {
+.edit-btn,
+.delete-btn {
   padding: 6px 12px;
   border: none;
   border-radius: 4px;
@@ -288,4 +307,201 @@
 .delete-btn {
   background: var(--btn-danger);
   color: white;
+}
+
+/* ========== Responsive Styles ========== */
+@media (max-width: 768px) {
+  .manage-admins {
+    padding: 15px;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .header h1 {
+    font-size: 22px;
+  }
+
+  .admin-form {
+    padding: 15px;
+  }
+
+  .admin-form h2 {
+    font-size: 18px;
+  }
+
+  .form-group input,
+  .form-group select {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .permissions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .permissions label {
+    padding: 8px;
+    background: var(--nav-link-hover);
+    border-radius: 5px;
+  }
+
+  .table-container {
+    overflow-x: auto;
+    margin: 0 -15px;
+    padding: 0 15px;
+  }
+
+  .admins-table {
+    min-width: 600px;
+  }
+
+  .admins-table th,
+  .admins-table td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+
+  .role {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .permission-tag {
+    font-size: 10px;
+    padding: 2px 5px;
+  }
+
+  .edit-btn,
+  .delete-btn {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .admins-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .manage-admins {
+    padding: 10px;
+  }
+
+  .header h1 {
+    font-size: 18px;
+  }
+
+  .add-admin-btn {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .admin-form {
+    padding: 12px;
+  }
+
+  .admin-form h2 {
+    font-size: 16px;
+  }
+
+  .form-group {
+    margin-bottom: 12px;
+  }
+
+  .form-group label {
+    font-size: 13px;
+  }
+
+  .form-group input,
+  .form-group select {
+    padding: 10px 12px;
+  }
+
+  .submit-btn {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .admins-table th,
+  .admins-table td {
+    padding: 8px 6px;
+    font-size: 12px;
+  }
+
+  .permissions-list {
+    gap: 3px;
+  }
+
+  .permission-tag {
+    font-size: 9px;
+  }
+
+  .actions-cell {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .edit-btn,
+  .delete-btn {
+    margin-right: 0;
+    width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 360px) {
+  .manage-admins {
+    padding: 8px;
+  }
+
+  .header h1 {
+    font-size: 16px;
+  }
+
+  .add-admin-btn {
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  .admin-form {
+    padding: 10px;
+  }
+
+  .form-group input,
+  .form-group select {
+    padding: 8px 10px;
+    font-size: 13px;
+  }
+
+  .admins-table {
+    min-width: 500px;
+  }
+
+  .admins-table th,
+  .admins-table td {
+    padding: 6px 4px;
+    font-size: 11px;
+  }
+
+  .role {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
+  .status {
+    font-size: 10px;
+    padding: 2px 4px;
+  }
+
+  .edit-btn,
+  .delete-btn {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
 }

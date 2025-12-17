@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import { useCart } from '../../context/CartContext.jsx';
 import { useUser } from '../../context/UserContext.jsx';
+import axios from '../../utils/axios';
 import Swal from 'sweetalert2';
 
 const CartContainer = styled.div`
@@ -26,10 +27,10 @@ const CartContent = styled.div`
 `;
 
 const CartItems = styled.div`
-  background: white;
+  background: var(--card-bg);
   border-radius: 10px;
   padding: 20px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px var(--shadow);
 `;
 
 const CartItem = styled.div`
@@ -51,19 +52,9 @@ const ItemImage = styled.img`
   height: 100px;
   object-fit: cover;
   border-radius: 5px;
-  
-  @media (max-width: 768px) {
-    width: 80px;
-    height: 80px;
-    grid-row: span 2;
-  }
 `;
 
-const ItemDetails = styled.div`
-  @media (max-width: 768px) {
-    grid-column: 2;
-  }
-`;
+const ItemDetails = styled.div``;
 
 const ItemName = styled.h3`
   font-size: 18px;
@@ -74,81 +65,61 @@ const ItemName = styled.h3`
 const ItemPrice = styled.p`
   color: var(--btn-primary);
   font-weight: 500;
-  
-  &::before {
-    content: '₹';
-  }
 `;
 
 const QuantityControl = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-  
-  @media (max-width: 768px) {
-    grid-column: 2;
-  }
 `;
 
 const QuantityButton = styled.button`
-  width: 30px;
-  height: 30px;
+  width: 32px;
+  height: 32px;
   border: 1px solid var(--border-color);
-  background: var(--card-bg);
+  background: var(--bg-color);
   border-radius: 5px;
+  cursor: pointer;
   font-size: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: var(--text-color);
   
   &:hover {
-    background-color: var(--nav-link-hover);
+    background: var(--border-light);
   }
 `;
 
-const QuantityInput = styled.input`
-  width: 50px;
+const QuantityDisplay = styled.span`
+  font-size: 16px;
+  min-width: 30px;
   text-align: center;
-  border: 1px solid var(--border-color);
-  border-radius: 5px;
-  padding: 5px;
-  
-  &:focus {
-    outline: none;
-    border-color: var(--input-focus-border);
-  }
+  color: var(--text-color);
 `;
 
 const RemoveButton = styled.button`
   background: none;
   border: none;
-  color: var(--btn-danger);
-  font-size: 20px;
+  color: #dc3545;
   cursor: pointer;
+  padding: 5px;
   
   &:hover {
-    color: var(--btn-danger-hover);
-  }
-  
-  @media (max-width: 768px) {
-    grid-column: 2;
-    justify-self: end;
+    color: #c82333;
   }
 `;
 
 const CartSummary = styled.div`
-  background: white;
+  background: var(--card-bg);
   border-radius: 10px;
-  padding: 20px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  padding: 25px;
+  box-shadow: 0 4px 6px var(--shadow);
   height: fit-content;
-  position: sticky;
-  top: 100px;
 `;
 
 const SummaryTitle = styled.h2`
-  font-size: 24px;
+  font-size: 20px;
   margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border-light);
   color: var(--text-color);
 `;
 
@@ -156,29 +127,25 @@ const SummaryRow = styled.div`
   display: flex;
   justify-content: space-between;
   margin-bottom: 15px;
-  padding-bottom: 10px;
-  border-bottom: ${props => props.total ? '2px solid var(--text-color)' : '1px solid var(--border-light)'};
-  font-weight: ${props => props.total ? '600' : 'normal'};
+  font-size: ${props => props.total ? '18px' : '16px'};
+  font-weight: ${props => props.total ? '600' : '400'};
+  color: ${props => props.total ? 'var(--text-color)' : 'var(--text-secondary)'};
 `;
 
 const EmptyCart = styled.div`
   text-align: center;
-  padding: 50px;
-  color: var(--text-secondary);
-  
-  i {
-    font-size: 60px;
-    color: var(--text-light);
-    margin-bottom: 20px;
-  }
+  padding: 60px 20px;
+  background: var(--card-bg);
+  border-radius: 10px;
   
   h3 {
     font-size: 24px;
-    margin-bottom: 10px;
+    color: var(--text-color);
   }
   
   p {
     margin-bottom: 20px;
+    color: var(--text-secondary);
   }
 `;
 
@@ -192,6 +159,7 @@ const CheckoutButton = styled.button`
   font-size: 18px;
   font-weight: 500;
   margin-top: 20px;
+  cursor: pointer;
   
   &:hover {
     background-color: var(--btn-primary-hover);
@@ -208,22 +176,120 @@ const ContinueButton = styled.button`
   font-size: 16px;
   font-weight: 500;
   margin-top: 10px;
+  cursor: pointer;
   
   &:hover {
     background-color: var(--btn-secondary-hover);
   }
 `;
 
+const PaymentModal = styled.div`
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+`;
+
+const ModalContent = styled.div`
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 30px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+`;
+
+const PaymentOption = styled.button`
+  width: 100%;
+  padding: 15px 20px;
+  border: 2px solid ${props => props.selected ? 'var(--btn-primary)' : 'var(--border-color)'};
+  background: ${props => props.selected ? 'rgba(40, 167, 69, 0.1)' : 'var(--card-bg)'};
+  border-radius: 12px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  margin-bottom: 10px;
+  transition: all 0.2s;
+  text-align: left;
+  
+  &:hover {
+    border-color: var(--btn-primary);
+  }
+`;
+
+const WalletBadge = styled.span`
+  background: var(--btn-primary);
+  color: white;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+`;
+
 const Cart = () => {
   const { cart, total, removeFromCart, updateQuantity, clearCart, placeOrder } = useCart();
   const { user } = useUser();
-  
-  const handleQuantityChange = (productId, newQuantity) => {
-    if (newQuantity >= 1) {
-      updateQuantity(productId, newQuantity);
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('wallet');
+  const [friendPhone, setFriendPhone] = useState('');
+  const [friendData, setFriendData] = useState(null);
+  const [friendLoading, setFriendLoading] = useState(false);
+  const [friendError, setFriendError] = useState('');
+
+  useEffect(() => {
+    if (user) {
+      fetchWalletBalance();
+    }
+  }, [user]);
+
+  const fetchWalletBalance = async () => {
+    try {
+      const token = localStorage.getItem('userToken');
+      const response = await axios.get('/user/wallet', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setWalletBalance(response.data.balance);
+    } catch (error) {
+      console.error('Error fetching wallet:', error);
     }
   };
-  
+
+  const handleQuantityChange = (productId, newQuantity) => {
+    updateQuantity(productId, newQuantity);
+  };
+
+  const lookupFriend = async () => {
+    if (!friendPhone || friendPhone.length < 10) {
+      setFriendError('Please enter a valid 10-digit phone number');
+      return;
+    }
+
+    setFriendLoading(true);
+    setFriendError('');
+    setFriendData(null);
+
+    try {
+      const token = localStorage.getItem('userToken');
+      const response = await axios.get(`/user/find-friend/${friendPhone}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setFriendData(response.data);
+    } catch (error) {
+      setFriendError(error.response?.data?.message || 'User not found');
+    } finally {
+      setFriendLoading(false);
+    }
+  };
+
   const handleCheckout = async () => {
     if (!user) {
       Swal.fire({
@@ -249,50 +315,100 @@ const Cart = () => {
       return;
     }
 
-    const result = await Swal.fire({
-      title: 'Confirm Order',
-      html: `
-        <div style="text-align: left;">
-          <p><strong>Total Amount:</strong> ₹${total.toFixed(2)}</p>
-          <p><strong>Delivery Address:</strong></p>
-          <p>${user.address.street || ''}</p>
-          <p>${user.address.city || ''}, ${user.address.state || ''} ${user.address.pincode || ''}</p>
-          <p><strong>Payment:</strong> Cash on Delivery</p>
-        </div>
-      `,
-      icon: 'question',
-      showCancelButton: true,
-      confirmButtonColor: 'var(--btn-primary)',
-      cancelButtonColor: 'var(--btn-secondary)',
-      confirmButtonText: 'Place Order',
-      cancelButtonText: 'Cancel'
-    });
+    setShowPaymentModal(true);
+  };
 
-    if (result.isConfirmed) {
+  const processPayment = async () => {
+    const deliveryCharge = total > 500 ? 0 : 50;
+    const grandTotal = total + deliveryCharge;
+
+    if (paymentMethod === 'wallet') {
+      if (walletBalance < grandTotal) {
+        Swal.fire({
+          title: 'Insufficient Balance',
+          html: `
+            <p>Your wallet balance: <strong>₹${walletBalance.toFixed(2)}</strong></p>
+            <p>Amount required: <strong>₹${grandTotal.toFixed(2)}</strong></p>
+            <p style="color: #666; margin-top: 15px;">Buying via money will be added very soon!</p>
+          `,
+          icon: 'warning',
+          confirmButtonText: 'OK'
+        });
+        return;
+      }
+
       try {
-        await placeOrder(user.address, 'cod');
+        const token = localStorage.getItem('userToken');
+        await axios.post('/user/wallet/pay',
+          { amount: grandTotal, description: `Order payment` },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        await placeOrder(user.address, 'wallet');
+        setShowPaymentModal(false);
+
         Swal.fire({
           title: 'Order Placed!',
-          text: 'Your order has been placed successfully',
+          text: `Payment of ₹${grandTotal.toFixed(2)} made from your wallet`,
+          icon: 'success'
+        });
+
+        fetchWalletBalance();
+      } catch (error) {
+        Swal.fire({
+          title: 'Payment Failed',
+          text: error.response?.data?.message || 'Failed to process payment',
+          icon: 'error'
+        });
+      }
+    } else if (paymentMethod === 'friend') {
+      if (!friendData) {
+        Swal.fire({
+          title: 'Select Friend',
+          text: "Please enter your friend's phone number and search",
+          icon: 'warning'
+        });
+        return;
+      }
+
+      try {
+        const token = localStorage.getItem('userToken');
+        await axios.post('/user/wallet/pay-friend',
+          { friendId: friendData.id, amount: grandTotal, description: `Order payment for ${user.name}` },
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+
+        await placeOrder(user.address, 'friend_wallet');
+        setShowPaymentModal(false);
+
+        Swal.fire({
+          title: 'Order Placed!',
+          text: `Payment of ₹${grandTotal.toFixed(2)} made from ${friendData.name}'s wallet`,
           icon: 'success'
         });
       } catch (error) {
-        console.error('Order placement error:', error);
         Swal.fire({
-          title: 'Order Failed',
-          text: error.response?.data?.message || 'Failed to place order',
+          title: 'Payment Failed',
+          text: error.response?.data?.message || 'Failed to process payment',
           icon: 'error'
         });
       }
     }
   };
-  
+
+  const deliveryCharge = total > 500 ? 0 : 50;
+  const grandTotal = total + deliveryCharge;
+
   if (cart.length === 0) {
     return (
       <CartContainer>
         <CartTitle>Cart</CartTitle>
         <EmptyCart>
-          <i className="expDel_shopping_cart"></i>
+          <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="var(--border-color)" strokeWidth="1">
+            <circle cx="9" cy="21" r="1"></circle>
+            <circle cx="20" cy="21" r="1"></circle>
+            <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+          </svg>
           <h3>Cart is empty</h3>
           <p>Add some delicious groceries to get started!</p>
           <ContinueButton onClick={() => window.location.href = '/'}>
@@ -302,89 +418,239 @@ const Cart = () => {
       </CartContainer>
     );
   }
-  
-  const deliveryCharge = total > 500 ? 0 : 50;
-  const grandTotal = total + deliveryCharge;
-  
+
   return (
     <CartContainer>
       <CartTitle>Cart ({cart.length} items)</CartTitle>
-      
+
       <CartContent>
         <CartItems>
           {cart.map(item => (
             <CartItem key={item._id}>
-              <ItemImage 
+              <ItemImage
                 src={item.image && (item.image.startsWith('http') ? item.image : `${item.image.startsWith('/') ? '' : '/'}${item.image}`) || 'https://via.placeholder.com/100x100?text=No+Image'}
                 alt={item.name}
               />
-              
+
               <ItemDetails>
                 <ItemName>{item.name}</ItemName>
-                <ItemPrice><span className="currency">{item.price.toFixed(2)}</span> / {item.unit}</ItemPrice>
+                <ItemPrice>₹{item.price}</ItemPrice>
               </ItemDetails>
-              
+
               <QuantityControl>
-                <QuantityButton 
-                  onClick={() => handleQuantityChange(item._id, item.quantity - 1)}
-                >
+                <QuantityButton onClick={() => handleQuantityChange(item._id, item.quantity - 1)}>
                   -
                 </QuantityButton>
-                <QuantityInput 
-                  type="number" 
-                  value={item.quantity}
-                  min="1"
-                  onChange={(e) => handleQuantityChange(item._id, parseInt(e.target.value) || 1)}
-                />
-                <QuantityButton 
-                  onClick={() => handleQuantityChange(item._id, item.quantity + 1)}
-                >
+                <QuantityDisplay>{item.quantity}</QuantityDisplay>
+                <QuantityButton onClick={() => handleQuantityChange(item._id, item.quantity + 1)}>
                   +
                 </QuantityButton>
               </QuantityControl>
-              
+
               <RemoveButton onClick={() => removeFromCart(item._id)}>
-                <i className="expDel_trash"></i>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
               </RemoveButton>
             </CartItem>
           ))}
         </CartItems>
-        
+
         <CartSummary>
           <SummaryTitle>Order Summary</SummaryTitle>
-          
+
           <SummaryRow>
             <span>Subtotal</span>
-            <span className="currency">{total.toFixed(2)}</span>
+            <span>₹{total.toFixed(2)}</span>
           </SummaryRow>
-          
+
           <SummaryRow>
             <span>Delivery Charges</span>
-            <span className="currency">
-              {deliveryCharge === 0 ? 'FREE' : `${deliveryCharge.toFixed(2)}`}
-            </span>
+            <span>{deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge.toFixed(2)}`}</span>
           </SummaryRow>
-          
+
           {deliveryCharge > 0 && (
             <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '15px' }}>
               Add ₹{(500 - total).toFixed(2)} more for FREE delivery
             </p>
           )}
-          
+
+          {user && (
+            <div style={{
+              background: 'linear-gradient(135deg, #667eea, #764ba2)',
+              padding: '12px',
+              borderRadius: '8px',
+              marginBottom: '15px',
+              color: 'white'
+            }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '14px' }}>Wallet Balance</span>
+                <span style={{ fontSize: '20px', fontWeight: '700' }}>₹{walletBalance.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+
           <SummaryRow total>
             <span>Total</span>
-            <span className="currency">{grandTotal.toFixed(2)}</span>
+            <span>₹{grandTotal.toFixed(2)}</span>
           </SummaryRow>
-          
+
           <CheckoutButton onClick={handleCheckout}>
-            Proceed to Checkout
+            Choose Payment Method
           </CheckoutButton>
-          
+
           <ContinueButton onClick={() => window.location.href = '/'}>
             Continue Shopping
           </ContinueButton>
         </CartSummary>
       </CartContent>
+
+      {/* Payment Method Modal */}
+      {showPaymentModal && (
+        <PaymentModal onClick={() => setShowPaymentModal(false)}>
+          <ModalContent onClick={e => e.stopPropagation()}>
+            <h2 style={{ marginBottom: '20px', color: 'var(--text-color)', display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--btn-primary)" strokeWidth="2">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                <line x1="1" y1="10" x2="23" y2="10"></line>
+              </svg>
+              Select Payment Method
+            </h2>
+
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>
+              Total: <strong style={{ color: 'var(--text-color)', fontSize: '20px' }}>₹{grandTotal.toFixed(2)}</strong>
+            </p>
+
+            {/* Wallet Payment Option */}
+            <PaymentOption
+              selected={paymentMethod === 'wallet'}
+              onClick={() => setPaymentMethod('wallet')}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={paymentMethod === 'wallet' ? 'var(--btn-primary)' : 'currentColor'} strokeWidth="2">
+                <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
+                <line x1="1" y1="10" x2="23" y2="10"></line>
+              </svg>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontWeight: '600', color: 'var(--text-color)', marginBottom: '4px' }}>Pay with Wallet</p>
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Balance: ₹{walletBalance.toFixed(2)}</p>
+              </div>
+              {walletBalance >= grandTotal && <WalletBadge>Sufficient</WalletBadge>}
+            </PaymentOption>
+
+            {/* Friend Payment Option */}
+            <PaymentOption
+              selected={paymentMethod === 'friend'}
+              onClick={() => setPaymentMethod('friend')}
+            >
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={paymentMethod === 'friend' ? 'var(--btn-primary)' : 'currentColor'} strokeWidth="2">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                <circle cx="9" cy="7" r="4"></circle>
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+              </svg>
+              <div style={{ flex: 1 }}>
+                <p style={{ fontWeight: '600', color: 'var(--text-color)', marginBottom: '4px' }}>Pay via Friend</p>
+                <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Let a friend pay from their wallet</p>
+              </div>
+            </PaymentOption>
+
+            {/* Friend Phone Lookup */}
+            {paymentMethod === 'friend' && (
+              <div style={{
+                background: 'var(--bg-color)',
+                padding: '15px',
+                borderRadius: '8px',
+                marginTop: '15px'
+              }}>
+                <label style={{ display: 'block', marginBottom: '8px', color: 'var(--text-secondary)', fontSize: '14px' }}>
+                  Friend's Phone Number
+                </label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input
+                    type="tel"
+                    placeholder="Enter 10-digit phone"
+                    value={friendPhone}
+                    onChange={(e) => setFriendPhone(e.target.value)}
+                    style={{
+                      flex: 1,
+                      padding: '12px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--input-bg)',
+                      color: 'var(--text-color)'
+                    }}
+                  />
+                  <button
+                    onClick={lookupFriend}
+                    disabled={friendLoading}
+                    style={{
+                      padding: '12px 20px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      background: 'var(--btn-primary)',
+                      color: 'white',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {friendLoading ? '...' : 'Find'}
+                  </button>
+                </div>
+
+                {friendError && (
+                  <p style={{ color: '#dc3545', fontSize: '14px', marginTop: '10px' }}>{friendError}</p>
+                )}
+
+                {friendData && (
+                  <div style={{
+                    marginTop: '15px',
+                    padding: '12px',
+                    background: 'rgba(40, 167, 69, 0.1)',
+                    borderRadius: '8px',
+                    border: '1px solid var(--btn-primary)'
+                  }}>
+                    <p style={{ fontWeight: '600', color: 'var(--text-color)' }}>{friendData.name}</p>
+                    <p style={{ fontSize: '14px', color: 'var(--text-secondary)' }}>{friendData.phone}</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '25px' }}>
+              <button
+                onClick={processPayment}
+                style={{
+                  flex: 1,
+                  padding: '15px',
+                  borderRadius: '8px',
+                  border: 'none',
+                  background: 'var(--btn-primary)',
+                  color: 'white',
+                  fontWeight: '600',
+                  fontSize: '16px',
+                  cursor: 'pointer'
+                }}
+              >
+                Buy Now
+              </button>
+              <button
+                onClick={() => setShowPaymentModal(false)}
+                style={{
+                  flex: 1,
+                  padding: '15px',
+                  borderRadius: '8px',
+                  border: '1px solid var(--border-color)',
+                  background: 'transparent',
+                  color: 'var(--text-color)',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </ModalContent>
+        </PaymentModal>
+      )}
     </CartContainer>
   );
 };

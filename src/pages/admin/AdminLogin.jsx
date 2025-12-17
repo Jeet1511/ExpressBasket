@@ -50,6 +50,13 @@ const AdminLogin = ({ setIsAdmin }) => {
 
   return (
     <div className="admin-login-container">
+      {/* Snowfall Animation */}
+      <div className="snowfall-bg">
+        {[...Array(15)].map((_, i) => (
+          <div key={i} className="snow">❄</div>
+        ))}
+      </div>
+
       <div className="admin-login-box">
         <button
           onClick={toggleTheme}
@@ -99,9 +106,12 @@ const AdminLogin = ({ setIsAdmin }) => {
         </button>
         <div className="admin-logo">
           <div className="admin-icon">
-            <i className="expDel_user_shield"></i>
+            <svg className="admin-shield-icon" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              <path d="m9 12 2 2 4-4"></path>
+            </svg>
           </div>
-          <h1>Basket Admin</h1>
+          <h1>Express Delivery</h1>
           <p>Administrator Login</p>
         </div>
 

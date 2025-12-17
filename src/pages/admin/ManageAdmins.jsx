@@ -12,11 +12,21 @@ const ManageAdmins = () => {
     username: '',
     email: '',
     password: '',
-    role: 'admin',
+    role: 'vendor',
     permissions: ['manage_products', 'manage_categories'],
     tags: [],
     isActive: true
   });
+
+  // Helper function to display friendly role names
+  const getRoleDisplay = (role) => {
+    const roleNames = {
+      'super_admin': 'Super Admin',
+      'admin': 'Admin',
+      'vendor': 'Vendor'
+    };
+    return roleNames[role] || role;
+  };
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [currentAdmin, setCurrentAdmin] = useState(null);
@@ -123,7 +133,7 @@ const ManageAdmins = () => {
         });
         setSuccess('Admin created successfully');
       }
-      setFormData({ username: '', email: '', password: '', role: 'admin', permissions: ['manage_products', 'manage_categories'], tags: [], isActive: true });
+      setFormData({ username: '', email: '', password: '', role: 'vendor', permissions: ['manage_products', 'manage_categories'], tags: [], isActive: true });
       setShowForm(false);
       setEditingAdmin(null);
       fetchAdmins(); // Refresh the list
@@ -174,7 +184,7 @@ const ManageAdmins = () => {
                 />
               </div>
             )}
-            {(currentAdmin?.role === 'super_admin' || currentAdmin?.role === 'god') && (
+            {currentAdmin?.role === 'super_admin' && (
               <>
                 <div className="form-group">
                   <label>Role</label>
@@ -183,19 +193,15 @@ const ManageAdmins = () => {
                     value={formData.role}
                     onChange={handleInputChange}
                   >
+                    <option value="vendor">Vendor</option>
                     <option value="admin">Admin</option>
-                    {currentAdmin?.role === 'super_admin' || currentAdmin?.role === 'god' ? (
-                      <option value="super_admin">Super Admin</option>
-                    ) : null}
-                    {currentAdmin?.role === 'god' && (
-                      <option value="god">God</option>
-                    )}
+                    <option value="super_admin">Super Admin</option>
                   </select>
                 </div>
                 <div className="form-group">
                   <label>Permissions</label>
                   <div className="permissions">
-                    {['manage_products', 'manage_categories', 'manage_admins', 'view_reports', 'manage_admins_passwords', 'manage_admins_roles'].map(perm => (
+                    {['manage_products', 'manage_categories', 'manage_orders', 'manage_users', 'manage_admins', 'view_reports', 'manage_admins_passwords', 'manage_admins_roles', 'manage_memberships', 'manage_wallets'].map(perm => (
                       <label key={perm}>
                         <input
                           type="checkbox"
@@ -262,7 +268,7 @@ const ManageAdmins = () => {
                 <th>Permissions</th>
                 <th>Tags</th>
                 <th>Status</th>
-                {(currentAdmin?.role === 'super_admin' || currentAdmin?.role === 'god') && <th>Actions</th>}
+                {currentAdmin?.role === 'super_admin' && <th>Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -270,7 +276,7 @@ const ManageAdmins = () => {
                 <tr key={admin._id}>
                   <td>{admin.username}</td>
                   <td>{admin.email}</td>
-                  <td><span className="role">{admin.role}</span></td>
+                  <td><span className={`role role-${admin.role}`}>{getRoleDisplay(admin.role)}</span></td>
                   <td>
                     <div className="permissions-list">
                       {admin.permissions?.length > 0 ? admin.permissions.map(perm => (
@@ -290,7 +296,7 @@ const ManageAdmins = () => {
                       {admin.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  {(currentAdmin?.role === 'super_admin' || currentAdmin?.role === 'god') && (
+                  {currentAdmin?.role === 'super_admin' && (
                     <td className="actions-cell">
                       <button onClick={() => handleEdit(admin)} className="edit-btn">Edit</button>
                       <button onClick={() => handleChangePassword(admin._id)} className="password-btn">Change Password</button>

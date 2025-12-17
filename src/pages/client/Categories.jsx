@@ -75,11 +75,11 @@ const Categories = () => {
     try {
       const response = await axios.get('/categories');
       setCategories(response.data);
-      
+
       // Fetch products for each category
       response.data.forEach(async (category) => {
         try {
-          const productsResponse = await axios.get(`/api/products/category/${category._id}`);
+          const productsResponse = await axios.get(`/products/category/${category._id}`);
           setCategoryProducts(prev => ({
             ...prev,
             [category._id]: productsResponse.data.slice(0, 4) // Show only 4 products per category
@@ -112,7 +112,7 @@ const Categories = () => {
   return (
     <CategoriesContainer>
       <h1 style={{ fontSize: '36px', marginBottom: '30px', color: 'var(--text-color)' }}>All Categories</h1>
-      
+
       {categories.map(category => (
         <CategorySection key={category._id}>
           <CategoryHeader>
@@ -122,7 +122,7 @@ const Categories = () => {
             </CategoryTitle>
             <ViewAll onClick={() => handleViewAll(category._id)}>View All</ViewAll>
           </CategoryHeader>
-          
+
           <ProductGrid>
             {categoryProducts[category._id]?.length > 0 ? (
               categoryProducts[category._id].map(product => (

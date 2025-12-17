@@ -22,15 +22,15 @@ export const UserProvider = ({ children }) => {
       axios.get('/user/profile', {
         headers: { Authorization: `Bearer ${token}` }
       })
-      .then(response => {
-        setUser(response.data.user);
-      })
-      .catch(() => {
-        localStorage.removeItem('userToken');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+        .then(response => {
+          setUser(response.data.user);
+        })
+        .catch(() => {
+          localStorage.removeItem('userToken');
+        })
+        .finally(() => {
+          setLoading(false);
+        });
     } else {
       setLoading(false);
     }
@@ -39,9 +39,14 @@ export const UserProvider = ({ children }) => {
   const login = async (email, password) => {
     try {
       const response = await axios.post('/login', { email, password });
-      const { token, user: userData } = response.data;
+      const { token } = response.data;
       localStorage.setItem('userToken', token);
-      setUser(userData);
+
+      // Fetch full user profile to get all fields including walletBalance and loyaltyBadge
+      const profileResponse = await axios.get('/user/profile', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setUser(profileResponse.data.user);
       return { success: true };
     } catch (error) {
       return { success: false, message: error.response?.data?.message || 'Login failed' };

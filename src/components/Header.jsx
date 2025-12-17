@@ -14,10 +14,28 @@ const Header = () => {
     <header className="header">
       <div className="container">
         <div className="header-content">
-          {/* Logo */}
+          {/* Logo with Animated Rocket */}
           <div className="logo">
             <Link to="/">
-              <span className="logo-icon">🛒</span>
+              <span className="rocket-logo">
+                <svg
+                  className="rocket-icon"
+                  width="32"
+                  height="32"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path>
+                  <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path>
+                  <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path>
+                  <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>
+                </svg>
+                <span className="rocket-trail"></span>
+              </span>
               <span className="logo-text">Express Delivery</span>
             </Link>
           </div>
@@ -45,22 +63,17 @@ const Header = () => {
             </NavLink>
           </nav>
 
-          <div className="theme-toggle-container">
-            <button
-              className={`theme-toggle-switch ${theme === 'dark' ? 'dark' : ''}`}
-              onClick={toggleTheme}
-              title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
-              aria-label="Toggle theme"
-            >
-              <div className="toggle-track">
-                <div className="toggle-icons">
-                  <span className="icon-moon">🌙</span>
-                  <span className="icon-sun">☀️</span>
-                </div>
-                <div className="toggle-thumb"></div>
-              </div>
-            </button>
-          </div>
+          {/* Animated Theme Toggle */}
+          <button
+            className="theme-toggle-animated"
+            onClick={toggleTheme}
+            title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
+            aria-label="Toggle theme"
+          >
+            <span className="toggle-icon sun-icon">☀️</span>
+            <span className="toggle-icon moon-icon">🌙</span>
+            <span className="toggle-ball"></span>
+          </button>
 
           {/* Mobile Menu Button */}
           <button
@@ -73,7 +86,11 @@ const Header = () => {
           {/* Mobile Navigation */}
           <div className={`mobile-nav ${mobileMenuOpen ? 'open' : ''}`}>
             <NavLink to="/" end onClick={() => setMobileMenuOpen(false)}>
-              <i className="expDel_home"></i> Home
+              <svg className="mobile-rocket" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path>
+                <path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path>
+              </svg>
+              Home
             </NavLink>
             <NavLink to="/categories" onClick={() => setMobileMenuOpen(false)}>
               <i className="expDel_list"></i> Categories

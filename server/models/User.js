@@ -34,6 +34,57 @@ const userSchema = new mongoose.Schema({
             default: 1
         }
     }],
+    // Loyalty Badge System
+    loyaltyBadge: {
+        type: {
+            type: String,
+            enum: ['none', 'silver', 'gold', 'platinum'],
+            default: 'none'
+        },
+        purchasedAt: {
+            type: Date
+        },
+        expiresAt: {
+            type: Date
+        },
+        assignedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Admin'
+        }
+    },
+    // Wallet Cash System
+    walletBalance: {
+        type: Number,
+        default: 0
+    },
+    walletHistory: [{
+        type: {
+            type: String,
+            enum: ['topup', 'purchase', 'refund', 'deposit', 'withdraw', 'friend_payment'],
+            required: true
+        },
+        amount: {
+            type: Number,
+            required: true
+        },
+        description: String,
+        orderId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Order'
+        },
+        friendId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'User'
+        },
+        adminId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Admin'
+        },
+        createdAt: {
+            type: Date,
+            default: Date.now
+        }
+    }],
     createdAt: {
         type: Date,
         default: Date.now

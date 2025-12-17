@@ -1,8 +1,57 @@
-/* Admin Dashboard Styles */
+/* Admin Dashboard Styles with Animations */
 .admin-dashboard {
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+  animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+@keyframes float {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-8px);
+  }
 }
 
 .loading {
@@ -66,23 +115,45 @@
 
 .dashboard-card {
   background: var(--card-bg);
-  border-radius: 12px;
-  padding: 25px;
-  box-shadow: 0 4px 6px var(--shadow);
+  border-radius: 16px;
+  padding: 28px;
+  box-shadow: 0 4px 15px var(--shadow);
   text-align: center;
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: all 0.3s ease;
   border: 1px solid var(--border-light);
+  animation: fadeInUp 0.5s ease forwards;
+  opacity: 0;
+}
+
+.dashboard-card:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.dashboard-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.dashboard-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+
+.dashboard-card:nth-child(4) {
+  animation-delay: 0.3s;
+}
+
+.dashboard-card:nth-child(5) {
+  animation-delay: 0.4s;
 }
 
 .dashboard-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+  transform: translateY(-10px);
+  box-shadow: 0 15px 35px var(--shadow-dark);
 }
 
 .card-icon {
-  width: 60px;
-  height: 60px;
-  background: var(--gradient-primary);
+  width: 70px;
+  height: 70px;
+  background: linear-gradient(135deg, #667eea, #764ba2);
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -90,6 +161,70 @@
   margin: 0 auto 15px;
   color: white;
   font-size: 24px;
+  transition: all 0.3s ease;
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+}
+
+.card-icon.edit-icon {
+  background: linear-gradient(135deg, #f093fb, #f5576c);
+  box-shadow: 0 5px 20px rgba(245, 87, 108, 0.3);
+}
+
+.card-icon.category-icon {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  box-shadow: 0 5px 20px rgba(79, 172, 254, 0.3);
+}
+
+.card-icon.admin-icon {
+  background: linear-gradient(135deg, #43e97b, #38f9d7);
+  box-shadow: 0 5px 20px rgba(56, 249, 215, 0.3);
+}
+
+.card-icon.users-icon {
+  background: linear-gradient(135deg, #fa709a, #fee140);
+  box-shadow: 0 5px 20px rgba(250, 112, 154, 0.3);
+}
+
+.card-icon.orders-icon {
+  background: linear-gradient(135deg, #a18cd1, #fbc2eb);
+  box-shadow: 0 5px 20px rgba(161, 140, 209, 0.3);
+}
+
+.lucide-icon {
+  stroke: white;
+  animation: iconFloat 2s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.dashboard-card:hover .card-icon {
+  transform: scale(1.1) rotate(5deg);
+}
+
+.dashboard-card:hover .lucide-icon {
+  animation: iconBounce 0.5s ease;
+}
+
+@keyframes iconBounce {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.2);
+  }
 }
 
 .dashboard-card h3 {
@@ -107,20 +242,34 @@
 }
 
 .card-btn {
-  background: var(--btn-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(135deg, var(--btn-primary), #20c997);
   color: white;
   border: none;
-  padding: 10px 20px;
-  border-radius: 6px;
+  padding: 12px 20px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
-  font-weight: 500;
-  transition: background-color 0.3s;
+  font-weight: 600;
+  transition: all 0.3s ease;
   width: 100%;
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
 }
 
 .card-btn:hover {
-  background: var(--btn-primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.btn-icon {
+  transition: transform 0.3s ease;
+}
+
+.card-btn:hover .btn-icon {
+  transform: translateX(5px);
 }
 
 .quick-stats {
@@ -240,6 +389,7 @@
   font-size: 14px;
   transition: background-color 0.3s;
 }
+
 .view-all-btn:hover {
   background: var(--btn-primary-hover);
 }
@@ -262,7 +412,7 @@
 }
 
 .order-card:hover {
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .order-info {
@@ -303,22 +453,27 @@
   background-color: var(--warning-bg);
   color: var(--warning-text);
 }
+
 .order-status.confirmed {
   background-color: var(--info-bg);
   color: var(--info-text);
 }
+
 .order-status.processing {
   background-color: var(--success-bg);
   color: var(--success-text);
 }
+
 .order-status.shipped {
   background-color: var(--primary-light-bg);
   color: var(--primary-light-text);
 }
+
 .order-status.delivered {
   background-color: var(--success-bg);
   color: var(--success-text);
 }
+
 .order-status.cancelled {
   background-color: var(--error-bg);
   color: var(--error-text);
@@ -350,12 +505,53 @@
 }
 
 @media (max-width: 480px) {
+  .admin-dashboard {
+    padding: 10px;
+  }
+
+  .dashboard-header {
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 20px;
+  }
+
   .dashboard-grid {
     grid-template-columns: 1fr;
+    gap: 15px;
+  }
+
+  .dashboard-card {
+    padding: 18px;
+  }
+
+  .card-icon {
+    width: 50px;
+    height: 50px;
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .dashboard-card h3 {
+    font-size: 16px;
+  }
+
+  .dashboard-card p {
+    font-size: 13px;
+    margin-bottom: 15px;
+  }
+
+  .card-btn {
+    padding: 10px 16px;
+    font-size: 13px;
+    border-radius: 8px;
   }
 
   .stats-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
   }
 
   .stat-item {
@@ -363,6 +559,118 @@
   }
 
   .stat-number {
-    font-size: 28px;
+    font-size: 24px;
+  }
+
+  .stat-label {
+    font-size: 12px;
+  }
+
+  .quick-stats {
+    padding: 18px;
+    border-radius: 10px;
+  }
+
+  .quick-stats h2 {
+    font-size: 20px;
+    margin-bottom: 15px;
+  }
+
+  .recent-orders {
+    padding: 18px;
+    margin-top: 20px;
+  }
+
+  .orders-header h2 {
+    font-size: 18px;
+  }
+
+  .view-all-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .order-card {
+    padding: 12px;
+  }
+
+  .order-id {
+    font-size: 14px;
+  }
+
+  .order-customer {
+    font-size: 13px;
+  }
+
+  .order-amount {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 360px) {
+  .admin-dashboard {
+    padding: 8px;
+  }
+
+  .dashboard-header h1 {
+    font-size: 18px;
+  }
+
+  .admin-info {
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .admin-info span {
+    font-size: 12px;
+  }
+
+  .logout-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .dashboard-card {
+    padding: 15px;
+  }
+
+  .card-icon {
+    width: 45px;
+    height: 45px;
+    font-size: 16px;
+  }
+
+  .dashboard-card h3 {
+    font-size: 15px;
+  }
+
+  .dashboard-card p {
+    font-size: 12px;
+  }
+
+  .card-btn {
+    padding: 8px 14px;
+    font-size: 12px;
+  }
+
+  .stat-number {
+    font-size: 22px;
+  }
+
+  .quick-stats h2 {
+    font-size: 18px;
+  }
+
+  .orders-header {
+    gap: 8px;
+  }
+
+  .orders-header h2 {
+    font-size: 16px;
+  }
+
+  .order-card {
+    padding: 10px;
   }
 }

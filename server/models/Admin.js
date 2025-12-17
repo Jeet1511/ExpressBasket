@@ -18,12 +18,12 @@ const adminSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['god', 'super_admin', 'admin'],
-        default: 'admin'
+        enum: ['super_admin', 'admin', 'vendor'],
+        default: 'vendor'
     },
     permissions: [{
         type: String,
-        enum: ['manage_products', 'manage_categories', 'manage_admins', 'manage_admins_passwords', 'manage_admins_roles', 'view_reports']
+        enum: ['manage_products', 'manage_categories', 'manage_orders', 'manage_users', 'manage_admins', 'manage_admins_passwords', 'manage_admins_roles', 'view_reports', 'manage_memberships', 'manage_wallets']
     }],
     tags: [{
         type: String
@@ -39,7 +39,7 @@ const adminSchema = new mongoose.Schema({
 });
 
 // Hash password before saving
-adminSchema.pre('save', async function(next) {
+adminSchema.pre('save', async function (next) {
     if (!this.isModified('password')) return next();
 
     try {
@@ -52,7 +52,7 @@ adminSchema.pre('save', async function(next) {
 });
 
 // Compare password method
-adminSchema.methods.comparePassword = async function(candidatePassword) {
+adminSchema.methods.comparePassword = async function (candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
 
