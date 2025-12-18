@@ -350,8 +350,7 @@ const Cart = () => {
   };
 
   const processPayment = async () => {
-    const deliveryCharge = total > 500 ? 0 : 50;
-    const grandTotal = total + deliveryCharge;
+    // Use component-level grandTotal which includes membership discounts
 
     if (paymentMethod === 'wallet') {
       if (walletBalance < grandTotal) {
@@ -404,31 +403,84 @@ const Cart = () => {
 
       try {
         const token = localStorage.getItem('userToken');
-        await axios.post('/user/wallet/pay-friend',
-          { friendId: friendData.id, amount: grandTotal, description: `Order payment for ${user.name}` },
+
+        // Prepare cart items for the request
+        const cartItemsForRequest = cart.map(item => ({
+          productId: item._id,
+          name: item.name,
+          price: item.price,
+          quantity: item.quantity,
+          image: item.image
+        }));
+
+        const response = await axios.post('/user/wallet/pay-friend',
+          {
+            friendId: friendData.id,
+            amount: grandTotal,
+            cartItems: cartItemsForRequest,
+            shippingAddress: user.address,
+            description: `Order payment for ${user.name}`
+          },
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        await placeOrder(user.address, 'friend_wallet');
         setShowPaymentModal(false);
 
         Swal.fire({
-          title: 'Order Placed!',
-          text: `Payment of ₹${grandTotal.toFixed(2)} made from ${friendData.name}'s wallet`,
+          title: 'Request Sent! 📩',
+          html: `
+            <p>Payment request of <strong>₹${grandTotal.toFixed(2)}</strong> sent to <strong>${friendData.name}</strong>!</p>
+            <p style="color: #666; margin-top: 15px; font-size: 14px;">
+              Your friend will receive a notification and can approve or reject from their mailbox.
+            </p>
+            <p style="color: #888; margin-top: 10px; font-size: 12px;">
+              Request expires in 30 minutes
+            </p>
+          `,
           icon: 'success'
         });
+
+        // Clear cart after sending request
+        clearCart();
       } catch (error) {
         Swal.fire({
-          title: 'Payment Failed',
-          text: error.response?.data?.message || 'Failed to process payment',
+          title: 'Request Failed',
+          text: error.response?.data?.message || 'Failed to send payment request',
           icon: 'error'
         });
       }
     }
   };
 
-  const deliveryCharge = total > 500 ? 0 : 50;
-  const grandTotal = total + deliveryCharge;
+  // Membership benefits configuration
+  const membershipBenefits = {
+    silver: { discount: 5, freeDeliveryThreshold: 300, price: 99 },
+    gold: { discount: 10, freeDeliveryThreshold: 0, price: 199 },
+    platinum: { discount: 15, freeDeliveryThreshold: 0, price: 499 }
+  };
+
+  // Get user's badge type
+  const userBadge = user?.loyaltyBadge?.type;
+  const hasMembership = userBadge && userBadge !== 'none' && membershipBenefits[userBadge];
+
+  // Calculate membership discount
+  const membershipDiscount = hasMembership
+    ? (total * membershipBenefits[userBadge].discount / 100)
+    : 0;
+  const discountedTotal = total - membershipDiscount;
+
+  // Calculate delivery charge based on membership
+  let deliveryCharge = 50; // Default delivery charge
+  if (hasMembership) {
+    const threshold = membershipBenefits[userBadge].freeDeliveryThreshold;
+    if (threshold === 0 || total >= threshold) {
+      deliveryCharge = 0;
+    }
+  } else if (total > 500) {
+    deliveryCharge = 0;
+  }
+
+  const grandTotal = discountedTotal + deliveryCharge;
 
   if (cart.length === 0) {
     return (
@@ -629,15 +681,70 @@ const Cart = () => {
             <span>₹{total.toFixed(2)}</span>
           </SummaryRow>
 
+          {/* Membership Discount */}
+          {hasMembership && membershipDiscount > 0 && (
+            <SummaryRow style={{ color: '#28a745' }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
+                {userBadge.charAt(0).toUpperCase() + userBadge.slice(1)} Discount ({membershipBenefits[userBadge].discount}%)
+              </span>
+              <span>-₹{membershipDiscount.toFixed(2)}</span>
+            </SummaryRow>
+          )}
+
           <SummaryRow>
-            <span>Delivery Charges</span>
-            <span>{deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge.toFixed(2)}`}</span>
+            <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              Delivery Charges
+              {hasMembership && deliveryCharge === 0 && (
+                <span style={{
+                  fontSize: '10px',
+                  background: userBadge === 'platinum' ? 'linear-gradient(135deg, #e5e4e2, #9370db)' :
+                    userBadge === 'gold' ? 'linear-gradient(135deg, #ffd700, #ffb347)' :
+                      'linear-gradient(135deg, #c0c0c0, #a8a8a8)',
+                  color: '#333',
+                  padding: '2px 6px',
+                  borderRadius: '8px',
+                  fontWeight: '600'
+                }}>
+                  {userBadge.toUpperCase()} PERK
+                </span>
+              )}
+            </span>
+            <span style={{ color: deliveryCharge === 0 ? '#28a745' : 'inherit', fontWeight: deliveryCharge === 0 ? '600' : 'normal' }}>
+              {deliveryCharge === 0 ? 'FREE' : `₹${deliveryCharge.toFixed(2)}`}
+            </span>
           </SummaryRow>
 
-          {deliveryCharge > 0 && (
+          {deliveryCharge > 0 && !hasMembership && (
             <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '15px' }}>
               Add ₹{(500 - total).toFixed(2)} more for FREE delivery
             </p>
+          )}
+
+          {deliveryCharge > 0 && hasMembership && userBadge === 'silver' && (
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '15px' }}>
+              Add ₹{(300 - total).toFixed(2)} more for FREE delivery (Silver Perk)
+            </p>
+          )}
+
+          {/* Membership Upgrade Hint */}
+          {!hasMembership && user && (
+            <div style={{
+              background: 'rgba(102, 126, 234, 0.1)',
+              border: '1px dashed var(--btn-primary)',
+              borderRadius: '8px',
+              padding: '10px',
+              marginBottom: '15px',
+              fontSize: '12px',
+              color: 'var(--text-color)'
+            }}>
+              <strong>Save with Membership!</strong>
+              <p style={{ fontSize: '11px', color: 'var(--text-secondary)', margin: '4px 0 0' }}>
+                Get up to 15% discount + free delivery
+              </p>
+            </div>
           )}
 
           {user && (

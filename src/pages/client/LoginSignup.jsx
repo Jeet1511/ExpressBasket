@@ -66,21 +66,28 @@ const AuthTab = styled.button`
   background: none;
   border: none;
   font-size: 18px;
-  font-weight: 500;
-  color: ${props => props.active ? 'var(--btn-primary)' : 'var(--text-secondary)'};
-  border-bottom: 2px solid ${props => props.active ? 'var(--btn-primary)' : 'transparent'};
+  font-weight: 600;
+  color: ${props => props.active ? '#667eea' : 'var(--text-secondary)'};
+  border-bottom: 2px solid ${props => props.active ? '#667eea' : 'transparent'};
   cursor: pointer;
   transition: all 0.3s;
+  text-shadow: ${props => props.active ? '0 0 10px rgba(102, 126, 234, 0.5)' : 'none'};
   
   &:hover {
-    color: var(--btn-primary);
+    color: #667eea;
+    text-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
   }
 `;
 
 const AuthTitle = styled.h2`
   text-align: center;
   margin-bottom: 30px;
-  color: var(--text-color);
+  color: white;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  padding: 12px 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
 `;
 
 const AuthForm = styled.form`
@@ -94,10 +101,15 @@ const FormGroup = styled.div`
 `;
 
 const FormLabel = styled.label`
-  display: block;
+  display: inline-block;
   margin-bottom: 8px;
-  color: var(--text-secondary);
-  font-weight: 500;
+  color: white;
+  font-weight: 700;
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  padding: 5px 14px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+  font-size: 13px;
 `;
 
 const FormInput = styled.input`
@@ -111,14 +123,15 @@ const FormInput = styled.input`
   color: var(--input-text) !important;
   
   &::placeholder {
-    color: var(--input-placeholder) !important;
-    opacity: 1;
+    color: #667eea !important;
+    opacity: 0.8;
+    font-weight: 500;
   }
   
   &:focus {
     outline: none;
-    border-color: var(--input-focus-border);
-    box-shadow: 0 0 0 4px rgba(40, 167, 69, 0.15);
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
   }
 `;
 
@@ -126,23 +139,26 @@ const FormInput = styled.input`
 const SubmitButton = styled.button`
   width: 100%;
   padding: 15px;
-  background-color: var(--btn-primary);
+  background: linear-gradient(135deg, #667eea, #764ba2);
   color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 18px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
   margin-top: 10px;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
   
   &:hover {
-    background-color: var(--btn-primary-hover);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
   }
   
   &:disabled {
-    background-color: var(--btn-secondary);
+    background: linear-gradient(135deg, #a0a0a0, #808080);
     cursor: not-allowed;
+    box-shadow: none;
   }
 `;
 
@@ -170,7 +186,7 @@ const PasswordToggle = styled.button`
   z-index: 10;
   
   &:hover {
-    color: var(--btn-primary);
+    color: #667eea;
   }
   
   i {
@@ -194,7 +210,7 @@ const ForgotPasswordLink = styled(Link)`
   transition: color 0.3s;
   
   &:hover {
-    color: var(--btn-primary);
+    color: #667eea;
     text-decoration: underline;
   }
 `;
@@ -363,12 +379,12 @@ const LoginSignup = () => {
             active={!isLogin}
             onClick={() => setIsLogin(false)}
           >
-            Signup
+            Sign Up
           </AuthTab>
         </AuthTabs>
 
         <AuthTitle>
-          {isLogin ? 'Welcome Back' : 'Create Account'}
+          {isLogin ? 'Login to Your Account' : 'Create Account'}
         </AuthTitle>
 
         <AuthForm onSubmit={handleSubmit}>
@@ -401,13 +417,13 @@ const LoginSignup = () => {
           )}
 
           <FormGroup>
-            <FormLabel>Email Address</FormLabel>
+            <FormLabel>Email</FormLabel>
             <FormInput
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="Enter email"
+              placeholder="Enter your email"
             />
             {errors.email && <ErrorMessage>{errors.email}</ErrorMessage>}
           </FormGroup>
@@ -420,7 +436,7 @@ const LoginSignup = () => {
                 name="password"
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="Enter password"
+                placeholder="Enter your password"
                 style={{ paddingRight: '45px' }}
               />
               <PasswordToggle

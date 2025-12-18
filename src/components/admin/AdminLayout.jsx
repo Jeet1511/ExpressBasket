@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { useTheme } from '../context/ThemeContext.jsx';
+import { useTheme } from '../../context/ThemeContext.jsx';
 import { hasPermission } from './ProtectedAdminRoute.jsx';
 import './AdminLayout.css';
 
@@ -243,12 +243,23 @@ const AdminLayout = ({ children }) => {
             </Link>
           )}
 
-          {/* Users - requires manage_users permission */}
-          {hasPermission(admin, 'manage_users') && (
-            <Link to="/admin/users" className="nav-item">
-              <UsersIcon />
-              <span>Users</span>
-            </Link>
+          {/* Users - requires manage_users permission, hidden from normal_viewer, disabled for special_viewer */}
+          {hasPermission(admin, 'manage_users') && admin?.role !== 'normal_viewer' && (
+            admin?.role === 'special_viewer' ? (
+              <div className="nav-item disabled" title="View only - No access to user data" onClick={(e) => e.preventDefault()}>
+                <UsersIcon />
+                <span>Users</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ marginLeft: 'auto', opacity: 0.5 }}>
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                </svg>
+              </div>
+            ) : (
+              <Link to="/admin/users" className="nav-item">
+                <UsersIcon />
+                <span>Users</span>
+              </Link>
+            )
           )}
 
           {/* Manage Admins - requires manage_admins permission */}
@@ -289,14 +300,27 @@ const AdminLayout = ({ children }) => {
             <span>Tracking Toggle</span>
           </Link>
 
-          {/* Mail Center - Super Admin Only */}
-          {admin?.role === 'super_admin' && (
+          {/* Mail Center - Super Admin & Special Viewer */}
+          {(admin?.role === 'super_admin' || admin?.role === 'special_viewer') && (
             <Link to="/admin/mails" className="nav-item">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                 <polyline points="22,6 12,13 2,6"></polyline>
               </svg>
               <span>Mail Center</span>
+            </Link>
+          )}
+
+          {/* Server - Super Admin & Special Viewer */}
+          {(admin?.role === 'super_admin' || admin?.role === 'special_viewer') && (
+            <Link to="/admin/server" className="nav-item server-nav-item">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+              </svg>
+              <span>Server</span>
             </Link>
           )}
 

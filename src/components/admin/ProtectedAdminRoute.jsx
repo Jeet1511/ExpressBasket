@@ -73,6 +73,9 @@ export const hasPermission = (admin, requiredPermission) => {
     // Super admin has access to everything
     if (admin.role === 'super_admin' || admin.role === 'superadmin') return true;
 
+    // Special viewer can SEE everything (but not modify)
+    if (admin.role === 'special_viewer') return true;
+
     // If no specific permission required, allow access
     if (!requiredPermission) return true;
 
@@ -87,6 +90,17 @@ export const hasPermission = (admin, requiredPermission) => {
     if (admin.permissions?.includes(viewPermission)) return true;
 
     return false;
+};
+
+/**
+ * Helper function to check if admin can modify data (not a viewer)
+ * @param {Object} admin - Admin object with role
+ * @returns {boolean} - Whether admin can modify data
+ */
+export const canModify = (admin) => {
+    if (!admin) return false;
+    const viewerRoles = ['normal_viewer', 'special_viewer'];
+    return !viewerRoles.includes(admin.role);
 };
 
 /**

@@ -1,14 +1,25 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { useUser } from '../../context/UserContext';
 import { useCart } from '../../context/CartContext';
+import { useSocket } from '../../context/SocketContext';
 import axios from '../../utils/axios';
 import useTrackingStatus from '../../hooks/useTrackingStatus.js';
 import OrderBill from '../../components/OrderBill';
+import Swal from 'sweetalert2';
 import './Profile.css';
 
 const Profile = () => {
   const { user, loading, login, signup, logout, updateProfile } = useUser();
   const { reorderItems } = useCart();
+  const {
+    newMailNotification,
+    clearNotification,
+    membershipUpdate,
+    clearMembershipUpdate,
+    walletUpdate,
+    clearWalletUpdate
+  } = useSocket() || {};
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
@@ -35,6 +46,7 @@ const Profile = () => {
   });
   const [message, setMessage] = useState('');
   const [messageType, setMessageType] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   // New state for stats and orders
   const [stats, setStats] = useState({ totalOrders: 0, totalSpend: 0, loyaltyBadge: { type: 'none' } });
@@ -134,6 +146,90 @@ const Profile = () => {
       fetchMails();
     }
   }, [user]);
+
+  // Real-time mail notification handler
+  useEffect(() => {
+    if (newMailNotification) {
+      // Show toast notification
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: newMailNotification.mail?.type === 'payment_request' ? 'warning' : 'info',
+        title: '📬 New Mail!',
+        text: newMailNotification.mail?.subject || 'You have a new message',
+        showConfirmButton: false,
+        timer: 5000,
+        timerProgressBar: true,
+        didOpen: (toast) => {
+          toast.addEventListener('click', () => {
+            setShowMails(true);
+            Swal.close();
+          });
+        }
+      });
+
+      // Refresh mails to update the count and list
+      fetchMails();
+
+      // Clear the notification
+      if (clearNotification) {
+        clearNotification();
+      }
+    }
+  }, [newMailNotification]);
+
+  // Real-time membership update handler
+  useEffect(() => {
+    if (membershipUpdate) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'Membership Updated!',
+        text: membershipUpdate.badge?.type
+          ? `Your badge is now: ${membershipUpdate.badge.type.toUpperCase()}`
+          : 'Your membership has been updated',
+        showConfirmButton: false,
+        timer: 4000,
+        timerProgressBar: true
+      });
+
+      // Refresh user stats
+      fetchUserStats();
+
+      if (clearMembershipUpdate) {
+        clearMembershipUpdate();
+      }
+    }
+  }, [membershipUpdate]);
+
+  // Real-time wallet update handler
+  useEffect(() => {
+    if (walletUpdate) {
+      const action = walletUpdate.action;
+      const amount = walletUpdate.amount;
+
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: action === 'deposit' ? 'success' : 'info',
+        title: action === 'deposit' ? 'Wallet Credited!' : 'Wallet Updated',
+        text: `₹${amount} ${action === 'deposit' ? 'added to' : 'deducted from'} your wallet`,
+        showConfirmButton: false,
+        timer: 4000,
+        timerProgressBar: true
+      });
+
+      // Update wallet balance immediately
+      if (walletUpdate.balance !== undefined) {
+        setWalletBalance(walletUpdate.balance);
+      }
+
+      if (clearWalletUpdate) {
+        clearWalletUpdate();
+      }
+    }
+  }, [walletUpdate]);
 
   const fetchMails = async () => {
     try {
@@ -284,6 +380,35 @@ const Profile = () => {
     }
   };
 
+  // Handle payment request response (approve or reject)
+  const handlePaymentResponse = async (paymentRequestId, action) => {
+    try {
+      const token = localStorage.getItem('userToken');
+      const response = await axios.post(
+        `/user/payment-requests/${paymentRequestId}/respond`,
+        { action },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      if (action === 'approve') {
+        setMessage(`Payment approved! Order has been placed.`);
+        setMessageType('success');
+        // Refresh wallet balance
+        fetchWallet();
+      } else {
+        setMessage('Payment request rejected.');
+        setMessageType('info');
+      }
+
+      // Close mail and refresh
+      setSelectedMail(null);
+      fetchMails();
+    } catch (error) {
+      setMessage(error.response?.data?.message || `Failed to ${action} payment request`);
+      setMessageType('error');
+    }
+  };
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     if (name.includes('.')) {
@@ -416,9 +541,25 @@ const Profile = () => {
                 </div>
                 <div className="form-group">
                   <label>Password</label>
-                  <input type="password" name="password" value={formData.password} onChange={handleInputChange} placeholder="Enter your password" required />
+                  <div className="password-input-wrapper">
+                    <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleInputChange} placeholder="Enter your password" required />
+                    <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+                      {showPassword ? (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                      ) : (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <button type="submit" className="auth-btn">Login</button>
+                <Link to="/forgot-password" className="forgot-password-link">Forgot Password?</Link>
               </form>
             ) : (
               <form className="auth-form" onSubmit={handleSignup}>
@@ -433,7 +574,22 @@ const Profile = () => {
                 </div>
                 <div className="form-group">
                   <label>Password</label>
-                  <input type="password" name="password" value={formData.password} onChange={handleInputChange} placeholder="Create a password" required />
+                  <div className="password-input-wrapper">
+                    <input type={showPassword ? "text" : "password"} name="password" value={formData.password} onChange={handleInputChange} placeholder="Create a password" required />
+                    <button type="button" className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+                      {showPassword ? (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                          <line x1="1" y1="1" x2="23" y2="23"></line>
+                        </svg>
+                      ) : (
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                          <circle cx="12" cy="12" r="3"></circle>
+                        </svg>
+                      )}
+                    </button>
+                  </div>
                 </div>
                 <div className="form-group">
                   <label>Phone</label>
@@ -579,14 +735,19 @@ const Profile = () => {
             ) : (
               <div className="profile-details">
                 <div className="detail-item">
-                  <svg className="icon-pulse" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--btn-primary)" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                  <div className="detail-icon-wrapper">
+                    <svg className="icon-pulse" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>
+                  </div>
                   <div>
                     <span className="detail-label">Phone</span>
                     <span className="detail-value">{user.phone}</span>
                   </div>
                 </div>
                 <div className="detail-item">
-                  <svg className="icon-pulse" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--btn-primary)" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  <div className="detail-icon-wrapper">
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', display: 'inline-block', marginRight: '10px' }}></span>
+                    <svg className="icon-pulse" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+                  </div>
                   <div>
                     <span className="detail-label">Address</span>
                     <span className="detail-value">
@@ -604,7 +765,8 @@ const Profile = () => {
             <div className="stats-section">
               <h3>Account Stats</h3>
               <div className="stats-grid">
-                <div className="stat-card">
+                {/* Total Orders Card */}
+                <div className="stat-card orders-card">
                   <div className="stat-icon total-orders">
                     <svg className="icon-bounce" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="9" cy="21" r="1"></circle><circle cx="20" cy="21" r="1"></circle><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path></svg>
                   </div>
@@ -613,7 +775,9 @@ const Profile = () => {
                     <div className="stat-label">Total Orders</div>
                   </div>
                 </div>
-                <div className="stat-card">
+
+                {/* Total Spent Card */}
+                <div className="stat-card spent-card">
                   <div className="stat-icon total-spent">
                     <svg className="icon-pulse" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
                   </div>
@@ -622,7 +786,9 @@ const Profile = () => {
                     <div className="stat-label">Total Spent</div>
                   </div>
                 </div>
-                <div className="stat-card" onClick={() => setShowBadgeModal(true)} style={{ cursor: 'pointer' }}>
+
+                {/* Loyalty Badge Card */}
+                <div className="stat-card loyalty-card" onClick={() => setShowBadgeModal(true)}>
                   <div className="stat-icon loyalty">
                     <svg className="icon-spin-slow" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                   </div>
@@ -631,34 +797,90 @@ const Profile = () => {
                       {stats.loyaltyBadge?.type === 'none' ? 'None' : stats.loyaltyBadge?.type || 'None'}
                     </div>
                     <div className="stat-label">Loyalty Badge</div>
-                    <small style={{ color: 'var(--btn-primary)', fontSize: '10px' }}>Click to upgrade</small>
+                    {stats.loyaltyBadge?.type && stats.loyaltyBadge.type !== 'none' && stats.loyaltyBadge.expiresAt && (
+                      <div style={{
+                        fontSize: '11px',
+                        marginTop: '6px',
+                        padding: '4px 8px',
+                        borderRadius: '6px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        background: (() => {
+                          const days = Math.ceil((new Date(stats.loyaltyBadge.expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
+                          if (days <= 0) return 'rgba(220, 53, 69, 0.2)';
+                          if (days <= 30) return 'rgba(255, 193, 7, 0.2)';
+                          return 'rgba(40, 167, 69, 0.15)';
+                        })(),
+                        color: (() => {
+                          const days = Math.ceil((new Date(stats.loyaltyBadge.expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
+                          if (days <= 0) return '#dc3545';
+                          if (days <= 30) return '#ffc107';
+                          return '#28a745';
+                        })(),
+                        fontWeight: '600'
+                      }}>
+                        {(() => {
+                          const days = Math.ceil((new Date(stats.loyaltyBadge.expiresAt) - new Date()) / (1000 * 60 * 60 * 24));
+                          if (days <= 0) return (
+                            <>
+                              <svg className="icon-pulse" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                                <line x1="12" y1="9" x2="12" y2="13"></line>
+                                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                              </svg>
+                              Expired
+                            </>
+                          );
+                          if (days <= 30) return (
+                            <>
+                              <svg className="icon-spin-slow" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <circle cx="12" cy="12" r="10"></circle>
+                                <polyline points="12 6 12 12 16 14"></polyline>
+                              </svg>
+                              {days} days left
+                            </>
+                          );
+                          return (
+                            <>
+                              <svg className="icon-bounce" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                              </svg>
+                              {days} days left
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
+                    {(!stats.loyaltyBadge?.type || stats.loyaltyBadge?.type === 'none') && (
+                      <small className="stat-action">Click to upgrade</small>
+                    )}
                   </div>
                 </div>
+
                 {/* Wallet Balance Card */}
-                <div className="stat-card" onClick={() => setShowTopupModal(true)} style={{ cursor: 'pointer' }}>
-                  <div className="stat-icon" style={{ background: 'rgba(255,255,255,0.2)' }}>
+                <div className="stat-card wallet-card" onClick={() => setShowTopupModal(true)}>
+                  <div className="stat-icon wallet-icon">
                     <svg className="icon-pulse" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
                   </div>
                   <div className="stat-content">
-                    <div className="stat-value" style={{ color: 'white' }}>₹{walletBalance.toFixed(2)}</div>
-                    <div className="stat-label" style={{ color: 'rgba(255,255,255,0.8)' }}>Wallet Balance</div>
-                    <small style={{ color: 'rgba(255,255,255,0.7)', fontSize: '10px' }}>Click to top-up</small>
+                    <div className="stat-value">₹{walletBalance.toFixed(2)}</div>
+                    <div className="stat-label">Wallet Balance</div>
+                    <small className="stat-action">Click to top-up</small>
                   </div>
                 </div>
-                {/* My Mails Card */}
-                <div className="stat-card" onClick={() => setShowMails(!showMails)} style={{ cursor: 'pointer' }}>
-                  <div className="stat-icon" style={{ background: unreadCount > 0 ? 'rgba(255,255,255,0.2)' : 'var(--nav-link-hover)' }}>
-                    <svg className="icon-pulse" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={unreadCount > 0 ? 'white' : 'currentColor'} strokeWidth="2">
+
+                {/* My Mails Card - Full Width */}
+                <div className="stat-card mails-card" onClick={() => setShowMails(!showMails)}>
+                  <div className="stat-icon mail-icon">
+                    <svg className="icon-pulse" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
                       <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                       <polyline points="22,6 12,13 2,6"></polyline>
                     </svg>
                   </div>
                   <div className="stat-content">
-                    <div className="stat-value" style={{ color: unreadCount > 0 ? 'white' : 'var(--text-color)' }}>{mails.length}</div>
-                    <div className="stat-label" style={{ color: unreadCount > 0 ? 'rgba(255,255,255,0.8)' : 'var(--text-secondary)' }}>My Mails</div>
-                    {unreadCount > 0 && (
-                      <small style={{ color: 'rgba(255,255,255,0.9)', fontSize: '10px', fontWeight: '600' }}>{unreadCount} unread</small>
-                    )}
+                    <div className="stat-value">{mails.length}</div>
+                    <div className="stat-label">My Mails</div>
                   </div>
                 </div>
               </div>
@@ -1229,7 +1451,7 @@ const Profile = () => {
                     </button>
                     <h4 style={{ margin: '0 0 10px', color: 'var(--text-color)', fontSize: '20px' }}>{selectedMail.subject}</h4>
                     <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '20px' }}>
-                      From: Admin • {new Date(selectedMail.createdAt).toLocaleString('en-IN')}
+                      From: {selectedMail.fromModel === 'User' ? 'User' : 'Admin'} • {new Date(selectedMail.createdAt).toLocaleString('en-IN')}
                     </p>
                     <div style={{
                       background: 'var(--nav-link-hover)',
@@ -1241,6 +1463,87 @@ const Profile = () => {
                     }}>
                       {selectedMail.message}
                     </div>
+
+                    {/* Payment Request Action Buttons */}
+                    {selectedMail.type === 'payment_request' && selectedMail.paymentRequestId && (
+                      <div style={{
+                        marginTop: '20px',
+                        padding: '20px',
+                        background: 'linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1))',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(102, 126, 234, 0.2)'
+                      }}>
+                        <p style={{
+                          color: 'var(--text-color)',
+                          fontWeight: '600',
+                          marginBottom: '15px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}>
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                          </svg>
+                          Action Required: Approve or Reject this payment request
+                        </p>
+                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                          <button
+                            onClick={() => handlePaymentResponse(selectedMail.paymentRequestId, 'approve')}
+                            style={{
+                              flex: 1,
+                              minWidth: '140px',
+                              padding: '14px 24px',
+                              background: 'linear-gradient(135deg, #10b981, #059669)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '10px',
+                              cursor: 'pointer',
+                              fontWeight: '700',
+                              fontSize: '15px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.3)'
+                            }}
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                            Approve & Pay
+                          </button>
+                          <button
+                            onClick={() => handlePaymentResponse(selectedMail.paymentRequestId, 'reject')}
+                            style={{
+                              flex: 1,
+                              minWidth: '140px',
+                              padding: '14px 24px',
+                              background: 'linear-gradient(135deg, #ef4444, #dc2626)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '10px',
+                              cursor: 'pointer',
+                              fontWeight: '700',
+                              fontSize: '15px',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '8px',
+                              boxShadow: '0 4px 12px rgba(239, 68, 68, 0.3)'
+                            }}
+                          >
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                              <line x1="18" y1="6" x2="6" y2="18"></line>
+                              <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
                     <button
                       onClick={() => handleDeleteMail(selectedMail._id)}
                       style={{

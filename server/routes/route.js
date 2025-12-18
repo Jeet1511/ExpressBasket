@@ -5,6 +5,7 @@ const Order = require('../models/Order.js');
 const Product = require('../models/Product.js');
 const Settings = require('../models/Settings.js');
 const Mail = require('../models/Mail.js');
+const PaymentRequest = require('../models/PaymentRequest.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -109,6 +110,26 @@ const authenticateAdminToken = (req, res, next) => {
         next();
     });
 };
+
+// Block viewers from write operations (POST, PUT, DELETE)
+// Viewers can only view (GET requests)
+const blockViewersWrite = (req, res, next) => {
+    const viewerRoles = ['normal_viewer', 'special_viewer'];
+
+    if (viewerRoles.includes(req.admin?.role)) {
+        // Only allow GET requests for viewers
+        if (req.method !== 'GET') {
+            return res.status(403).json({
+                message: 'Viewers do not have permission to modify data. You can only view content.',
+                role: req.admin.role
+            });
+        }
+    }
+    next();
+};
+
+// Combined middleware: authenticate admin + block viewers from write operations
+const authenticateAdminWithWriteProtection = [authenticateAdminToken, blockViewersWrite];
 
 // Get user profile
 router.get('/user/profile', authenticateToken, async (req, res) => {
@@ -470,10 +491,10 @@ router.post('/user/wallet/pay', authenticateToken, async (req, res) => {
     }
 });
 
-// Pay via friend's wallet
+// Pay via friend's wallet - Now sends payment request instead of direct deduction
 router.post('/user/wallet/pay-friend', authenticateToken, async (req, res) => {
     try {
-        const { friendId, amount, orderId, description } = req.body;
+        const { friendId, amount, cartItems, shippingAddress, description } = req.body;
 
         if (!amount || amount <= 0) {
             return res.status(400).json({ message: 'Invalid amount' });
@@ -483,11 +504,21 @@ router.post('/user/wallet/pay-friend', authenticateToken, async (req, res) => {
             return res.status(400).json({ message: 'Friend ID is required' });
         }
 
+        if (!cartItems || cartItems.length === 0) {
+            return res.status(400).json({ message: 'Cart items are required' });
+        }
+
         const friend = await User.findById(friendId);
         if (!friend) {
             return res.status(404).json({ message: 'Friend not found' });
         }
 
+        const user = await User.findById(req.user.userId);
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        // Check if friend has sufficient balance
         if ((friend.walletBalance || 0) < amount) {
             return res.status(400).json({
                 message: `${friend.name}'s wallet has insufficient balance`,
@@ -496,31 +527,260 @@ router.post('/user/wallet/pay-friend', authenticateToken, async (req, res) => {
             });
         }
 
-        const user = await User.findById(req.user.userId);
-
-        // Deduct from friend's wallet
-        friend.walletBalance -= amount;
-        friend.walletHistory = friend.walletHistory || [];
-        friend.walletHistory.push({
-            type: 'friend_payment',
-            amount: -amount,
-            description: `Payment for ${user.name}'s order`,
-            friendId: user._id,
-            orderId: orderId,
-            createdAt: new Date()
+        // Create payment request
+        const paymentRequest = new PaymentRequest({
+            requesterId: req.user.userId,
+            friendId: friendId,
+            amount: amount,
+            cartItems: cartItems,
+            shippingAddress: shippingAddress,
+            status: 'pending'
         });
 
-        await friend.save();
+        await paymentRequest.save();
+
+        // Create mail notification for friend
+        const mail = new Mail({
+            from: req.user.userId,
+            fromModel: 'User',
+            to: friendId,
+            subject: `💳 Payment Request from ${user.name}`,
+            message: `${user.name} is requesting you to pay ₹${amount.toFixed(2)} for their order.\n\nItems: ${cartItems.length} items\n\nPlease approve or reject this request from your mailbox. The request will expire in 30 minutes.`,
+            type: 'payment_request',
+            paymentRequestId: paymentRequest._id
+        });
+
+        await mail.save();
+
+        // Emit real-time notification to friend
+        const { sendMailNotification } = require('../socketHandler.js');
+        sendMailNotification(friendId, {
+            _id: mail._id,
+            subject: mail.subject,
+            message: mail.message,
+            type: 'payment_request',
+            paymentRequestId: paymentRequest._id,
+            createdAt: mail.createdAt
+        });
+
+        // Update payment request with mail ID
+        paymentRequest.mailId = mail._id;
+        await paymentRequest.save();
 
         res.json({
             success: true,
-            message: `Payment of ₹${amount} made through ${friend.name}'s wallet!`,
-            friendName: friend.name
+            message: `Payment request sent to ${friend.name}! Waiting for approval.`,
+            paymentRequestId: paymentRequest._id,
+            friendName: friend.name,
+            expiresAt: paymentRequest.expiresAt
         });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
+
+// Get pending payment requests for the logged-in user (where they are the friend)
+router.get('/user/payment-requests/pending', authenticateToken, async (req, res) => {
+    try {
+        const requests = await PaymentRequest.find({
+            friendId: req.user.userId,
+            status: 'pending'
+        })
+            .populate('requesterId', 'name email phone')
+            .sort({ createdAt: -1 });
+
+        // Check and update expired requests
+        const now = new Date();
+        const validRequests = [];
+
+        for (const request of requests) {
+            if (now > request.expiresAt) {
+                request.status = 'expired';
+                await request.save();
+            } else {
+                validRequests.push(request);
+            }
+        }
+
+        res.json(validRequests);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Get my sent payment requests (where I am the requester)
+router.get('/user/payment-requests/sent', authenticateToken, async (req, res) => {
+    try {
+        const requests = await PaymentRequest.find({
+            requesterId: req.user.userId
+        })
+            .populate('friendId', 'name email phone')
+            .sort({ createdAt: -1 })
+            .limit(10);
+
+        res.json(requests);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Get specific payment request status
+router.get('/user/payment-requests/:id', authenticateToken, async (req, res) => {
+    try {
+        const request = await PaymentRequest.findById(req.params.id)
+            .populate('requesterId', 'name email phone')
+            .populate('friendId', 'name email phone');
+
+        if (!request) {
+            return res.status(404).json({ message: 'Payment request not found' });
+        }
+
+        // Check if user is involved in this request
+        if (request.requesterId._id.toString() !== req.user.userId &&
+            request.friendId._id.toString() !== req.user.userId) {
+            return res.status(403).json({ message: 'Not authorized to view this request' });
+        }
+
+        // Check if expired
+        if (request.status === 'pending' && new Date() > request.expiresAt) {
+            request.status = 'expired';
+            await request.save();
+        }
+
+        res.json(request);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Respond to payment request (approve or reject)
+router.post('/user/payment-requests/:id/respond', authenticateToken, async (req, res) => {
+    try {
+        const { action, message } = req.body;
+
+        if (!['approve', 'reject'].includes(action)) {
+            return res.status(400).json({ message: 'Action must be approve or reject' });
+        }
+
+        const paymentRequest = await PaymentRequest.findById(req.params.id)
+            .populate('requesterId', 'name email phone address');
+
+        if (!paymentRequest) {
+            return res.status(404).json({ message: 'Payment request not found' });
+        }
+
+        // Only the friend can respond
+        if (paymentRequest.friendId.toString() !== req.user.userId) {
+            return res.status(403).json({ message: 'Only the recipient can respond to this request' });
+        }
+
+        // Check if already responded or expired
+        if (paymentRequest.status !== 'pending') {
+            return res.status(400).json({ message: `This request is already ${paymentRequest.status}` });
+        }
+
+        // Check if expired
+        if (new Date() > paymentRequest.expiresAt) {
+            paymentRequest.status = 'expired';
+            await paymentRequest.save();
+            return res.status(400).json({ message: 'This request has expired' });
+        }
+
+        const friend = await User.findById(req.user.userId);
+        const requester = await User.findById(paymentRequest.requesterId);
+
+        if (action === 'reject') {
+            paymentRequest.status = 'rejected';
+            paymentRequest.responseMessage = message || 'Request rejected';
+            paymentRequest.respondedAt = new Date();
+            await paymentRequest.save();
+
+            // Send rejection notification mail to requester
+            const rejectionMail = new Mail({
+                from: req.user.userId,
+                fromModel: 'User',
+                to: paymentRequest.requesterId,
+                subject: `❌ Payment Request Rejected`,
+                message: `${friend.name} has rejected your payment request of ₹${paymentRequest.amount.toFixed(2)}.\n\n${message ? `Message: ${message}` : 'Please try another payment method.'}`,
+                type: 'normal'
+            });
+            await rejectionMail.save();
+
+            return res.json({
+                success: true,
+                message: 'Payment request rejected',
+                status: 'rejected'
+            });
+        }
+
+        // Approve action
+        // Check wallet balance
+        if ((friend.walletBalance || 0) < paymentRequest.amount) {
+            return res.status(400).json({
+                message: 'Insufficient wallet balance',
+                balance: friend.walletBalance || 0,
+                required: paymentRequest.amount
+            });
+        }
+
+        // Deduct from friend's wallet
+        friend.walletBalance -= paymentRequest.amount;
+        friend.walletHistory = friend.walletHistory || [];
+        friend.walletHistory.push({
+            type: 'friend_payment',
+            amount: -paymentRequest.amount,
+            description: `Payment for ${requester.name}'s order`,
+            friendId: requester._id,
+            createdAt: new Date()
+        });
+        await friend.save();
+
+        // Create the order
+        const order = new Order({
+            userId: paymentRequest.requesterId,
+            items: paymentRequest.cartItems,
+            totalAmount: paymentRequest.amount,
+            shippingAddress: paymentRequest.shippingAddress,
+            paymentMethod: 'friend_wallet',
+            status: 'confirmed',
+            statusHistory: [{
+                status: 'confirmed',
+                timestamp: new Date(),
+                message: `Paid by ${friend.name} via wallet`
+            }]
+        });
+        await order.save();
+
+        // Update payment request
+        paymentRequest.status = 'completed';
+        paymentRequest.orderId = order._id;
+        paymentRequest.responseMessage = message || 'Approved';
+        paymentRequest.respondedAt = new Date();
+        await paymentRequest.save();
+
+        // Send approval notification mail to requester
+        const approvalMail = new Mail({
+            from: req.user.userId,
+            fromModel: 'User',
+            to: paymentRequest.requesterId,
+            subject: `✅ Payment Approved - Order Placed!`,
+            message: `${friend.name} has approved your payment request and paid ₹${paymentRequest.amount.toFixed(2)} from their wallet.\n\nYour order has been placed successfully!\nOrder ID: ${order._id.toString().slice(-6).toUpperCase()}`,
+            type: 'normal'
+        });
+        await approvalMail.save();
+
+        res.json({
+            success: true,
+            message: `Payment approved! Order placed for ${requester.name}`,
+            status: 'completed',
+            orderId: order._id,
+            newBalance: friend.walletBalance
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
 
 // ============ FORGOT PASSWORD SYSTEM ============
 
@@ -751,7 +1011,7 @@ router.post('/user/orders/:orderId/rate', authenticateToken, async (req, res) =>
 });
 
 // Admin: Update order status
-router.put('/admin/orders/:orderId/status', authenticateAdminToken, async (req, res) => {
+router.put('/admin/orders/:orderId/status', authenticateAdminWithWriteProtection, async (req, res) => {
     try {
         const { orderId } = req.params;
         const { status, message } = req.body;
@@ -783,7 +1043,7 @@ router.put('/admin/orders/:orderId/status', authenticateAdminToken, async (req, 
 });
 
 // Admin: Assign delivery partner
-router.post('/admin/orders/:orderId/assign-partner', authenticateAdminToken, async (req, res) => {
+router.post('/admin/orders/:orderId/assign-partner', authenticateAdminWithWriteProtection, async (req, res) => {
     try {
         const { orderId } = req.params;
         const { partnerId } = req.body;
@@ -875,7 +1135,7 @@ router.get('/admin/delivery-partners', authenticateAdminToken, async (req, res) 
 });
 
 // Admin: Create delivery partner
-router.post('/admin/delivery-partners', authenticateAdminToken, async (req, res) => {
+router.post('/admin/delivery-partners', authenticateAdminWithWriteProtection, async (req, res) => {
     try {
         const { name, phone, email, vehicle } = req.body;
 
@@ -913,7 +1173,7 @@ router.get('/admin/packaging-points', authenticateAdminToken, async (req, res) =
 });
 
 // Admin: Set route for order (packaging point + waypoints)
-router.post('/admin/orders/:orderId/set-route', authenticateAdminToken, async (req, res) => {
+router.post('/admin/orders/:orderId/set-route', authenticateAdminWithWriteProtection, async (req, res) => {
     try {
         const { orderId } = req.params;
         const { packagingPoint, waypoints = [], membershipType, expressDelivery } = req.body;
@@ -1162,6 +1422,16 @@ router.post('/admin/mails', authenticateAdminToken, async (req, res) => {
 
         await mail.save();
 
+        // Emit real-time notification to user
+        const { sendMailNotification } = require('../socketHandler.js');
+        sendMailNotification(userId, {
+            _id: mail._id,
+            subject: mail.subject,
+            message: mail.message,
+            type: mail.type || 'normal',
+            createdAt: mail.createdAt
+        });
+
         res.status(201).json({
             message: 'Mail sent successfully',
             mail: {
@@ -1264,6 +1534,47 @@ router.delete('/user/mails/:id', authenticateToken, async (req, res) => {
         await Mail.findByIdAndDelete(mail._id);
 
         res.json({ message: 'Mail deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// ============ SERVER MAINTENANCE MODE ============
+
+// Public: Get server status (maintenance mode)
+router.get('/server/status', async (req, res) => {
+    try {
+        const settings = await Settings.getSettings();
+        res.json({
+            maintenanceMode: settings.maintenanceMode,
+            status: settings.maintenanceMode ? 'offline' : 'online'
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Admin (Super Admin Only): Toggle maintenance mode
+router.post('/admin/server/maintenance', authenticateAdminToken, async (req, res) => {
+    try {
+        const { enabled } = req.body;
+
+        // Get admin to verify super_admin role
+        const Admin = require('../models/Admin.js');
+        const admin = await Admin.findById(req.admin.id);
+
+        if (!admin || admin.role !== 'super_admin') {
+            return res.status(403).json({ message: 'Only Super Admin can toggle maintenance mode' });
+        }
+
+        const settings = await Settings.updateMaintenanceMode(enabled, req.admin.id);
+
+        res.json({
+            message: enabled ? 'Server is now in maintenance mode' : 'Server is back online',
+            maintenanceMode: settings.maintenanceMode,
+            status: settings.maintenanceMode ? 'offline' : 'online',
+            updatedAt: settings.updatedAt
+        });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }

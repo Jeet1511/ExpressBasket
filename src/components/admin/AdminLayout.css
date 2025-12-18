@@ -249,6 +249,40 @@
   background: linear-gradient(90deg, rgba(40, 167, 69, 0.15), transparent);
 }
 
+/* Disabled nav item for viewers */
+.nav-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: auto;
+}
+
+.nav-item.disabled:hover {
+  transform: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.nav-item.disabled:hover::before {
+  width: 0;
+}
+
+.nav-item.disabled svg {
+  opacity: 0.6;
+}
+
+.nav-item.disabled:hover svg {
+  transform: none;
+}
+
+[data-theme="light"] .nav-item.disabled {
+  color: rgba(30, 41, 59, 0.4);
+}
+
+[data-theme="light"] .nav-item.disabled:hover {
+  color: rgba(30, 41, 59, 0.4);
+  background: transparent;
+}
+
 /* Animated Logout Button */
 .logout-btn-animated {
   position: relative;

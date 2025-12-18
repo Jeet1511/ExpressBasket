@@ -77,6 +77,26 @@ const verifyAdmin = (req, res, next) => {
     }
 };
 
+// Block viewers from write operations (POST, PUT, DELETE)
+// Viewers can only view (GET requests)
+const blockViewers = (req, res, next) => {
+    const viewerRoles = ['normal_viewer', 'special_viewer'];
+
+    if (viewerRoles.includes(req.admin?.role)) {
+        // Only allow GET requests for viewers
+        if (req.method !== 'GET') {
+            return res.status(403).json({
+                message: 'Viewers do not have permission to modify data. You can only view content.',
+                role: req.admin.role
+            });
+        }
+    }
+    next();
+};
+
+// Combined middleware: verify admin + block viewers for write operations
+const verifyAdminWithWriteProtection = [verifyAdmin, blockViewers];
+
 // Setup first admin
 router.post('/setup', async (req, res) => {
     try {
@@ -365,7 +385,7 @@ router.get('/sign', verifyAdmin, (req, res) => {
 });
 
 // Add product
-router.post('/products', verifyAdmin, async (req, res) => {
+router.post('/products', verifyAdminWithWriteProtection, async (req, res) => {
     try {
         console.log('Product creation request received');
         console.log('Body:', JSON.stringify(req.body));
@@ -429,7 +449,7 @@ router.post('/products', verifyAdmin, async (req, res) => {
 });
 
 // Update product
-router.put('/products/:id', verifyAdmin, upload.single('image'), async (req, res) => {
+router.put('/products/:id', verifyAdminWithWriteProtection, upload.single('image'), async (req, res) => {
     try {
         const { name, description, price, originalPrice, category, stock, unit, discount, isFeatured } = req.body;
 
@@ -465,7 +485,7 @@ router.put('/products/:id', verifyAdmin, upload.single('image'), async (req, res
 });
 
 // Delete product
-router.delete('/products/:id', verifyAdmin, async (req, res) => {
+router.delete('/products/:id', verifyAdminWithWriteProtection, async (req, res) => {
     try {
         const product = await Product.findByIdAndDelete(req.params.id);
 
@@ -493,7 +513,7 @@ router.get('/products', verifyAdmin, async (req, res) => {
 });
 
 // Add category
-router.post('/categories', verifyAdmin, async (req, res) => {
+router.post('/categories', verifyAdminWithWriteProtection, async (req, res) => {
     try {
         const { name, description, image } = req.body;
 
@@ -529,16 +549,49 @@ router.post('/categories', verifyAdmin, async (req, res) => {
     }
 });
 
-// Update category
-router.put('/categories/:id', verifyAdmin, upload.single('image'), async (req, res) => {
+// Get all categories for admin (includes inactive)
+router.get('/categories', verifyAdmin, async (req, res) => {
     try {
-        const { name, description } = req.body;
+        const categories = await Category.find().sort({ isActive: -1, name: 1 });
+        res.json(categories);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
 
-        const updateData = { name, description };
+// Update category
+router.put('/categories/:id', verifyAdminWithWriteProtection, upload.single('image'), async (req, res) => {
+    try {
+        const { name, description, image, isActive } = req.body;
 
+        console.log('Category update request:', {
+            categoryId: req.params.id,
+            body: req.body,
+            isActive: isActive,
+            typeOfIsActive: typeof isActive
+        });
+
+        const updateData = {};
+
+        // Only update fields that are provided
+        if (name !== undefined) updateData.name = name;
+        if (description !== undefined) updateData.description = description;
+
+        // Handle isActive - parse properly as boolean
+        if (isActive !== undefined) {
+            // Handle string "true"/"false" or actual boolean
+            updateData.isActive = isActive === true || isActive === 'true';
+            console.log('Setting isActive to:', updateData.isActive);
+        }
+
+        // Handle image update - either from file upload or direct URL
         if (req.file) {
-            console.log('Updating category image:', req.file.path);
-            updateData.image = req.file.path; // Cloudinary URL
+            console.log('Updating category image from file upload:', req.file.path);
+            updateData.image = req.file.path; // Cloudinary URL from multer
+        } else if (image && image.trim() !== '') {
+            // Image URL provided directly (from client-side Cloudinary upload)
+            console.log('Updating category image from URL:', image);
+            updateData.image = image;
         }
 
         const category = await Category.findByIdAndUpdate(req.params.id, updateData, { new: true });
@@ -550,6 +603,10 @@ router.put('/categories/:id', verifyAdmin, upload.single('image'), async (req, r
         // Log contribution
         await Contribution.log(req.admin.id, 'category_updated', `Updated category: ${category.name}`, { categoryId: category._id });
 
+        // Broadcast to all connected clients
+        const { broadcastCategoryUpdate } = require('../socketHandler.js');
+        broadcastCategoryUpdate('updated', category);
+
         res.json(category);
     } catch (error) {
         console.error('Error updating category:', error);
@@ -557,8 +614,61 @@ router.put('/categories/:id', verifyAdmin, upload.single('image'), async (req, r
     }
 });
 
+// Transfer all products from one category to another
+router.post('/categories/:sourceId/transfer/:targetId', verifyAdminWithWriteProtection, async (req, res) => {
+    try {
+        const { sourceId, targetId } = req.params;
+
+        // Validate both categories exist
+        const sourceCategory = await Category.findById(sourceId);
+        const targetCategory = await Category.findById(targetId);
+
+        if (!sourceCategory) {
+            return res.status(404).json({ message: 'Source category not found' });
+        }
+        if (!targetCategory) {
+            return res.status(404).json({ message: 'Target category not found' });
+        }
+
+        if (sourceId === targetId) {
+            return res.status(400).json({ message: 'Source and target categories cannot be the same' });
+        }
+
+        // Count products to transfer
+        const productCount = await Product.countDocuments({ category: sourceId });
+
+        if (productCount === 0) {
+            return res.status(400).json({ message: 'No products to transfer in source category' });
+        }
+
+        // Transfer all products
+        const result = await Product.updateMany(
+            { category: sourceId },
+            { $set: { category: targetId } }
+        );
+
+        // Log contribution
+        await Contribution.log(
+            req.admin.id,
+            'products_transferred',
+            `Transferred ${result.modifiedCount} products from "${sourceCategory.name}" to "${targetCategory.name}"`,
+            { sourceId, targetId, count: result.modifiedCount }
+        );
+
+        res.json({
+            message: `Successfully transferred ${result.modifiedCount} products`,
+            transferredCount: result.modifiedCount,
+            sourceCategory: sourceCategory.name,
+            targetCategory: targetCategory.name
+        });
+    } catch (error) {
+        console.error('Error transferring products:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // Delete category
-router.delete('/categories/:id', verifyAdmin, async (req, res) => {
+router.delete('/categories/:id', verifyAdminWithWriteProtection, async (req, res) => {
     try {
         // Check if category has products
         const productCount = await Product.countDocuments({ category: req.params.id });
@@ -575,6 +685,10 @@ router.delete('/categories/:id', verifyAdmin, async (req, res) => {
 
         // Log contribution
         await Contribution.log(req.admin.id, 'category_deleted', `Deleted category: ${category.name}`, { categoryId: category._id });
+
+        // Broadcast to all connected clients
+        const { broadcastCategoryUpdate } = require('../socketHandler.js');
+        broadcastCategoryUpdate('deleted', { _id: category._id, name: category.name });
 
         res.json({ message: 'Category deleted successfully' });
     } catch (error) {
@@ -593,7 +707,7 @@ router.get('/users', verifyAdmin, async (req, res) => {
 });
 
 // Update user
-router.put('/users/:id', verifyAdmin, async (req, res) => {
+router.put('/users/:id', verifyAdminWithWriteProtection, async (req, res) => {
     try {
         const { name, email, phone, address } = req.body;
         const updateData = {};
@@ -680,7 +794,7 @@ router.get('/orders', verifyAdmin, async (req, res) => {
 });
 
 // Update order status
-router.put('/orders/:id', verifyAdmin, async (req, res) => {
+router.put('/orders/:id', verifyAdminWithWriteProtection, async (req, res) => {
     try {
         const { status } = req.body;
         const updateData = { status };
@@ -709,7 +823,7 @@ router.put('/orders/:id', verifyAdmin, async (req, res) => {
 });
 
 // Delete order
-router.delete('/orders/:id', verifyAdmin, async (req, res) => {
+router.delete('/orders/:id', verifyAdminWithWriteProtection, async (req, res) => {
     try {
         const order = await Order.findByIdAndDelete(req.params.id);
         if (!order) return res.status(404).json({ message: 'Order not found' });
@@ -734,7 +848,7 @@ router.get('/users', verifyAdmin, async (req, res) => {
 });
 
 // Update user
-router.put('/users/:id', verifyAdmin, async (req, res) => {
+router.put('/users/:id', verifyAdminWithWriteProtection, async (req, res) => {
     try {
         const { name, email, phone, address } = req.body;
         const updateData = {};
@@ -756,7 +870,7 @@ router.put('/users/:id', verifyAdmin, async (req, res) => {
 });
 
 // Delete user
-router.delete('/users/:id', verifyAdmin, async (req, res) => {
+router.delete('/users/:id', verifyAdminWithWriteProtection, async (req, res) => {
     try {
         const user = await User.findByIdAndDelete(req.params.id);
         if (!user) return res.status(404).json({ message: 'User not found' });
@@ -778,6 +892,15 @@ const verifyMembershipPermission = async (req, res, next) => {
 
         if (!admin) {
             return res.status(401).json({ message: 'Admin not found' });
+        }
+
+        // Block viewers from write operations
+        const viewerRoles = ['normal_viewer', 'special_viewer'];
+        if (viewerRoles.includes(admin.role) && req.method !== 'GET') {
+            return res.status(403).json({
+                message: 'Viewers do not have permission to modify data. You can only view content.',
+                role: admin.role
+            });
         }
 
         // Super admins always have access
@@ -874,7 +997,7 @@ router.get('/memberships/stats', verifyMembershipPermission, async (req, res) =>
 // Assign badge to user (Admin/Super Admin only)
 router.put('/memberships/:userId/badge', verifyMembershipPermission, async (req, res) => {
     try {
-        const { badgeType } = req.body;
+        const { badgeType, customExpiresAt } = req.body;
 
         if (!['none', 'silver', 'gold', 'platinum'].includes(badgeType)) {
             return res.status(400).json({ message: 'Invalid badge type' });
@@ -885,6 +1008,10 @@ router.put('/memberships/:userId/badge', verifyMembershipPermission, async (req,
             return res.status(404).json({ message: 'User not found' });
         }
 
+        // Get admin info to check role for custom expiry
+        const admin = await Admin.findById(req.admin.id);
+        const isSuperAdmin = admin && (admin.role === 'super_admin' || admin.role === 'god');
+
         if (badgeType === 'none') {
             // Remove badge
             user.loyaltyBadge = {
@@ -894,19 +1021,35 @@ router.put('/memberships/:userId/badge', verifyMembershipPermission, async (req,
                 assignedBy: null
             };
         } else {
-            // Set expiry date (1 year from now)
-            const expiresAt = new Date();
-            expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+            // Determine expiry date
+            let expiresAt;
+
+            // Only super admins can set custom expiry
+            if (customExpiresAt && isSuperAdmin) {
+                expiresAt = new Date(customExpiresAt);
+                // Validate the date is in the future
+                if (expiresAt <= new Date()) {
+                    return res.status(400).json({ message: 'Expiry date must be in the future' });
+                }
+            } else {
+                // Default: 1 year from now
+                expiresAt = new Date();
+                expiresAt.setFullYear(expiresAt.getFullYear() + 1);
+            }
 
             user.loyaltyBadge = {
                 type: badgeType,
                 purchasedAt: new Date(),
                 expiresAt: expiresAt,
-                assignedBy: req.admin.adminId
+                assignedBy: req.admin.id
             };
         }
 
         await user.save();
+
+        // Broadcast membership update to user
+        const { broadcastMembershipUpdate } = require('../socketHandler.js');
+        broadcastMembershipUpdate(user._id, user.loyaltyBadge);
 
         res.json({
             message: badgeType === 'none'
@@ -1009,6 +1152,10 @@ router.post('/wallets/:userId/deposit', verifyWalletPermission, async (req, res)
 
         await user.save();
 
+        // Broadcast wallet update to user
+        const { broadcastWalletUpdate } = require('../socketHandler.js');
+        broadcastWalletUpdate(user._id, 'deposit', { balance: user.walletBalance, amount });
+
         res.json({
             message: `₹${amount} deposited successfully!`,
             newBalance: user.walletBalance,
@@ -1051,6 +1198,10 @@ router.post('/wallets/:userId/withdraw', verifyWalletPermission, async (req, res
         });
 
         await user.save();
+
+        // Broadcast wallet update to user
+        const { broadcastWalletUpdate } = require('../socketHandler.js');
+        broadcastWalletUpdate(user._id, 'withdraw', { balance: user.walletBalance, amount });
 
         res.json({
             message: `₹${amount} withdrawn successfully!`,

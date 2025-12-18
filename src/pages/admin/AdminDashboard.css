@@ -230,6 +230,138 @@
   box-shadow: 0 5px 20px rgba(161, 140, 209, 0.3);
 }
 
+/* Server Card Styles */
+.dashboard-card.server-card {
+  border: 2px solid transparent;
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-card.server-card.online {
+  border-color: rgba(40, 167, 69, 0.3);
+}
+
+.dashboard-card.server-card.maintenance {
+  border-color: rgba(239, 68, 68, 0.3);
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(220, 38, 38, 0.05));
+}
+
+.card-icon.server-icon {
+  background: linear-gradient(135deg, #667eea, #764ba2);
+  box-shadow: 0 5px 20px rgba(102, 126, 234, 0.3);
+  transition: all 0.3s ease;
+}
+
+.card-icon.server-icon.online {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  box-shadow: 0 5px 20px rgba(40, 167, 69, 0.3);
+}
+
+.card-icon.server-icon.offline {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 5px 20px rgba(239, 68, 68, 0.3);
+}
+
+.server-status-wrapper {
+  margin-bottom: 15px;
+}
+
+.server-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.server-status-badge.online {
+  background: linear-gradient(135deg, rgba(40, 167, 69, 0.15), rgba(32, 201, 151, 0.15));
+  color: #28a745;
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+.server-status-badge.offline {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15), rgba(220, 38, 38, 0.15));
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  animation: statusPulse 2s ease-in-out infinite;
+}
+
+.server-status-badge.online .status-dot {
+  background: #28a745;
+  box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+}
+
+.server-status-badge.offline .status-dot {
+  background: #ef4444;
+  box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+}
+
+@keyframes statusPulse {
+
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+.server-toggle-btn {
+  width: 100%;
+}
+
+.server-toggle-btn.turn-off {
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.server-toggle-btn.turn-off:hover {
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.server-toggle-btn.turn-on {
+  background: linear-gradient(135deg, #28a745, #20c997);
+  box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.server-toggle-btn.turn-on:hover {
+  box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.server-toggle-btn:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.btn-icon.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .lucide-icon {
   stroke: white;
   animation: iconFloat 2s ease-in-out infinite;

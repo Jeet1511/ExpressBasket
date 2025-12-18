@@ -1,0 +1,343 @@
+/* Server Management Page Styles */
+.server-management {
+    padding: 20px;
+    max-width: 1000px;
+    margin: 0 auto;
+    animation: fadeInUp 0.5s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.server-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 60vh;
+    font-size: 18px;
+    color: var(--text-secondary);
+}
+
+.server-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.server-header h1 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    color: var(--text-color);
+    font-size: 32px;
+    margin-bottom: 10px;
+}
+
+.server-header h1 svg {
+    color: #667eea;
+}
+
+.server-subtitle {
+    color: var(--text-secondary);
+    font-size: 16px;
+}
+
+.server-content {
+    display: flex;
+    flex-direction: column;
+    gap: 30px;
+}
+
+/* Main Status Card */
+.server-status-card {
+    background: var(--card-bg);
+    border-radius: 20px;
+    padding: 40px;
+    text-align: center;
+    box-shadow: 0 10px 40px var(--shadow);
+    border: 3px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.server-status-card.online {
+    border-color: rgba(40, 167, 69, 0.3);
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.05), rgba(32, 201, 151, 0.05));
+}
+
+.server-status-card.offline {
+    border-color: rgba(239, 68, 68, 0.3);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.05), rgba(220, 38, 38, 0.05));
+}
+
+.status-icon-large {
+    margin-bottom: 25px;
+}
+
+.server-status-card.online .status-icon-large svg {
+    color: #28a745;
+    filter: drop-shadow(0 0 20px rgba(40, 167, 69, 0.5));
+    animation: pulseGreen 2s ease-in-out infinite;
+}
+
+.server-status-card.offline .status-icon-large svg {
+    color: #ef4444;
+    filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.5));
+    animation: pulseRed 2s ease-in-out infinite;
+}
+
+@keyframes pulseGreen {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+}
+
+@keyframes pulseRed {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.8;
+        transform: scale(1.05);
+    }
+}
+
+.status-info h2 {
+    color: var(--text-color);
+    font-size: 24px;
+    margin-bottom: 15px;
+}
+
+.status-badge-large {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 30px;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 18px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 15px;
+}
+
+.status-badge-large.online {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.2), rgba(32, 201, 151, 0.2));
+    color: #28a745;
+    border: 2px solid rgba(40, 167, 69, 0.4);
+}
+
+.status-badge-large.offline {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2));
+    color: #ef4444;
+    border: 2px solid rgba(239, 68, 68, 0.4);
+}
+
+.status-dot-large {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    animation: dotPulse 1.5s ease-in-out infinite;
+}
+
+.status-badge-large.online .status-dot-large {
+    background: #28a745;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.6);
+}
+
+.status-badge-large.offline .status-dot-large {
+    background: #ef4444;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+}
+
+@keyframes dotPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.3);
+        opacity: 0.7;
+    }
+}
+
+.status-description {
+    color: var(--text-secondary);
+    font-size: 16px;
+    max-width: 500px;
+    margin: 0 auto 25px;
+    line-height: 1.6;
+}
+
+/* Toggle Button */
+.toggle-btn-large {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 18px 50px;
+    border: none;
+    border-radius: 15px;
+    font-size: 18px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: white;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.toggle-btn-large.turn-off {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+}
+
+.toggle-btn-large.turn-off:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(239, 68, 68, 0.5);
+}
+
+.toggle-btn-large.turn-on {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+}
+
+.toggle-btn-large.turn-on:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 35px rgba(40, 167, 69, 0.5);
+}
+
+.toggle-btn-large:disabled {
+    opacity: 0.7;
+    cursor: wait;
+    transform: none !important;
+}
+
+.toggle-btn-large .spinning {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Info Cards */
+.server-info-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 20px;
+}
+
+.info-card {
+    background: var(--card-bg);
+    border-radius: 16px;
+    padding: 25px;
+    box-shadow: 0 4px 15px var(--shadow);
+    border: 1px solid var(--border-light);
+    transition: all 0.3s ease;
+}
+
+.info-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 30px var(--shadow-dark);
+}
+
+.info-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 15px;
+}
+
+.info-icon.online-icon {
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.2), rgba(32, 201, 151, 0.2));
+    color: #28a745;
+}
+
+.info-icon.offline-icon {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.2));
+    color: #ef4444;
+}
+
+.info-icon.admin-icon {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.2), rgba(118, 75, 162, 0.2));
+    color: #667eea;
+}
+
+.info-card h3 {
+    color: var(--text-color);
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+.info-card p {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .server-management {
+        padding: 15px;
+    }
+
+    .server-header h1 {
+        font-size: 24px;
+    }
+
+    .server-status-card {
+        padding: 25px;
+    }
+
+    .status-icon-large svg {
+        width: 60px;
+        height: 60px;
+    }
+
+    .status-badge-large {
+        font-size: 14px;
+        padding: 10px 20px;
+    }
+
+    .toggle-btn-large {
+        padding: 14px 30px;
+        font-size: 16px;
+    }
+
+    .server-info-cards {
+        grid-template-columns: 1fr;
+    }
+}

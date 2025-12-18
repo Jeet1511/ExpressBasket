@@ -1,0 +1,313 @@
+/* Maintenance Overlay Styles */
+.maintenance-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 99999;
+    overflow: hidden;
+}
+
+/* Animated background pattern */
+.maintenance-overlay::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background:
+        radial-gradient(circle at 20% 80%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(118, 75, 162, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 40% 40%, rgba(239, 68, 68, 0.05) 0%, transparent 30%);
+    animation: backgroundPulse 8s ease-in-out infinite;
+}
+
+@keyframes backgroundPulse {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 1;
+    }
+}
+
+/* Floating particles */
+.maintenance-overlay::after {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-image:
+        radial-gradient(2px 2px at 100px 100px, rgba(255, 255, 255, 0.3), transparent),
+        radial-gradient(2px 2px at 400px 300px, rgba(255, 255, 255, 0.2), transparent),
+        radial-gradient(3px 3px at 200px 200px, rgba(255, 255, 255, 0.15), transparent),
+        radial-gradient(2px 2px at 500px 400px, rgba(255, 255, 255, 0.2), transparent),
+        radial-gradient(2px 2px at 300px 500px, rgba(255, 255, 255, 0.25), transparent);
+    animation: floatingParticles 20s linear infinite;
+}
+
+@keyframes floatingParticles {
+    0% {
+        transform: translateY(0) translateX(0);
+    }
+
+    100% {
+        transform: translateY(-100px) translateX(50px);
+    }
+}
+
+.maintenance-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 40px;
+    max-width: 600px;
+    animation: contentFadeIn 1s ease forwards;
+}
+
+@keyframes contentFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.maintenance-icon {
+    position: relative;
+    margin-bottom: 30px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.wrench-icon {
+    color: #ef4444;
+    animation: wrenchSwing 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.5));
+}
+
+@keyframes wrenchSwing {
+
+    0%,
+    100% {
+        transform: rotate(-15deg);
+    }
+
+    50% {
+        transform: rotate(15deg);
+    }
+}
+
+.gear-icon {
+    position: absolute;
+    top: 10px;
+    right: calc(50% - 80px);
+    color: #667eea;
+    animation: gearSpin 4s linear infinite;
+    filter: drop-shadow(0 0 15px rgba(102, 126, 234, 0.5));
+}
+
+@keyframes gearSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.maintenance-title {
+    color: white;
+    font-size: 32px;
+    font-weight: 800;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    text-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+    animation: titleGlow 3s ease-in-out infinite;
+}
+
+@keyframes titleGlow {
+
+    0%,
+    100% {
+        text-shadow: 0 0 30px rgba(239, 68, 68, 0.5);
+    }
+
+    50% {
+        text-shadow: 0 0 50px rgba(239, 68, 68, 0.8), 0 0 80px rgba(239, 68, 68, 0.4);
+    }
+}
+
+.maintenance-subtitle {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 18px;
+    margin-bottom: 30px;
+    font-weight: 400;
+}
+
+.maintenance-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.divider-line {
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+}
+
+.divider-icon {
+    color: rgba(255, 255, 255, 0.5);
+    animation: iconPulse 2s ease-in-out infinite;
+}
+
+@keyframes iconPulse {
+
+    0%,
+    100% {
+        opacity: 0.5;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 1;
+        transform: scale(1.1);
+    }
+}
+
+.maintenance-contact {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 20px;
+    margin-bottom: 30px;
+    font-weight: 500;
+}
+
+.maintenance-contact .highlight {
+    color: #667eea;
+    font-weight: 700;
+    text-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+    animation: highlightPulse 2s ease-in-out infinite;
+}
+
+@keyframes highlightPulse {
+
+    0%,
+    100% {
+        color: #667eea;
+        text-shadow: 0 0 20px rgba(102, 126, 234, 0.5);
+    }
+
+    50% {
+        color: #764ba2;
+        text-shadow: 0 0 30px rgba(118, 75, 162, 0.7);
+    }
+}
+
+.maintenance-dots {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+.dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #667eea;
+    animation: dotBounce 1.5s ease-in-out infinite;
+}
+
+.dot:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.dot:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.dot:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes dotBounce {
+
+    0%,
+    100% {
+        transform: translateY(0);
+        opacity: 0.5;
+    }
+
+    50% {
+        transform: translateY(-10px);
+        opacity: 1;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .maintenance-content {
+        padding: 30px 20px;
+    }
+
+    .maintenance-title {
+        font-size: 24px;
+        letter-spacing: 1px;
+    }
+
+    .maintenance-subtitle {
+        font-size: 16px;
+    }
+
+    .maintenance-contact {
+        font-size: 16px;
+    }
+
+    .wrench-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    .gear-icon {
+        width: 35px;
+        height: 35px;
+        right: calc(50% - 60px);
+    }
+}
+
+@media (max-width: 480px) {
+    .maintenance-title {
+        font-size: 20px;
+    }
+
+    .maintenance-subtitle {
+        font-size: 14px;
+    }
+
+    .maintenance-contact {
+        font-size: 14px;
+    }
+
+    .divider-line {
+        width: 50px;
+    }
+}

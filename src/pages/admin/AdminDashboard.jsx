@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../utils/axios';
-import { hasPermission } from '../../components/ProtectedAdminRoute.jsx';
+import { hasPermission } from '../../components/admin/ProtectedAdminRoute.jsx';
+import Swal from 'sweetalert2';
 import './AdminDashboard.css';
 
 const AdminDashboard = () => {
@@ -15,6 +16,8 @@ const AdminDashboard = () => {
     totalRevenue: 0
   });
   const [recentOrders, setRecentOrders] = useState([]);
+  const [serverStatus, setServerStatus] = useState({ status: 'online', maintenanceMode: false });
+  const [togglingServer, setTogglingServer] = useState(false);
 
   useEffect(() => {
     // Check if admin is logged in
@@ -37,8 +40,89 @@ const AdminDashboard = () => {
 
     fetchStats();
     fetchRecentOrders();
+    fetchServerStatus();
     setLoading(false);
   }, [navigate]);
+
+  const fetchServerStatus = async () => {
+    try {
+      const response = await axios.get('/server/status');
+      setServerStatus(response.data);
+    } catch (error) {
+      console.error('Error fetching server status:', error);
+    }
+  };
+
+  const toggleMaintenanceMode = async () => {
+    const isGoingOffline = !serverStatus.maintenanceMode;
+
+    // Show confirmation dialog
+    const result = await Swal.fire({
+      title: isGoingOffline ? '🔴 Turn Off Server?' : '🟢 Turn On Server?',
+      html: isGoingOffline
+        ? '<p style="font-size: 16px;">This will put the website in <strong>maintenance mode</strong>.</p><p style="color: #ef4444;">All users will see a maintenance message!</p>'
+        : '<p style="font-size: 16px;">This will bring the website <strong>back online</strong>.</p><p style="color: #28a745;">Users will be able to access the site again!</p>',
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonColor: isGoingOffline ? '#ef4444' : '#28a745',
+      cancelButtonColor: '#6c757d',
+      confirmButtonText: isGoingOffline ? 'Yes, Turn Off!' : 'Yes, Turn On!',
+      cancelButtonText: 'Cancel',
+      showClass: {
+        popup: 'animate__animated animate__fadeInDown'
+      },
+      hideClass: {
+        popup: 'animate__animated animate__fadeOutUp'
+      }
+    });
+
+    if (!result.isConfirmed) return;
+
+    setTogglingServer(true);
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await axios.post('/admin/server/maintenance',
+        { enabled: isGoingOffline },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+
+      setServerStatus({
+        status: response.data.status,
+        maintenanceMode: response.data.maintenanceMode
+      });
+
+      // Show success alert with animation
+      await Swal.fire({
+        title: response.data.maintenanceMode ? '🔴 Server Offline!' : '🟢 Server Online!',
+        html: response.data.maintenanceMode
+          ? '<p>The website is now in <strong>maintenance mode</strong>.</p><p style="color: #ef4444; font-weight: 600;">Users will see the maintenance page.</p>'
+          : '<p>The website is now <strong>back online</strong>!</p><p style="color: #28a745; font-weight: 600;">Users can access the site normally.</p>',
+        icon: 'success',
+        confirmButtonColor: response.data.maintenanceMode ? '#ef4444' : '#28a745',
+        timer: 3000,
+        timerProgressBar: true,
+        showClass: {
+          popup: 'animate__animated animate__zoomIn'
+        },
+        hideClass: {
+          popup: 'animate__animated animate__zoomOut'
+        }
+      });
+    } catch (error) {
+      console.error('Error toggling maintenance mode:', error);
+      await Swal.fire({
+        title: 'Error!',
+        text: error.response?.data?.message || 'Failed to toggle maintenance mode',
+        icon: 'error',
+        confirmButtonColor: '#ef4444',
+        showClass: {
+          popup: 'animate__animated animate__shakeX'
+        }
+      });
+    } finally {
+      setTogglingServer(false);
+    }
+  };
 
   const fetchStats = async () => {
     try {
@@ -224,6 +308,57 @@ const AdminDashboard = () => {
                 <polyline points="12 5 19 12 12 19"></polyline>
               </svg>
               Manage Orders
+            </button>
+          </div>
+        )}
+
+        {/* Server Status - Super Admin Only */}
+        {admin?.role === 'super_admin' && (
+          <div className={`dashboard-card server-card ${serverStatus.maintenanceMode ? 'maintenance' : 'online'}`}>
+            <div className={`card-icon server-icon ${serverStatus.maintenanceMode ? 'offline' : 'online'}`}>
+              <svg className="lucide-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+                <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+                <line x1="6" y1="6" x2="6.01" y2="6"></line>
+                <line x1="6" y1="18" x2="6.01" y2="18"></line>
+              </svg>
+            </div>
+            <h3>Server</h3>
+            <div className="server-status-wrapper">
+              <span className={`server-status-badge ${serverStatus.maintenanceMode ? 'offline' : 'online'}`}>
+                <span className="status-dot"></span>
+                {serverStatus.maintenanceMode ? 'Offline' : 'Online'}
+              </span>
+            </div>
+            <button
+              className={`card-btn server-toggle-btn ${serverStatus.maintenanceMode ? 'turn-on' : 'turn-off'}`}
+              onClick={toggleMaintenanceMode}
+              disabled={togglingServer}
+            >
+              {togglingServer ? (
+                <>
+                  <svg className="btn-icon spinning" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M21 12a9 9 0 1 1-6.219-8.56"></path>
+                  </svg>
+                  {serverStatus.maintenanceMode ? 'Turning On...' : 'Turning Off...'}
+                </>
+              ) : serverStatus.maintenanceMode ? (
+                <>
+                  <svg className="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                  </svg>
+                  Turn On Server
+                </>
+              ) : (
+                <>
+                  <svg className="btn-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="8" x2="12" y2="12"></line>
+                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                  </svg>
+                  Turn Off Server
+                </>
+              )}
             </button>
           </div>
         )}

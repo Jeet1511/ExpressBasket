@@ -4,6 +4,8 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const path = require('path');
+const http = require('http');
+const { Server } = require('socket.io');
 
 dotenv.config({ path: path.join(__dirname, '.env') });
 
@@ -12,9 +14,13 @@ const Routes = require('./routes/route.js');
 const productRoutes = require('./routes/productRoutes.js');
 const categoryRoutes = require('./routes/categoryRoutes.js');
 const adminRoutes = require('./routes/adminRoutes.js');
+const { initSocketHandler } = require('./socketHandler.js');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+// Create HTTP server for Socket.io
+const server = http.createServer(app);
 
 // Middleware
 // Configure CORS to allow the frontend origin (set ALLOWED_ORIGIN in Render envs)
@@ -45,6 +51,22 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
+
+// Initialize Socket.io with CORS
+const io = new Server(server, {
+  cors: {
+    origin: allowedOrigins.indexOf('*') !== -1 ? '*' : allowedOrigins,
+    methods: ['GET', 'POST'],
+    credentials: true
+  }
+});
+
+// Initialize socket handler
+initSocketHandler(io);
+
+// Make io accessible in routes
+app.set('io', io);
+
 // Fallback middleware: ensure CORS headers are present even if cors() didn't run
 app.use((req, res, next) => {
   const origin = req.headers.origin;
@@ -113,8 +135,10 @@ app.use((err, req, res, next) => {
   res.status(status).json({ message: err && err.message ? err.message : 'Internal Server Error' });
 });
 
-const server = app.listen(PORT, () => {
+// Use http server instead of express app.listen for Socket.io
+server.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
+  console.log(`Socket.io ready for connections`);
 });
 
 server.on('error', (err) => {

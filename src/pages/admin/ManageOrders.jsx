@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import axios from '../../utils/axios';
 import Swal from 'sweetalert2';
-import RouteConfigModal from '../../components/RouteConfigModal.jsx';
+import RouteConfigModal from '../../components/admin/RouteConfigModal.jsx';
 import useTrackingStatus from '../../hooks/useTrackingStatus.js';
 
 const ManageOrdersContainer = styled.div``;
