@@ -6,10 +6,10 @@ import Swal from 'sweetalert2';
 const ManageUsersContainer = styled.div``;
 
 const Section = styled.section`
-  background: white;
+  background: var(--card-bg);
   border-radius: 10px;
   padding: 30px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px var(--shadow);
   margin-bottom: 30px;
 `;
 
@@ -73,10 +73,10 @@ const ActionButton = styled.button`
 `;
 
 const FormContainer = styled.div`
-  background: white;
+  background: var(--card-bg);
   border-radius: 10px;
   padding: 30px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px var(--shadow);
 `;
 
 const Form = styled.form`
@@ -194,6 +194,10 @@ const ManageUsers = () => {
   });
   const [loading, setLoading] = useState(false);
 
+  // Viewer role check - viewers cannot edit
+  const admin = JSON.parse(localStorage.getItem('admin') || '{}');
+  const viewOnly = admin?.role === 'normal_viewer' || admin?.role === 'special_viewer';
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -230,7 +234,7 @@ const ManageUsers = () => {
 
   const handleEdit = (user) => {
     setEditingUser(user);
-    
+
     // Format address for form input
     const formatAddressForForm = (address) => {
       if (!address) return '';
@@ -245,7 +249,7 @@ const ManageUsers = () => {
       }
       return '';
     };
-    
+
     setFormData({
       name: user.name || '',
       email: user.email || '',
@@ -348,7 +352,7 @@ const ManageUsers = () => {
     <ManageUsersContainer>
       <Section>
         <SectionTitle>All Users</SectionTitle>
-        
+
         {/* Search Section */}
         <SearchContainer>
           <FormGroup style={{ flex: 1 }}>
@@ -366,12 +370,12 @@ const ManageUsers = () => {
             </ClearButton>
           )}
         </SearchContainer>
-        
+
         <div style={{ marginBottom: '10px', color: 'var(--text-secondary)', fontSize: '14px' }}>
           Showing {filteredUsers.length} of {users.length} users
           {searchTerm && ` (filtered by "${searchTerm}")`}
         </div>
-        
+
         <UserTable>
           <thead>
             <tr>
@@ -407,12 +411,18 @@ const ManageUsers = () => {
                     <td>{user.phone || 'N/A'}</td>
                     <td>{formatAddress(user.address)}</td>
                     <td>
-                      <ActionButton className="edit" onClick={() => handleEdit(user)}>
-                        Edit
-                      </ActionButton>
-                      <ActionButton className="delete" onClick={() => handleDelete(user._id)}>
-                        Delete
-                      </ActionButton>
+                      {!viewOnly ? (
+                        <>
+                          <ActionButton className="edit" onClick={() => handleEdit(user)}>
+                            Edit
+                          </ActionButton>
+                          <ActionButton className="delete" onClick={() => handleDelete(user._id)}>
+                            Delete
+                          </ActionButton>
+                        </>
+                      ) : (
+                        <span style={{ color: 'var(--text-secondary)' }}>View Only</span>
+                      )}
                     </td>
                   </tr>
                 );

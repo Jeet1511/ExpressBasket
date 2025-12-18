@@ -13,6 +13,10 @@ import Cart from './pages/client/Cart.jsx';
 import Store from './pages/client/Store.jsx';
 import LoginSignup from './pages/client/LoginSignup.jsx';
 import Profile from './pages/client/Profile.jsx';
+import ForgotPassword from './pages/client/ForgotPassword.jsx';
+import ResetPassword from './pages/client/ResetPassword.jsx';
+import OrderTracking from './pages/client/OrderTracking.jsx';
+import ViewBill from './pages/client/ViewBill.jsx';
 
 // Admin Pages
 import AdminLogin from './pages/admin/AdminLogin.jsx';
@@ -26,11 +30,15 @@ import ManageUsers from './pages/admin/ManageUsers.jsx';
 import ManageOrders from './pages/admin/ManageOrders.jsx';
 import ManageMemberships from './pages/admin/ManageMemberships.jsx';
 import ManageWallets from './pages/admin/ManageWallets.jsx';
+import ManageDeliveryPartners from './pages/admin/ManageDeliveryPartners.jsx';
+import TrackingToggle from './pages/admin/TrackingToggle.jsx';
+import ManageMails from './pages/admin/ManageMails.jsx';
 
 // Components
 import Header from './components/Header.jsx';
 import Layout from './components/Layout.jsx';
 import AdminLayout from './components/AdminLayout.jsx';
+import ProtectedAdminRoute from './components/ProtectedAdminRoute.jsx';
 
 // Global Styles
 import './global.css';
@@ -62,39 +70,100 @@ function App() {
                 <Route path="/cart" element={<Layout><Cart /></Layout>} />
                 <Route path="/store" element={<Layout><Store /></Layout>} />
                 <Route path="/login" element={<LoginSignup />} />
+                <Route path="/forgot-password" element={<ForgotPassword />} />
+                <Route path="/reset-password/:token" element={<ResetPassword />} />
                 <Route path="/profile" element={<Layout><Profile /></Layout>} />
+                <Route path="/track-order/:orderId" element={<Layout><OrderTracking /></Layout>} />
+                <Route path="/bill/:orderId" element={<ViewBill />} />
 
                 {/* Admin Routes */}
                 <Route path="/admin" element={<AdminLogin setIsAdmin={setIsAdmin} />} />
+
+                {/* Dashboard - accessible to all admin roles */}
                 <Route path="/admin/dashboard" element={
-                  isAdmin ? <AdminLayout><AdminDashboard /></AdminLayout> : <Navigate to="/admin" />
+                  <ProtectedAdminRoute>
+                    <AdminLayout><AdminDashboard /></AdminLayout>
+                  </ProtectedAdminRoute>
                 } />
+
+                {/* Products - requires manage_products permission */}
                 <Route path="/admin/add-product" element={
-                  isAdmin ? <AdminLayout><AddProduct /></AdminLayout> : <Navigate to="/admin" />
+                  <ProtectedAdminRoute requiredPermission="manage_products">
+                    <AdminLayout><AddProduct /></AdminLayout>
+                  </ProtectedAdminRoute>
                 } />
                 <Route path="/admin/edit-product/:id" element={
-                  isAdmin ? <AdminLayout><EditProduct /></AdminLayout> : <Navigate to="/admin" />
-                } />
-                <Route path="/admin/categories" element={
-                  isAdmin ? <AdminLayout><ManageCategories /></AdminLayout> : <Navigate to="/admin" />
+                  <ProtectedAdminRoute requiredPermission="manage_products">
+                    <AdminLayout><EditProduct /></AdminLayout>
+                  </ProtectedAdminRoute>
                 } />
                 <Route path="/admin/products" element={
-                  isAdmin ? <AdminLayout><ManageProducts /></AdminLayout> : <Navigate to="/admin" />
+                  <ProtectedAdminRoute requiredPermission="manage_products">
+                    <AdminLayout><ManageProducts /></AdminLayout>
+                  </ProtectedAdminRoute>
                 } />
+
+                {/* Categories - requires manage_categories permission */}
+                <Route path="/admin/categories" element={
+                  <ProtectedAdminRoute requiredPermission="manage_categories">
+                    <AdminLayout><ManageCategories /></AdminLayout>
+                  </ProtectedAdminRoute>
+                } />
+
+                {/* Admins - requires manage_admins permission */}
                 <Route path="/admin/admins" element={
-                  isAdmin ? <AdminLayout><ManageAdmins /></AdminLayout> : <Navigate to="/admin" />
+                  <ProtectedAdminRoute requiredPermission="manage_admins">
+                    <AdminLayout><ManageAdmins /></AdminLayout>
+                  </ProtectedAdminRoute>
                 } />
+
+                {/* Users - requires manage_users permission */}
                 <Route path="/admin/users" element={
-                  isAdmin ? <AdminLayout><ManageUsers /></AdminLayout> : <Navigate to="/admin" />
+                  <ProtectedAdminRoute requiredPermission="manage_users">
+                    <AdminLayout><ManageUsers /></AdminLayout>
+                  </ProtectedAdminRoute>
                 } />
+
+                {/* Orders - requires manage_orders permission */}
                 <Route path="/admin/orders" element={
-                  isAdmin ? <AdminLayout><ManageOrders /></AdminLayout> : <Navigate to="/admin" />
+                  <ProtectedAdminRoute requiredPermission="manage_orders">
+                    <AdminLayout><ManageOrders /></AdminLayout>
+                  </ProtectedAdminRoute>
                 } />
+
+                {/* Memberships - requires manage_memberships permission */}
                 <Route path="/admin/memberships" element={
-                  isAdmin ? <AdminLayout><ManageMemberships /></AdminLayout> : <Navigate to="/admin" />
+                  <ProtectedAdminRoute requiredPermission="manage_memberships">
+                    <AdminLayout><ManageMemberships /></AdminLayout>
+                  </ProtectedAdminRoute>
                 } />
+
+                {/* Wallets - requires manage_wallets permission */}
                 <Route path="/admin/wallets" element={
-                  isAdmin ? <AdminLayout><ManageWallets /></AdminLayout> : <Navigate to="/admin" />
+                  <ProtectedAdminRoute requiredPermission="manage_wallets">
+                    <AdminLayout><ManageWallets /></AdminLayout>
+                  </ProtectedAdminRoute>
+                } />
+
+                {/* Delivery Partners - requires manage_orders permission */}
+                <Route path="/admin/delivery-partners" element={
+                  <ProtectedAdminRoute requiredPermission="manage_orders">
+                    <AdminLayout><ManageDeliveryPartners /></AdminLayout>
+                  </ProtectedAdminRoute>
+                } />
+
+                {/* Tracking Toggle - Super Admin Only */}
+                <Route path="/admin/tracking-toggle" element={
+                  <ProtectedAdminRoute>
+                    <AdminLayout><TrackingToggle /></AdminLayout>
+                  </ProtectedAdminRoute>
+                } />
+
+                {/* Mail Center - Super Admin Only */}
+                <Route path="/admin/mails" element={
+                  <ProtectedAdminRoute>
+                    <AdminLayout><ManageMails /></AdminLayout>
+                  </ProtectedAdminRoute>
                 } />
               </Routes>
             </AppContainer>

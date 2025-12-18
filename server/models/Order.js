@@ -32,14 +32,30 @@ const orderSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'],
+        enum: ['pending', 'confirmed', 'packed', 'out_for_delivery', 'delivered', 'cancelled'],
         default: 'pending'
     },
+    statusHistory: [{
+        status: {
+            type: String,
+            required: true
+        },
+        timestamp: {
+            type: Date,
+            default: Date.now
+        },
+        message: String,
+        updatedBy: String
+    }],
     shippingAddress: {
         street: String,
         city: String,
         state: String,
-        pincode: String
+        pincode: String,
+        coordinates: {
+            lat: Number,
+            lng: Number
+        }
     },
     paymentMethod: {
         type: String,
@@ -55,7 +71,101 @@ const orderSchema = new mongoose.Schema({
         type: Date,
         default: Date.now
     },
-    deliveredDate: Date
+    deliveredDate: Date,
+    // Tracking fields
+    deliveryPartner: {
+        partnerId: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'DeliveryPartner'
+        },
+        name: String,
+        phone: String,
+        vehicle: String,
+        currentLocation: {
+            lat: Number,
+            lng: Number,
+            timestamp: Date
+        }
+    },
+    estimatedDeliveryTime: Date,
+    deliveryInstructions: String,
+    deliveryRating: {
+        overall: {
+            type: Number,
+            min: 1,
+            max: 5
+        },
+        packaging: {
+            type: Number,
+            min: 1,
+            max: 5
+        },
+        freshness: {
+            type: Number,
+            min: 1,
+            max: 5
+        },
+        comment: String,
+        ratedAt: Date
+    },
+    // Enhanced Route Tracking
+    packagingPoint: {
+        name: String,
+        address: String,
+        coordinates: {
+            lat: Number,
+            lng: Number
+        }
+    },
+    routeWaypoints: [{
+        name: {
+            type: String,
+            required: true
+        },
+        address: String,
+        pincode: String,
+        coordinates: {
+            lat: Number,
+            lng: Number
+        },
+        order: {
+            type: Number,
+            default: 0
+        },
+        reached: {
+            type: Boolean,
+            default: false
+        },
+        reachedAt: Date
+    }],
+    deliveryTiming: {
+        estimatedMinutes: Number,
+        membershipType: {
+            type: String,
+            enum: ['none', 'silver', 'gold', 'platinum'],
+            default: 'none'
+        },
+        expressDelivery: {
+            type: Boolean,
+            default: false
+        },
+        expressDeliveryCharge: {
+            type: Number,
+            default: 0
+        }
+    },
+    route: {
+        origin: {
+            lat: Number,
+            lng: Number
+        },
+        destination: {
+            lat: Number,
+            lng: Number
+        },
+        distance: String,
+        duration: String
+    }
 });
 
 module.exports = mongoose.model('Order', orderSchema);

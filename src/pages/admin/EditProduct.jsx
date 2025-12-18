@@ -8,10 +8,11 @@ import Swal from 'sweetalert2';
 const EditProductContainer = styled.div``;
 
 const FormContainer = styled.div`
-  background: white;
+  background: var(--card-bg);
   border-radius: 10px;
   padding: 30px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px var(--shadow);
+  margin-bottom: 30px;
 `;
 
 const FormTitle = styled.h2`
@@ -186,7 +187,7 @@ const CancelButton = styled.button`
 const EditProduct = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -198,14 +199,14 @@ const EditProduct = () => {
     discount: '0',
     isFeatured: false
   });
-  
+
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [currentImage, setCurrentImage] = useState('');
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(true);
-  
+
   const units = ['kg', 'g', 'l', 'ml', 'piece', 'dozen', 'pack'];
 
   useEffect(() => {
@@ -217,7 +218,7 @@ const EditProduct = () => {
     try {
       const response = await axios.get(`/products/${id}`);
       const product = response.data;
-      
+
       setFormData({
         name: product.name,
         description: product.description,
@@ -229,7 +230,7 @@ const EditProduct = () => {
         discount: product.discount,
         isFeatured: product.isFeatured
       });
-      
+
       setCurrentImage(product.image);
       setFetching(false);
     } catch (error) {
@@ -270,7 +271,7 @@ const EditProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (!formData.name || !formData.price || !formData.category || !formData.stock) {
       Swal.fire({
@@ -286,12 +287,12 @@ const EditProduct = () => {
     try {
       const token = localStorage.getItem('adminToken');
       const formDataToSend = new FormData();
-      
+
       // Append form data
       Object.keys(formData).forEach(key => {
         formDataToSend.append(key, formData[key]);
       });
-      
+
       // Append image if new one is selected
       if (image) {
         formDataToSend.append('image', image);
@@ -314,8 +315,8 @@ const EditProduct = () => {
         showConfirmButton: false
       });
 
-      navigate('/admin/dashboard');
-      
+      navigate('/admin/products');
+
     } catch (error) {
       Swal.fire({
         icon: 'error',
@@ -328,7 +329,7 @@ const EditProduct = () => {
   };
 
   const handleCancel = () => {
-    navigate('/admin/dashboard');
+    navigate('/admin/products');
   };
 
   if (fetching) {
@@ -339,7 +340,7 @@ const EditProduct = () => {
     <EditProductContainer>
       <FormContainer>
         <FormTitle>Edit Product</FormTitle>
-        
+
         <Form onSubmit={handleSubmit}>
           <FormGroup>
             <Label className="required">Product Name</Label>
@@ -469,18 +470,18 @@ const EditProduct = () => {
               Current Image:
             </p>
             {currentImage && (
-              <img 
-                src={currentImage} 
-                alt="Current" 
-                style={{ 
-                  maxWidth: '200px', 
-                  maxHeight: '200px', 
+              <img
+                src={currentImage}
+                alt="Current"
+                style={{
+                  maxWidth: '200px',
+                  maxHeight: '200px',
                   borderRadius: '8px',
                   marginBottom: '20px'
                 }}
               />
             )}
-            
+
             <ImageUpload>
               <label htmlFor="image-upload">
                 <UploadIcon>
@@ -498,7 +499,7 @@ const EditProduct = () => {
                 />
               </label>
             </ImageUpload>
-            
+
             {imagePreview && (
               <ImagePreview>
                 <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '10px' }}>

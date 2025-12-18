@@ -1,0 +1,130 @@
+.tracking-toggle-container {
+    padding: 30px;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.tracking-toggle-card {
+    background: var(--card-bg);
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 4px 6px var(--shadow);
+}
+
+.toggle-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.toggle-header svg {
+    color: var(--btn-primary);
+}
+
+.toggle-header h3 {
+    color: var(--text-color);
+    margin: 0;
+    font-size: 20px;
+}
+
+.toggle-status {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.toggle-status p {
+    color: var(--text-secondary);
+    margin: 0;
+    font-weight: 600;
+}
+
+.status-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+}
+
+.status-badge.enabled {
+    background: #28a745;
+    color: white;
+}
+
+.status-badge.disabled {
+    background: #dc3545;
+    color: white;
+}
+
+.toggle-description {
+    color: var(--text-secondary);
+    font-size: 14px;
+    line-height: 1.6;
+    margin-bottom: 25px;
+    padding: 15px;
+    background: var(--bg-color);
+    border-radius: 8px;
+    border-left: 4px solid var(--btn-primary);
+}
+
+.toggle-btn {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 15px;
+}
+
+.toggle-btn.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.toggle-btn.btn-success:hover:not(:disabled) {
+    background: #218838;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.toggle-btn.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.toggle-btn.btn-danger:hover:not(:disabled) {
+    background: #c82333;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(220, 53, 69, 0.3);
+}
+
+.toggle-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.toggle-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px;
+    background: var(--bg-color);
+    border-radius: 6px;
+}
+
+.toggle-note svg {
+    color: var(--btn-primary);
+    flex-shrink: 0;
+}
+
+.toggle-note small {
+    color: var(--text-secondary);
+    font-size: 13px;
+}

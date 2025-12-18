@@ -6,10 +6,10 @@ import Swal from 'sweetalert2';
 const AddProductContainer = styled.div``;
 
 const FormContainer = styled.div`
-  background: white;
+  background: var(--card-bg);
   border-radius: 10px;
   padding: 30px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px var(--shadow);
 `;
 
 const FormTitle = styled.h2`
@@ -172,12 +172,12 @@ const AddProduct = () => {
     discount: '0',
     isFeatured: false
   });
-  
+
   const [image, setImage] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
-  
+
   const units = ['kg', 'g', 'l', 'ml', 'piece', 'dozen', 'pack'];
 
   useEffect(() => {
@@ -211,7 +211,7 @@ const AddProduct = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     // Validation
     if (!formData.name || !formData.price || !formData.category || !formData.stock || !formData.unit || !formData.description) {
       Swal.fire({
@@ -287,7 +287,7 @@ const AddProduct = () => {
       });
       setImage(null);
       setImagePreview('');
-      
+
     } catch (error) {
       Swal.fire({
         icon: 'error',
@@ -303,7 +303,7 @@ const AddProduct = () => {
     <AddProductContainer>
       <FormContainer>
         <FormTitle>Add New Product</FormTitle>
-        
+
         <Form onSubmit={handleSubmit}>
           <FormGroup>
             <Label className="required">Product Name</Label>
@@ -447,7 +447,7 @@ const AddProduct = () => {
                 />
               </label>
             </ImageUpload>
-            
+
             {imagePreview && (
               <ImagePreview>
                 <img src={imagePreview} alt="Preview" />

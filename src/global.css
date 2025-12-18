@@ -298,19 +298,19 @@ select:focus {
 
   0%,
   100% {
-    transform: translateX(0) translateY(0) rotate(-45deg);
+    transform: translateX(0) translateY(0) rotate(-30deg);
   }
 
   25% {
-    transform: translateX(3px) translateY(-3px) rotate(-45deg);
+    transform: translateX(3px) translateY(-3px) rotate(-30deg);
   }
 
   50% {
-    transform: translateX(0) translateY(-5px) rotate(-45deg);
+    transform: translateX(0) translateY(-5px) rotate(-30deg);
   }
 
   75% {
-    transform: translateX(-3px) translateY(-3px) rotate(-45deg);
+    transform: translateX(-3px) translateY(-3px) rotate(-30deg);
   }
 }
 
@@ -430,7 +430,7 @@ select:focus {
   height: 3px;
   background: linear-gradient(90deg, transparent, rgba(255, 165, 0, 0.8), transparent);
   animation: trailGlow 0.5s ease-in-out infinite alternate;
-  transform: rotate(-45deg);
+  transform: rotate(-30deg);
 }
 
 @keyframes trailGlow {
@@ -550,6 +550,30 @@ select:focus {
 .toast-error .toast-icon {
   background: linear-gradient(135deg, #dc3545, #c82333);
   color: white;
+}
+
+.toast-mail {
+  border-left-color: #f5af19;
+  background: linear-gradient(135deg, var(--card-bg) 0%, rgba(245, 175, 25, 0.15) 100%);
+  animation: slideInRight 0.4s ease, glowPulse 2s ease-in-out infinite;
+}
+
+.toast-mail .toast-icon {
+  background: linear-gradient(135deg, #f5af19, #f12711);
+  color: white;
+  animation: iconBounce 0.5s ease-out 0.2s, pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes glowPulse {
+
+  0%,
+  100% {
+    box-shadow: 0 4px 20px rgba(245, 175, 25, 0.3);
+  }
+
+  50% {
+    box-shadow: 0 4px 30px rgba(245, 175, 25, 0.5);
+  }
 }
 
 .toast-icon svg {

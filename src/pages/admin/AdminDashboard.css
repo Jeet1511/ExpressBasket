@@ -91,19 +91,59 @@
   opacity: 0.7;
 }
 
-.logout-btn {
-  background: var(--btn-danger);
+/* Animated Logout Button */
+.logout-btn-animated {
+  position: relative;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
   color: white;
   border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
+  font-weight: 600;
   font-size: 14px;
-  transition: background-color 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
 }
 
-.logout-btn:hover {
-  background: var(--btn-danger-hover);
+.logout-btn-animated::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  transition: left 0.5s;
+}
+
+.logout-btn-animated:hover::before {
+  left: 100%;
+}
+
+.logout-btn-animated:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+}
+
+.logout-btn-animated .logout-icon {
+  animation: logoutIconFloat 2s ease-in-out infinite;
+}
+
+@keyframes logoutIconFloat {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  50% {
+    transform: translateX(3px);
+  }
 }
 
 .dashboard-grid {

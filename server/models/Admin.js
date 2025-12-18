@@ -18,12 +18,18 @@ const adminSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['super_admin', 'admin', 'vendor'],
+        enum: ['super_admin', 'admin', 'vendor', 'normal_viewer', 'special_viewer'],
         default: 'vendor'
     },
     permissions: [{
         type: String,
-        enum: ['manage_products', 'manage_categories', 'manage_orders', 'manage_users', 'manage_admins', 'manage_admins_passwords', 'manage_admins_roles', 'view_reports', 'manage_memberships', 'manage_wallets']
+        enum: [
+            'manage_products', 'manage_categories', 'manage_orders', 'manage_users',
+            'manage_admins', 'manage_admins_passwords', 'manage_admins_roles',
+            'view_reports', 'manage_memberships', 'manage_wallets',
+            // New view-only permissions
+            'view_everything', 'view_products', 'view_categories', 'view_orders'
+        ]
     }],
     tags: [{
         type: String

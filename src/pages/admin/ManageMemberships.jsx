@@ -15,6 +15,14 @@ const ManageMemberships = () => {
     const [searchResults, setSearchResults] = useState([]);
     const [showSearchResults, setShowSearchResults] = useState(false);
 
+    // Viewer role check - viewers cannot edit
+    const viewOnly = (() => {
+        try {
+            const admin = JSON.parse(localStorage.getItem('admin') || '{}');
+            return admin?.role === 'normal_viewer' || admin?.role === 'special_viewer';
+        } catch { return false; }
+    })();
+
     useEffect(() => {
         fetchData();
     }, []);
@@ -214,12 +222,22 @@ const ManageMemberships = () => {
                                         <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '4px' }}>
                                             {user.email} {user.phone && `• ${user.phone}`}
                                         </p>
-                                        <span style={{
-                                            fontSize: '10px',
-                                            padding: '2px 8px',
-                                            borderRadius: '10px',
-                                            ...getBadgeStyle(user.loyaltyBadge?.type || 'none')
-                                        }}>
+                                        <span
+                                            className={`badge-${user.loyaltyBadge?.type || 'none'}`}
+                                            style={{
+                                                fontSize: '10px',
+                                                padding: '3px 10px',
+                                                borderRadius: '12px',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                                ...getBadgeStyle(user.loyaltyBadge?.type || 'none')
+                                            }}>
+                                            {user.loyaltyBadge?.type === 'platinum' && (
+                                                <svg className="platinum-icon" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                                                </svg>
+                                            )}
                                             Current: {user.loyaltyBadge?.type || 'None'}
                                         </span>
                                     </div>
@@ -333,15 +351,29 @@ const ManageMemberships = () => {
                                 <td>{user.email}</td>
                                 <td>
                                     <span
+                                        className={`badge-${user.loyaltyBadge?.type || 'none'}`}
                                         style={{
-                                            padding: '4px 12px',
+                                            padding: '6px 14px',
                                             borderRadius: '20px',
                                             fontSize: '12px',
                                             fontWeight: '600',
                                             textTransform: 'uppercase',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
                                             ...getBadgeStyle(user.loyaltyBadge?.type || 'none')
                                         }}
                                     >
+                                        {user.loyaltyBadge?.type === 'platinum' && (
+                                            <svg className="platinum-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                                            </svg>
+                                        )}
+                                        {user.loyaltyBadge?.type === 'gold' && (
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
+                                                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                                            </svg>
+                                        )}
                                         {user.loyaltyBadge?.type || 'None'}
                                     </span>
                                 </td>
@@ -351,22 +383,26 @@ const ManageMemberships = () => {
                                         : '-'}
                                 </td>
                                 <td>
-                                    <select
-                                        value={user.loyaltyBadge?.type || 'none'}
-                                        onChange={(e) => handleBadgeChange(user._id, e.target.value)}
-                                        style={{
-                                            padding: '6px 12px',
-                                            borderRadius: '6px',
-                                            border: '1px solid var(--border-color)',
-                                            background: 'var(--input-bg)',
-                                            color: 'var(--text-color)'
-                                        }}
-                                    >
-                                        <option value="none">No Badge</option>
-                                        <option value="silver">Silver</option>
-                                        <option value="gold">Gold</option>
-                                        <option value="platinum">Platinum</option>
-                                    </select>
+                                    {!viewOnly ? (
+                                        <select
+                                            value={user.loyaltyBadge?.type || 'none'}
+                                            onChange={(e) => handleBadgeChange(user._id, e.target.value)}
+                                            style={{
+                                                padding: '6px 12px',
+                                                borderRadius: '6px',
+                                                border: '1px solid var(--border-color)',
+                                                background: 'var(--input-bg)',
+                                                color: 'var(--text-color)'
+                                            }}
+                                        >
+                                            <option value="none">No Badge</option>
+                                            <option value="silver">Silver</option>
+                                            <option value="gold">Gold</option>
+                                            <option value="platinum">Platinum</option>
+                                        </select>
+                                    ) : (
+                                        <span style={{ color: 'var(--text-secondary)' }}>View Only</span>
+                                    )}
                                 </td>
                             </tr>
                         ))}

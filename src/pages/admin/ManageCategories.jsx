@@ -6,10 +6,10 @@ import Swal from 'sweetalert2';
 const ManageCategoriesContainer = styled.div``;
 
 const Section = styled.section`
-  background: white;
+  background: var(--card-bg);
   border-radius: 10px;
   padding: 30px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px var(--shadow);
   margin-bottom: 30px;
 `;
 
@@ -82,10 +82,10 @@ const ActionButton = styled.button`
 `;
 
 const FormContainer = styled.div`
-  background: white;
+  background: var(--card-bg);
   border-radius: 10px;
   padding: 30px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  box-shadow: 0 4px 6px var(--shadow);
 `;
 
 const Form = styled.form`
@@ -119,6 +119,8 @@ const Input = styled.input`
   border-radius: 8px;
   font-size: 16px;
   transition: all 0.3s;
+  background: var(--input-bg);
+  color: var(--text-color);
   
   &:focus {
     outline: none;
@@ -136,6 +138,8 @@ const TextArea = styled.textarea`
   min-height: 100px;
   resize: vertical;
   transition: all 0.3s;
+  background: var(--input-bg);
+  color: var(--text-color);
   
   &:focus {
     outline: none;
@@ -151,6 +155,8 @@ const ImageUpload = styled.div`
   text-align: center;
   cursor: pointer;
   transition: all 0.3s;
+  background: var(--bg-color);
+  color: var(--text-color);
   
   &:hover {
     border-color: var(--input-focus-border);
@@ -211,6 +217,10 @@ const ManageCategories = () => {
   const [loading, setLoading] = useState(false);
   const [editingId, setEditingId] = useState(null);
 
+  // Viewer role check - viewers cannot edit
+  const admin = JSON.parse(localStorage.getItem('admin') || '{}');
+  const viewOnly = admin?.role === 'normal_viewer' || admin?.role === 'special_viewer';
+
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -242,7 +252,7 @@ const ManageCategories = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!formData.name) {
       Swal.fire({
         icon: 'error',
@@ -311,7 +321,7 @@ const ManageCategories = () => {
       setImage(null);
       setImagePreview('');
       fetchCategories();
-      
+
     } catch (error) {
       Swal.fire({
         icon: 'error',
@@ -386,7 +396,7 @@ const ManageCategories = () => {
         }
       };
 
-      await axios.put(`/admin/categories/${categoryId}`, 
+      await axios.put(`/admin/categories/${categoryId}`,
         { isActive: !currentStatus },
         config
       );
@@ -418,98 +428,100 @@ const ManageCategories = () => {
 
   return (
     <ManageCategoriesContainer>
-      <Section>
-        <SectionTitle>
-          {editingId ? 'Edit Category' : 'Add New Category'}
-        </SectionTitle>
-        
-        <FormContainer>
-          <Form onSubmit={handleSubmit}>
-            <FormGroup>
-              <Label className="required">Category Name</Label>
-              <Input
-                type="text"
-                name="name"
-                value={formData.name}
-                onChange={handleInputChange}
-                placeholder="Enter category name"
-                required
-              />
-            </FormGroup>
+      {!viewOnly && (
+        <Section>
+          <SectionTitle>
+            {editingId ? 'Edit Category' : 'Add New Category'}
+          </SectionTitle>
 
-            <FormGroup className="full-width">
-              <Label>Description</Label>
-              <TextArea
-                name="description"
-                value={formData.description}
-                onChange={handleInputChange}
-                placeholder="Enter category description (optional)"
-              />
-            </FormGroup>
+          <FormContainer>
+            <Form onSubmit={handleSubmit}>
+              <FormGroup>
+                <Label className="required">Category Name</Label>
+                <Input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Enter category name"
+                  required
+                />
+              </FormGroup>
 
-            <FormGroup className="full-width">
-              <Label>Category Image</Label>
-              <ImageUpload>
-                <label htmlFor="category-image-upload">
-                  <UploadIcon>
-                    <i className="expDel_cloud_upload_alt"></i>
-                  </UploadIcon>
-                  <p>Click to upload category image</p>
-                  <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '5px' }}>
-                    Optional - Recommended size: 500x500px
-                  </p>
-                  <input
-                    id="category-image-upload"
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageChange}
-                  />
-                </label>
-              </ImageUpload>
-              
-              {imagePreview && (
-                <ImagePreview>
-                  <img src={imagePreview} alt="Preview" />
-                </ImagePreview>
-              )}
-            </FormGroup>
+              <FormGroup className="full-width">
+                <Label>Description</Label>
+                <TextArea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleInputChange}
+                  placeholder="Enter category description (optional)"
+                />
+              </FormGroup>
 
-            <FormGroup className="full-width">
-              <SubmitButton type="submit" disabled={loading}>
-                {loading ? (
-                  <>
-                    <i className="expDel_spinner fa-spin"></i> Saving...
-                  </>
-                ) : editingId ? (
-                  'Update Category'
-                ) : (
-                  'Add Category'
+              <FormGroup className="full-width">
+                <Label>Category Image</Label>
+                <ImageUpload>
+                  <label htmlFor="category-image-upload">
+                    <UploadIcon>
+                      <i className="expDel_cloud_upload_alt"></i>
+                    </UploadIcon>
+                    <p>Click to upload category image</p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '5px' }}>
+                      Optional - Recommended size: 500x500px
+                    </p>
+                    <input
+                      id="category-image-upload"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageChange}
+                    />
+                  </label>
+                </ImageUpload>
+
+                {imagePreview && (
+                  <ImagePreview>
+                    <img src={imagePreview} alt="Preview" />
+                  </ImagePreview>
                 )}
-              </SubmitButton>
-              
-              {editingId && (
-                <button
-                  type="button"
-                  onClick={cancelEdit}
-                  style={{
-                    padding: '15px 30px',
-                    background: 'none',
-                    border: '2px solid var(--btn-secondary)',
-                    color: 'var(--btn-secondary)',
-                    borderRadius: '8px',
-                    fontSize: '18px',
-                    fontWeight: '500',
-                    cursor: 'pointer',
-                    marginLeft: '15px'
-                  }}
-                >
-                  Cancel Edit
-                </button>
-              )}
-            </FormGroup>
-          </Form>
-        </FormContainer>
-      </Section>
+              </FormGroup>
+
+              <FormGroup className="full-width">
+                <SubmitButton type="submit" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <i className="expDel_spinner fa-spin"></i> Saving...
+                    </>
+                  ) : editingId ? (
+                    'Update Category'
+                  ) : (
+                    'Add Category'
+                  )}
+                </SubmitButton>
+
+                {editingId && (
+                  <button
+                    type="button"
+                    onClick={cancelEdit}
+                    style={{
+                      padding: '15px 30px',
+                      background: 'none',
+                      border: '2px solid var(--btn-secondary)',
+                      color: 'var(--btn-secondary)',
+                      borderRadius: '8px',
+                      fontSize: '18px',
+                      fontWeight: '500',
+                      cursor: 'pointer',
+                      marginLeft: '15px'
+                    }}
+                  >
+                    Cancel Edit
+                  </button>
+                )}
+              </FormGroup>
+            </Form>
+          </FormContainer>
+        </Section>
+      )}
 
       <Section>
         <SectionTitle>All Categories ({categories.length})</SectionTitle>
@@ -528,7 +540,7 @@ const ManageCategories = () => {
                 <td>{category.name}</td>
                 <td>{category.description || '-'}</td>
                 <td>
-                  <span style={{ 
+                  <span style={{
                     color: category.isActive ? 'var(--btn-primary)' : 'var(--btn-danger)',
                     fontWeight: '500'
                   }}>
@@ -536,26 +548,32 @@ const ManageCategories = () => {
                   </span>
                 </td>
                 <td>
-                  <ActionButton 
-                    className="edit"
-                    onClick={() => handleEdit(category)}
-                  >
-                    <i className="expDel_edit"></i> Edit
-                  </ActionButton>
-                  <ActionButton 
-                    className="toggle"
-                    active={category.isActive}
-                    onClick={() => handleToggleStatus(category._id, category.isActive)}
-                  >
-                    <i className={`expDel_${category.isActive ? 'eye_slash' : 'eye'}`}></i> 
-                    {category.isActive ? ' Deactivate' : ' Activate'}
-                  </ActionButton>
-                  <ActionButton 
-                    className="delete"
-                    onClick={() => handleDelete(category._id, category.name)}
-                  >
-                    <i className="expDel_trash"></i> Delete
-                  </ActionButton>
+                  {!viewOnly ? (
+                    <>
+                      <ActionButton
+                        className="edit"
+                        onClick={() => handleEdit(category)}
+                      >
+                        <i className="expDel_edit"></i> Edit
+                      </ActionButton>
+                      <ActionButton
+                        className="toggle"
+                        active={category.isActive}
+                        onClick={() => handleToggleStatus(category._id, category.isActive)}
+                      >
+                        <i className={`expDel_${category.isActive ? 'eye_slash' : 'eye'}`}></i>
+                        {category.isActive ? ' Deactivate' : ' Activate'}
+                      </ActionButton>
+                      <ActionButton
+                        className="delete"
+                        onClick={() => handleDelete(category._id, category.name)}
+                      >
+                        <i className="expDel_trash"></i> Delete
+                      </ActionButton>
+                    </>
+                  ) : (
+                    <span style={{ color: 'var(--text-secondary)' }}>View Only</span>
+                  )}
                 </td>
               </tr>
             ))}

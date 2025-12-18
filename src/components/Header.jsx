@@ -2,12 +2,14 @@ import React, { useState } from 'react';
 import { Link, NavLink } from 'react-router-dom';
 import { useCart } from '../context/CartContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
+import { useUser } from '../context/UserContext.jsx';
 import './Header.css';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const { getCartCount } = useCart();
   const { theme, toggleTheme } = useTheme();
+  const { user } = useUser();
   const cartCount = getCartCount();
 
   return (
@@ -58,9 +60,11 @@ const Header = () => {
             <NavLink to="/profile" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
               <i className="expDel_user"></i> Profile
             </NavLink>
-            <NavLink to="/login" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-              <i className="expDel_sign_in"></i> Login
-            </NavLink>
+            {!user && (
+              <NavLink to="/login" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+                <i className="expDel_sign_in"></i> Login
+              </NavLink>
+            )}
           </nav>
 
           {/* Animated Theme Toggle */}
@@ -104,9 +108,11 @@ const Header = () => {
             <NavLink to="/profile" onClick={() => setMobileMenuOpen(false)}>
               <i className="expDel_user"></i> Profile
             </NavLink>
-            <NavLink to="/login" onClick={() => setMobileMenuOpen(false)}>
-              <i className="expDel_sign_in"></i> Login
-            </NavLink>
+            {!user && (
+              <NavLink to="/login" onClick={() => setMobileMenuOpen(false)}>
+                <i className="expDel_sign_in"></i> Login
+              </NavLink>
+            )}
           </div>
         </div>
       </div>

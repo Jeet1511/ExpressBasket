@@ -235,7 +235,7 @@ const WalletBadge = styled.span`
 `;
 
 const Cart = () => {
-  const { cart, total, removeFromCart, updateQuantity, clearCart, placeOrder } = useCart();
+  const { cart, total, removeFromCart, updateQuantity, clearCart, placeOrder, reorderItems } = useCart();
   const { user } = useUser();
   const [walletBalance, setWalletBalance] = useState(0);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -244,12 +244,43 @@ const Cart = () => {
   const [friendData, setFriendData] = useState(null);
   const [friendLoading, setFriendLoading] = useState(false);
   const [friendError, setFriendError] = useState('');
+  const [previousOrders, setPreviousOrders] = useState([]);
+  const [reorderLoading, setReorderLoading] = useState(null);
 
   useEffect(() => {
     if (user) {
       fetchWalletBalance();
+      fetchPreviousOrders();
     }
   }, [user]);
+
+  const fetchPreviousOrders = async () => {
+    try {
+      const token = localStorage.getItem('userToken');
+      const response = await axios.get('/user/orders', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Get last 3 orders for quick reorder
+      setPreviousOrders(response.data.slice(0, 3));
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    }
+  };
+
+  const handleReorder = async (order) => {
+    setReorderLoading(order._id);
+    const success = await reorderItems(order.items);
+    setReorderLoading(null);
+    if (success) {
+      Swal.fire({
+        title: 'Items Added!',
+        text: 'Items from your previous order have been added to cart',
+        icon: 'success',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    }
+  };
 
   const fetchWalletBalance = async () => {
     try {
@@ -415,6 +446,84 @@ const Cart = () => {
             Continue Shopping
           </ContinueButton>
         </EmptyCart>
+
+        {/* Previous Orders for Quick Reorder */}
+        {user && previousOrders.length > 0 && (
+          <div style={{
+            marginTop: '30px',
+            background: 'var(--card-bg)',
+            borderRadius: '16px',
+            padding: '25px',
+            boxShadow: '0 4px 12px var(--shadow)'
+          }}>
+            <h3 style={{
+              color: 'var(--text-color)',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              fontSize: '18px'
+            }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="23 4 23 10 17 10" />
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+              </svg>
+              Quick Reorder
+            </h3>
+            <div style={{ display: 'grid', gap: '12px' }}>
+              {previousOrders.map(order => (
+                <div key={order._id} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '15px',
+                  background: 'var(--bg-color)',
+                  borderRadius: '12px',
+                  border: '1px solid var(--border-color)'
+                }}>
+                  <div>
+                    <p style={{ fontWeight: '600', color: 'var(--text-color)', marginBottom: '4px' }}>
+                      Order #{order._id.slice(-6).toUpperCase()}
+                    </p>
+                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
+                      {new Date(order.orderDate).toLocaleDateString('en-IN')} • {order.items.length} items • ₹{order.totalAmount?.toFixed(2)}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => handleReorder(order)}
+                    disabled={reorderLoading === order._id}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 20px',
+                      background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '10px',
+                      fontSize: '13px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      opacity: reorderLoading === order._id ? 0.7 : 1
+                    }}
+                  >
+                    {reorderLoading === order._id ? (
+                      'Adding...'
+                    ) : (
+                      <>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="23 4 23 10 17 10" />
+                          <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                        </svg>
+                        Reorder
+                      </>
+                    )}
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </CartContainer>
     );
   }
@@ -455,6 +564,61 @@ const Cart = () => {
               </RemoveButton>
             </CartItem>
           ))}
+
+          {/* Quick Reorder Section - For logged in users */}
+          {user && previousOrders.length > 0 && (
+            <div style={{
+              marginTop: '25px',
+              paddingTop: '20px',
+              borderTop: '2px dashed var(--border-color)'
+            }}>
+              <h4 style={{
+                color: 'var(--text-color)',
+                marginBottom: '15px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                fontSize: '16px'
+              }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--btn-primary)" strokeWidth="2">
+                  <polyline points="23 4 23 10 17 10" />
+                  <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                </svg>
+                Quick Reorder from Previous Orders
+              </h4>
+              <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '10px' }}>
+                {previousOrders.map(order => (
+                  <button
+                    key={order._id}
+                    onClick={() => handleReorder(order)}
+                    disabled={reorderLoading === order._id}
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '12px 18px',
+                      background: reorderLoading === order._id ? 'var(--bg-color)' : 'linear-gradient(135deg, #667eea, #764ba2)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '12px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      minWidth: '100px',
+                      opacity: reorderLoading === order._id ? 0.7 : 1
+                    }}
+                  >
+                    <span style={{ fontSize: '11px', opacity: 0.9 }}>
+                      {new Date(order.orderDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                    </span>
+                    <span>{order.items.length} items</span>
+                    <span style={{ fontSize: '10px' }}>₹{order.totalAmount?.toFixed(0)}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </CartItems>
 
         <CartSummary>

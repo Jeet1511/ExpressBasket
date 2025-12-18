@@ -18,6 +18,14 @@ const ManageAdmins = () => {
     isActive: true
   });
 
+  // Viewer role check - viewers cannot edit
+  const viewOnly = (() => {
+    try {
+      const admin = JSON.parse(localStorage.getItem('admin') || '{}');
+      return admin?.role === 'normal_viewer' || admin?.role === 'special_viewer';
+    } catch { return false; }
+  })();
+
   // Helper function to display friendly role names
   const getRoleDisplay = (role) => {
     const roleNames = {
@@ -146,7 +154,22 @@ const ManageAdmins = () => {
     return <div className="loading">Loading admins...</div>;
   }
 
+  const handlePermissionToggle = (permission) => {
+    const newPerms = formData.permissions.includes(permission)
+      ? formData.permissions.filter(p => p !== permission)
+      : [...formData.permissions, permission];
+    setFormData({ ...formData, permissions: newPerms });
+  };
+
   const renderForm = () => {
+    // Placeholder components for styling, assuming they are styled divs or custom components
+    const FormGroup = ({ children }) => <div className="form-group">{children}</div>;
+    const Label = ({ children }) => <label>{children}</label>;
+    const Select = (props) => <select {...props} />;
+    const PermissionsList = ({ children }) => <div className="permissions-list">{children}</div>;
+    const PermissionGroup = ({ children }) => <div className="permission-group">{children}</div>;
+    const PermissionItem = ({ children }) => <div className="permission-item">{children}</div>;
+
     try {
       return (
         <div className="admin-form">
@@ -186,38 +209,120 @@ const ManageAdmins = () => {
             )}
             {currentAdmin?.role === 'super_admin' && (
               <>
-                <div className="form-group">
-                  <label>Role</label>
-                  <select
-                    name="role"
-                    value={formData.role}
-                    onChange={handleInputChange}
-                  >
-                    <option value="vendor">Vendor</option>
-                    <option value="admin">Admin</option>
+                <FormGroup>
+                  <Label>Role</Label>
+                  <Select name="role" value={formData.role} onChange={handleInputChange} required>
+                    <option value="">Select Role</option>
                     <option value="super_admin">Super Admin</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Permissions</label>
-                  <div className="permissions">
-                    {['manage_products', 'manage_categories', 'manage_orders', 'manage_users', 'manage_admins', 'view_reports', 'manage_admins_passwords', 'manage_admins_roles', 'manage_memberships', 'manage_wallets'].map(perm => (
-                      <label key={perm}>
+                    <option value="admin">Admin</option>
+                    <option value="vendor">Vendor</option>
+                    <option value="normal_viewer">Normal Viewer (View Only)</option>
+                    <option value="special_viewer">Special Viewer (View Everything)</option>
+                  </Select>
+                </FormGroup>
+
+                <FormGroup>
+                  <Label>Permissions</Label>
+                  <PermissionsList>
+                    {/* Manage Permissions */}
+                    <PermissionGroup>
+                      <strong>Edit/Manage Permissions:</strong>
+                      <PermissionItem>
                         <input
                           type="checkbox"
-                          checked={formData.permissions.includes(perm)}
-                          onChange={(e) => {
-                            const newPerms = e.target.checked
-                              ? [...formData.permissions, perm]
-                              : formData.permissions.filter(p => p !== perm);
-                            setFormData({ ...formData, permissions: newPerms });
-                          }}
+                          checked={formData.permissions.includes('manage_products')}
+                          onChange={() => handlePermissionToggle('manage_products')}
                         />
-                        {perm.replace(/_/g, ' ')}
-                      </label>
-                    ))}
-                  </div>
-                </div>
+                        <span>Manage Products</span>
+                      </PermissionItem>
+                      <PermissionItem>
+                        <input
+                          type="checkbox"
+                          checked={formData.permissions.includes('manage_categories')}
+                          onChange={() => handlePermissionToggle('manage_categories')}
+                        />
+                        <span>Manage Categories</span>
+                      </PermissionItem>
+                      <PermissionItem>
+                        <input
+                          type="checkbox"
+                          checked={formData.permissions.includes('manage_orders')}
+                          onChange={() => handlePermissionToggle('manage_orders')}
+                        />
+                        <span>Manage Orders</span>
+                      </PermissionItem>
+                      <PermissionItem>
+                        <input
+                          type="checkbox"
+                          checked={formData.permissions.includes('manage_users')}
+                          onChange={() => handlePermissionToggle('manage_users')}
+                        />
+                        <span>Manage Users</span>
+                      </PermissionItem>
+                      <PermissionItem>
+                        <input
+                          type="checkbox"
+                          checked={formData.permissions.includes('manage_admins')}
+                          onChange={() => handlePermissionToggle('manage_admins')}
+                        />
+                        <span>Manage Admins</span>
+                      </PermissionItem>
+                      <PermissionItem>
+                        <input
+                          type="checkbox"
+                          checked={formData.permissions.includes('manage_memberships')}
+                          onChange={() => handlePermissionToggle('manage_memberships')}
+                        />
+                        <span>Manage Memberships</span>
+                      </PermissionItem>
+                      <PermissionItem>
+                        <input
+                          type="checkbox"
+                          checked={formData.permissions.includes('manage_wallets')}
+                          onChange={() => handlePermissionToggle('manage_wallets')}
+                        />
+                        <span>Manage Wallets</span>
+                      </PermissionItem>
+                    </PermissionGroup>
+
+                    {/* View-Only Permissions */}
+                    <PermissionGroup>
+                      <strong style={{ color: 'var(--btn-primary)', marginTop: '15px' }}>View-Only Permissions (for Viewers):</strong>
+                      <PermissionItem>
+                        <input
+                          type="checkbox"
+                          checked={formData.permissions.includes('view_everything')}
+                          onChange={() => handlePermissionToggle('view_everything')}
+                        />
+                        <span>View Everything</span>
+                      </PermissionItem>
+                      <PermissionItem>
+                        <input
+                          type="checkbox"
+                          checked={formData.permissions.includes('view_products')}
+                          onChange={() => handlePermissionToggle('view_products')}
+                        />
+                        <span>View Products</span>
+                      </PermissionItem>
+                      <PermissionItem>
+                        <input
+                          type="checkbox"
+                          checked={formData.permissions.includes('view_categories')}
+                          onChange={() => handlePermissionToggle('view_categories')}
+                        />
+                        <span>View Categories</span>
+                      </PermissionItem>
+                      <PermissionItem>
+                        <input
+                          type="checkbox"
+                          checked={formData.permissions.includes('view_orders')}
+                          onChange={() => handlePermissionToggle('view_orders')}
+                        />
+                        <span>View Orders</span>
+                      </PermissionItem>
+                    </PermissionGroup>
+                  </PermissionsList>
+                </FormGroup>
                 <div className="form-group">
                   <label>Tags (comma separated)</label>
                   <input
@@ -243,12 +348,14 @@ const ManageAdmins = () => {
     <div className="manage-admins">
       <div className="header">
         <h1>Manage Admins</h1>
-        <button
-          className="add-admin-btn"
-          onClick={() => setShowForm(!showForm)}
-        >
-          {showForm ? 'Cancel' : 'Add New Admin'}
-        </button>
+        {!viewOnly && (
+          <button
+            className="add-admin-btn"
+            onClick={() => setShowForm(!showForm)}
+          >
+            {showForm ? 'Cancel' : 'Add New Admin'}
+          </button>
+        )}
       </div>
 
       {error && <div className="error-message">{error}</div>}
@@ -296,11 +403,16 @@ const ManageAdmins = () => {
                       {admin.isActive ? 'Active' : 'Inactive'}
                     </span>
                   </td>
-                  {currentAdmin?.role === 'super_admin' && (
+                  {currentAdmin?.role === 'super_admin' && !viewOnly && (
                     <td className="actions-cell">
                       <button onClick={() => handleEdit(admin)} className="edit-btn">Edit</button>
                       <button onClick={() => handleChangePassword(admin._id)} className="password-btn">Change Password</button>
                       <button onClick={() => handleDelete(admin._id)} className="delete-btn">Delete</button>
+                    </td>
+                  )}
+                  {viewOnly && (
+                    <td className="actions-cell">
+                      <span style={{ color: 'var(--text-secondary)' }}>View Only</span>
                     </td>
                   )}
                 </tr>

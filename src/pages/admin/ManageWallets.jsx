@@ -21,6 +21,14 @@ const ManageWallets = () => {
     const [amount, setAmount] = useState('');
     const [description, setDescription] = useState('');
 
+    // Viewer role check - viewers cannot edit
+    const viewOnly = (() => {
+        try {
+            const admin = JSON.parse(localStorage.getItem('admin') || '{}');
+            return admin?.role === 'normal_viewer' || admin?.role === 'special_viewer';
+        } catch { return false; }
+    })();
+
     useEffect(() => {
         fetchData();
     }, []);
@@ -124,20 +132,22 @@ const ManageWallets = () => {
                     </svg>
                     Wallet Management
                 </h1>
-                <button
-                    onClick={handleDirectDeposit}
-                    style={{
-                        padding: '10px 20px',
-                        background: 'var(--btn-primary)',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '8px',
-                        cursor: 'pointer',
-                        fontWeight: '600'
-                    }}
-                >
-                    + Direct Deposit
-                </button>
+                {!viewOnly && (
+                    <button
+                        onClick={handleDirectDeposit}
+                        style={{
+                            padding: '10px 20px',
+                            background: 'var(--btn-primary)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            cursor: 'pointer',
+                            fontWeight: '600'
+                        }}
+                    >
+                        + Direct Deposit
+                    </button>
+                )}
             </div>
 
             {error && <div className="error-message">{error}</div>}
@@ -335,36 +345,40 @@ const ManageWallets = () => {
                                     ₹{(user.walletBalance || 0).toLocaleString()}
                                 </td>
                                 <td>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button
-                                            onClick={() => openModal(user, 'deposit')}
-                                            style={{
-                                                padding: '6px 12px',
-                                                borderRadius: '6px',
-                                                border: 'none',
-                                                background: 'var(--btn-primary)',
-                                                color: 'white',
-                                                fontSize: '12px',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            + Deposit
-                                        </button>
-                                        <button
-                                            onClick={() => openModal(user, 'withdraw')}
-                                            style={{
-                                                padding: '6px 12px',
-                                                borderRadius: '6px',
-                                                border: 'none',
-                                                background: '#dc3545',
-                                                color: 'white',
-                                                fontSize: '12px',
-                                                cursor: 'pointer'
-                                            }}
-                                        >
-                                            - Withdraw
-                                        </button>
-                                    </div>
+                                    {!viewOnly ? (
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            <button
+                                                onClick={() => openModal(user, 'deposit')}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    borderRadius: '6px',
+                                                    border: 'none',
+                                                    background: 'var(--btn-primary)',
+                                                    color: 'white',
+                                                    fontSize: '12px',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                + Deposit
+                                            </button>
+                                            <button
+                                                onClick={() => openModal(user, 'withdraw')}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    borderRadius: '6px',
+                                                    border: 'none',
+                                                    background: '#dc3545',
+                                                    color: 'white',
+                                                    fontSize: '12px',
+                                                    cursor: 'pointer'
+                                                }}
+                                            >
+                                                - Withdraw
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <span style={{ color: 'var(--text-secondary)' }}>View Only</span>
+                                    )}
                                 </td>
                             </tr>
                         ))}

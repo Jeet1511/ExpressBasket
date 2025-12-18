@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import styled from 'styled-components';
 import axios from '../../utils/axios';
 import Swal from 'sweetalert2';
 import { useTheme } from '../../context/ThemeContext';
+import { useUser } from '../../context/UserContext';
 
 const AuthContainer = styled.div`
   min-height: 100vh;
@@ -183,6 +184,21 @@ const PasswordInputWrapper = styled.div`
   align-items: center;
 `;
 
+const ForgotPasswordLink = styled(Link)`
+  display: block;
+  text-align: center;
+  margin-top: 15px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 14px;
+  transition: color 0.3s;
+  
+  &:hover {
+    color: var(--btn-primary);
+    text-decoration: underline;
+  }
+`;
+
 const LoginSignup = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -198,6 +214,7 @@ const LoginSignup = () => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { theme, toggleTheme } = useTheme();
+  const { login: userLogin } = useUser();
 
   const validateForm = () => {
     const newErrors = {};
@@ -245,14 +262,12 @@ const LoginSignup = () => {
 
     try {
       if (isLogin) {
-        // Login
-        const response = await axios.post('/login', {
-          email: formData.email,
-          password: formData.password
-        });
+        // Login using UserContext
+        const result = await userLogin(formData.email, formData.password);
 
-        localStorage.setItem('userToken', response.data.token);
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+        if (!result.success) {
+          throw new Error(result.message);
+        }
 
         Swal.fire({
           icon: 'success',
@@ -472,6 +487,12 @@ const LoginSignup = () => {
               'Create Account'
             )}
           </SubmitButton>
+
+          {isLogin && (
+            <ForgotPasswordLink to="/forgot-password">
+              Forgot Password?
+            </ForgotPasswordLink>
+          )}
         </AuthForm>
       </AuthBox>
     </AuthContainer>

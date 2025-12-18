@@ -4,6 +4,11 @@ import styled from 'styled-components';
 import axios from '../../utils/axios';
 import Swal from 'sweetalert2';
 
+// Check if admin is viewer (read-only)
+const isViewOnly = (admin) => {
+  return admin?.role === 'normal_viewer' || admin?.role === 'special_viewer';
+};
+
 const ManageProductsContainer = styled.div``;
 
 const Header = styled.div`
@@ -120,6 +125,8 @@ const ManageProducts = () => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
+  const admin = JSON.parse(localStorage.getItem('admin') || '{}');
+  const viewOnly = isViewOnly(admin);
 
   useEffect(() => {
     fetchProducts();
@@ -193,9 +200,11 @@ const ManageProducts = () => {
     <ManageProductsContainer>
       <Header>
         <Title>Manage Products</Title>
-        <AddButton onClick={() => navigate('/admin/add-product')}>
-          <i className="expDel_plus"></i> Add New Product
-        </AddButton>
+        {!viewOnly && (
+          <AddButton onClick={() => navigate('/admin/add-product')}>
+            <i className="expDel_plus"></i> Add New Product
+          </AddButton>
+        )}
       </Header>
 
       {products.length === 0 ? (
@@ -232,18 +241,23 @@ const ManageProducts = () => {
                 <td>₹{product.price}</td>
                 <td>{product.stock} {product.unit}</td>
                 <td>
-                  <ActionButton
-                    className="edit"
-                    onClick={() => handleEdit(product._id)}
-                  >
-                    <i className="expDel_edit"></i> Edit
-                  </ActionButton>
-                  <ActionButton
-                    className="delete"
-                    onClick={() => handleDelete(product._id)}
-                  >
-                    <i className="expDel_trash"></i> Delete
-                  </ActionButton>
+                  {!viewOnly && (
+                    <>
+                      <ActionButton
+                        className="edit"
+                        onClick={() => handleEdit(product._id)}
+                      >
+                        <i className="expDel_edit"></i> Edit
+                      </ActionButton>
+                      <ActionButton
+                        className="delete"
+                        onClick={() => handleDelete(product._id)}
+                      >
+                        <i className="expDel_trash"></i> Delete
+                      </ActionButton>
+                    </>
+                  )}
+                  {viewOnly && <span style={{ color: 'var(--text-secondary)' }}>View Only</span>}
                 </td>
               </tr>
             ))}

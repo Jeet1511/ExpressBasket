@@ -35,8 +35,12 @@ export const ToastProvider = ({ children }) => {
         showToast(`${productName} added to cart! 🛒`, 'cart', 2500);
     }, [showToast]);
 
+    const showMailToast = useCallback((count = 1) => {
+        showToast(`You have ${count} new mail${count > 1 ? 's' : ''}!`, 'mail', 5000);
+    }, [showToast]);
+
     return (
-        <ToastContext.Provider value={{ toasts, showToast, removeToast, showCartToast }}>
+        <ToastContext.Provider value={{ toasts, showToast, removeToast, showCartToast, showMailToast }}>
             {children}
             <ToastContainer toasts={toasts} removeToast={removeToast} />
         </ToastContext.Provider>
@@ -71,6 +75,12 @@ const ToastContainer = ({ toasts, removeToast }) => {
                                 <circle cx="12" cy="12" r="10"></circle>
                                 <line x1="15" y1="9" x2="9" y2="15"></line>
                                 <line x1="9" y1="9" x2="15" y2="15"></line>
+                            </svg>
+                        )}
+                        {toast.type === 'mail' && (
+                            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                                <polyline points="22,6 12,13 2,6"></polyline>
                             </svg>
                         )}
                     </div>

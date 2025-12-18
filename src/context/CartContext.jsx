@@ -60,6 +60,60 @@ export const CartProvider = ({ children }) => {
     setCart([]);
   };
 
+  // Reorder items from a previous order
+  const reorderItems = async (orderItems) => {
+    try {
+      let addedCount = 0;
+      // Fetch current product data for each item
+      for (const item of orderItems) {
+        // Handle different product ID structures
+        let productId;
+        if (item.productId && typeof item.productId === 'object') {
+          productId = item.productId._id || item.productId.id;
+        } else {
+          productId = item.productId || item._id;
+        }
+
+        if (!productId) {
+          console.error('No product ID found for item:', item);
+          continue;
+        }
+
+        try {
+          const response = await axios.get(`/products/${productId}`);
+          // Handle different API response formats
+          const product = response.data.product || response.data;
+
+          if (!product || !product._id) {
+            console.error('Invalid product data:', response.data);
+            continue;
+          }
+
+          // Add each item with the ordered quantity
+          setCart(prevCart => {
+            const existingItem = prevCart.find(cartItem => cartItem._id === product._id);
+            if (existingItem) {
+              return prevCart.map(cartItem =>
+                cartItem._id === product._id
+                  ? { ...cartItem, quantity: cartItem.quantity + (item.quantity || 1) }
+                  : cartItem
+              );
+            } else {
+              return [...prevCart, { ...product, quantity: item.quantity || 1 }];
+            }
+          });
+          addedCount++;
+        } catch (err) {
+          console.error(`Product ${productId} not available:`, err.message);
+        }
+      }
+      return addedCount > 0;
+    } catch (error) {
+      console.error('Error reordering:', error);
+      return false;
+    }
+  };
+
   const getCartCount = () => {
     return cart.reduce((count, item) => count + (item.quantity || 0), 0);
   };
@@ -104,17 +158,18 @@ export const CartProvider = ({ children }) => {
   return (
     <CartContext.Provider
       value={{
-          cart,
-          addToCart,
-          removeFromCart,
-          updateQuantity,
-          clearCart,
-          getCartCount,
-          getCartTotal,
-          placeOrder,
-          total,
-          count
-        }}
+        cart,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        reorderItems,
+        getCartCount,
+        getCartTotal,
+        placeOrder,
+        total,
+        count
+      }}
     >
       {children}
     </CartContext.Provider>

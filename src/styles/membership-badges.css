@@ -1,0 +1,323 @@
+/* Membership Badge Animations */
+/* Import this file globally for animated membership badges */
+
+/* ====================== */
+/* KEYFRAME ANIMATIONS */
+/* ====================== */
+
+/* Silver - Subtle shimmer */
+@keyframes silverShimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@keyframes silverPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.85;
+    }
+}
+
+/* Gold - Shining effect */
+@keyframes goldShine {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@keyframes goldGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 5px rgba(255, 215, 0, 0.4),
+            0 0 10px rgba(255, 215, 0, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 15px rgba(255, 215, 0, 0.6),
+            0 0 25px rgba(255, 215, 0, 0.3);
+    }
+}
+
+@keyframes goldSparkle {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.02);
+    }
+}
+
+/* Platinum - Premium effects */
+@keyframes platinumShine {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@keyframes platinumGlow {
+
+    0%,
+    100% {
+        box-shadow: 0 0 8px rgba(147, 112, 219, 0.5),
+            0 0 15px rgba(229, 228, 226, 0.4),
+            0 0 25px rgba(147, 112, 219, 0.2);
+    }
+
+    50% {
+        box-shadow: 0 0 15px rgba(147, 112, 219, 0.7),
+            0 0 30px rgba(229, 228, 226, 0.5),
+            0 0 45px rgba(147, 112, 219, 0.3);
+    }
+}
+
+@keyframes platinumPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.03);
+    }
+}
+
+@keyframes starRotate {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes starPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.15);
+        opacity: 0.9;
+    }
+}
+
+@keyframes iconGlow {
+
+    0%,
+    100% {
+        filter: drop-shadow(0 0 2px currentColor);
+    }
+
+    50% {
+        filter: drop-shadow(0 0 6px currentColor);
+    }
+}
+
+/* ====================== */
+/* BADGE CLASSES */
+/* ====================== */
+
+/* Silver Badge */
+.badge-silver {
+    background: linear-gradient(110deg,
+            #c0c0c0 0%,
+            #c0c0c0 40%,
+            #e8e8e8 50%,
+            #c0c0c0 60%,
+            #c0c0c0 100%) !important;
+    background-size: 200% 100% !important;
+    animation: silverShimmer 4s ease-in-out infinite, silverPulse 3s ease-in-out infinite !important;
+    color: #333 !important;
+    position: relative;
+}
+
+.badge-silver svg {
+    animation: silverPulse 2s ease-in-out infinite;
+}
+
+/* Gold Badge */
+.badge-gold {
+    background: linear-gradient(110deg,
+            #ffd700 0%,
+            #ffd700 35%,
+            #fff7cc 50%,
+            #ffd700 65%,
+            #ffd700 100%) !important;
+    background-size: 200% 100% !important;
+    animation: goldShine 2s ease-in-out infinite, goldGlow 2s ease-in-out infinite, goldSparkle 2s ease-in-out infinite !important;
+    color: #333 !important;
+    position: relative;
+}
+
+.badge-gold svg {
+    animation: starPulse 1.5s ease-in-out infinite, iconGlow 1.5s ease-in-out infinite;
+    color: #ff9500;
+}
+
+/* Platinum Badge */
+.badge-platinum {
+    background: linear-gradient(110deg,
+            #e5e4e2 0%,
+            #9370db 25%,
+            #ffffff 50%,
+            #9370db 75%,
+            #e5e4e2 100%) !important;
+    background-size: 200% 100% !important;
+    animation: platinumShine 1.5s ease-in-out infinite, platinumGlow 2s ease-in-out infinite, platinumPulse 2.5s ease-in-out infinite !important;
+    color: #333 !important;
+    position: relative;
+    border: 2px solid #9370db !important;
+}
+
+.badge-platinum svg {
+    animation: starRotate 4s linear infinite, iconGlow 1s ease-in-out infinite;
+    color: #9370db;
+    filter: drop-shadow(0 0 4px rgba(147, 112, 219, 0.8));
+}
+
+/* ====================== */
+/* ANIMATED LUCIDE ICON CLASSES */
+/* ====================== */
+
+.platinum-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    animation: starRotate 4s linear infinite, platinumGlow 2s ease-in-out infinite;
+    filter: drop-shadow(0 0 5px rgba(147, 112, 219, 0.7));
+}
+
+.platinum-icon svg {
+    animation: starRotate 4s linear infinite;
+    color: #9370db;
+}
+
+.gold-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    animation: starPulse 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.6));
+}
+
+.gold-icon svg {
+    animation: starPulse 1.5s ease-in-out infinite, iconGlow 1.5s ease-in-out infinite;
+    color: #ff9500;
+}
+
+.silver-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    animation: silverPulse 3s ease-in-out infinite;
+}
+
+.silver-icon svg {
+    animation: silverPulse 2s ease-in-out infinite;
+    color: #808080;
+}
+
+/* ====================== */
+/* MEMBERSHIP CARD STYLES */
+/* ====================== */
+
+/* Silver Member Card */
+.member-card-silver {
+    background: linear-gradient(135deg, #c0c0c0 0%, #e8e8e8 50%, #a8a8a8 100%) !important;
+    animation: silverPulse 4s ease-in-out infinite;
+    box-shadow: 0 4px 15px rgba(192, 192, 192, 0.3);
+}
+
+/* Gold Member Card */
+.member-card-gold {
+    background: linear-gradient(135deg, #ffd700 0%, #ffb347 50%, #ffd700 100%) !important;
+    animation: goldGlow 2s ease-in-out infinite;
+    box-shadow: 0 4px 20px rgba(255, 215, 0, 0.4);
+}
+
+/* Platinum Member Card */
+.member-card-platinum {
+    background: linear-gradient(135deg, #e5e4e2 0%, #9370db 50%, #e5e4e2 100%) !important;
+    animation: platinumGlow 2s ease-in-out infinite, platinumPulse 3s ease-in-out infinite;
+    box-shadow: 0 4px 25px rgba(147, 112, 219, 0.5);
+    border: 2px solid #9370db;
+}
+
+/* ====================== */
+/* STAT CARD BADGE STYLES */
+/* ====================== */
+
+/* For stats cards in admin panel */
+[style*="linear-gradient(135deg, #c0c0c0"] {
+    animation: silverPulse 4s ease-in-out infinite !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+[style*="linear-gradient(135deg, #c0c0c0"]:hover {
+    transform: translateY(-3px) !important;
+}
+
+[style*="linear-gradient(135deg, #ffd700"] {
+    animation: goldGlow 2s ease-in-out infinite !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+[style*="linear-gradient(135deg, #ffd700"]:hover {
+    transform: translateY(-3px) scale(1.02) !important;
+}
+
+[style*="linear-gradient(135deg, #e5e4e2"] {
+    animation: platinumGlow 2s ease-in-out infinite, platinumPulse 3s ease-in-out infinite !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+[style*="linear-gradient(135deg, #e5e4e2"]:hover {
+    transform: translateY(-3px) scale(1.03) !important;
+}
+
+/* ====================== */
+/* RESPONSIVE */
+/* ====================== */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .badge-silver,
+    .badge-gold,
+    .badge-platinum,
+    .platinum-icon,
+    .gold-icon,
+    .silver-icon,
+    .member-card-silver,
+    .member-card-gold,
+    .member-card-platinum {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}

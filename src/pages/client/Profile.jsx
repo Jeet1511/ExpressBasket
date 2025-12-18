@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useUser } from '../../context/UserContext';
+import { useCart } from '../../context/CartContext';
 import axios from '../../utils/axios';
+import useTrackingStatus from '../../hooks/useTrackingStatus.js';
+import OrderBill from '../../components/OrderBill';
 import './Profile.css';
 
 const Profile = () => {
   const { user, loading, login, signup, logout, updateProfile } = useUser();
+  const { reorderItems } = useCart();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
@@ -44,6 +48,72 @@ const Profile = () => {
   const [walletHistory, setWalletHistory] = useState([]);
   const [showTopupModal, setShowTopupModal] = useState(false);
   const [topupAmount, setTopupAmount] = useState('');
+  const [showTransactionHistory, setShowTransactionHistory] = useState(false);
+  const { trackingEnabled } = useTrackingStatus();
+
+  // Mail state
+  const [mails, setMails] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showMails, setShowMails] = useState(false);
+  const [selectedMail, setSelectedMail] = useState(null);
+
+  // Activities state
+  const [showActivities, setShowActivities] = useState(false);
+  const [activityFromDate, setActivityFromDate] = useState(() => {
+    const date = new Date();
+    date.setDate(date.getDate() - 7);
+    return date.toISOString().split('T')[0];
+  });
+  const [activityToDate, setActivityToDate] = useState(() => {
+    return new Date().toISOString().split('T')[0];
+  });
+
+  // Bill modal state
+  const [showBillModal, setShowBillModal] = useState(false);
+  const [selectedBillOrder, setSelectedBillOrder] = useState(null);
+
+  // Reordered items tracking
+  const [reorderedItems, setReorderedItems] = useState(() => {
+    const saved = localStorage.getItem('reorderedItems');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [showReorderedItems, setShowReorderedItems] = useState(false);
+
+  // Calculate activity data based on orders and date range
+  const getActivityData = () => {
+    const fromDate = new Date(activityFromDate);
+    const toDate = new Date(activityToDate);
+    toDate.setHours(23, 59, 59, 999);
+
+    const filteredOrders = orders.filter(order => {
+      const orderDate = new Date(order.orderDate);
+      return orderDate >= fromDate && orderDate <= toDate;
+    });
+
+    // Create daily aggregates
+    const dailyData = {};
+    let currentDate = new Date(fromDate);
+    while (currentDate <= toDate) {
+      const dateKey = currentDate.toISOString().split('T')[0];
+      dailyData[dateKey] = { orders: 0, spending: 0 };
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    filteredOrders.forEach(order => {
+      const dateKey = new Date(order.orderDate).toISOString().split('T')[0];
+      if (dailyData[dateKey]) {
+        dailyData[dateKey].orders += 1;
+        dailyData[dateKey].spending += order.totalAmount || 0;
+      }
+    });
+
+    return Object.entries(dailyData).map(([date, data]) => ({
+      date,
+      displayDate: new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }),
+      orders: data.orders,
+      spending: data.spending
+    }));
+  };
 
   useEffect(() => {
     if (user) {
@@ -61,8 +131,22 @@ const Profile = () => {
       fetchOrders();
       fetchBadgePrices();
       fetchWallet();
+      fetchMails();
     }
   }, [user]);
+
+  const fetchMails = async () => {
+    try {
+      const token = localStorage.getItem('userToken');
+      const response = await axios.get('/user/mails', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMails(response.data.mails);
+      setUnreadCount(response.data.unreadCount);
+    } catch (error) {
+      console.error('Error fetching mails:', error);
+    }
+  };
 
   const fetchUserStats = async () => {
     try {
@@ -163,6 +247,41 @@ const Profile = () => {
       platinum: { background: 'linear-gradient(135deg, #e5e4e2, #9370db)', color: '#333' }
     };
     return styles[type] || styles.none;
+  };
+
+  const handleMarkAsRead = async (mailId) => {
+    try {
+      const token = localStorage.getItem('userToken');
+      await axios.put(`/user/mails/${mailId}/read`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      fetchMails();
+    } catch (error) {
+      console.error('Error marking mail as read:', error);
+    }
+  };
+
+  const handleDeleteMail = async (mailId) => {
+    try {
+      const token = localStorage.getItem('userToken');
+      await axios.delete(`/user/mails/${mailId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSelectedMail(null);
+      fetchMails();
+      setMessage('Mail deleted successfully');
+      setMessageType('success');
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Failed to delete mail');
+      setMessageType('error');
+    }
+  };
+
+  const openMail = (mail) => {
+    setSelectedMail(mail);
+    if (!mail.read) {
+      handleMarkAsRead(mail._id);
+    }
   };
 
   const handleInputChange = (e) => {
@@ -352,13 +471,13 @@ const Profile = () => {
       <div className="container">
         <div className="profile-header-actions">
           <h1 className="profile-title">My Profile</h1>
-          <button className="logout-btn" onClick={logout}>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <button className="logout-btn-animated" onClick={logout}>
+            <svg className="logout-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
               <polyline points="16 17 21 12 16 7"></polyline>
               <line x1="21" y1="12" x2="9" y2="12"></line>
             </svg>
-            Logout
+            <span>Logout</span>
           </button>
         </div>
 
@@ -377,19 +496,29 @@ const Profile = () => {
                 <p className="profile-meta">Member since {new Date(user.createdAt || Date.now()).toLocaleDateString('en-IN')}</p>
                 {/* Loyalty Badge */}
                 {stats.loyaltyBadge?.type && stats.loyaltyBadge.type !== 'none' && (
-                  <span style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '4px 12px',
-                    borderRadius: '20px',
-                    fontSize: '12px',
-                    fontWeight: '600',
-                    textTransform: 'uppercase',
-                    marginTop: '8px',
-                    ...getBadgeStyle(stats.loyaltyBadge.type)
-                  }}>
-                    <svg className="icon-pulse" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
+                  <span
+                    className={`badge-${stats.loyaltyBadge.type}`}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 14px',
+                      borderRadius: '20px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      textTransform: 'uppercase',
+                      marginTop: '8px',
+                      ...getBadgeStyle(stats.loyaltyBadge.type)
+                    }}>
+                    {stats.loyaltyBadge.type === 'platinum' ? (
+                      <svg className="platinum-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"></path>
+                      </svg>
+                    ) : (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="1">
+                        <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                      </svg>
+                    )}
                     {stats.loyaltyBadge.type} Member
                   </span>
                 )}
@@ -467,7 +596,10 @@ const Profile = () => {
                 </div>
               </div>
             )}
+          </div>
 
+          {/* Right Column Content */}
+          <div className="right-column">
             {/* Stats Section */}
             <div className="stats-section">
               <h3>Account Stats</h3>
@@ -499,68 +631,313 @@ const Profile = () => {
                       {stats.loyaltyBadge?.type === 'none' ? 'None' : stats.loyaltyBadge?.type || 'None'}
                     </div>
                     <div className="stat-label">Loyalty Badge</div>
-                    <small style={{ color: 'var(--btn-primary)', fontSize: '11px' }}>Click to upgrade</small>
+                    <small style={{ color: 'var(--btn-primary)', fontSize: '10px' }}>Click to upgrade</small>
                   </div>
                 </div>
                 {/* Wallet Balance Card */}
-                <div className="stat-card" onClick={() => setShowTopupModal(true)} style={{ cursor: 'pointer', background: 'linear-gradient(135deg, #667eea, #764ba2)' }}>
+                <div className="stat-card" onClick={() => setShowTopupModal(true)} style={{ cursor: 'pointer' }}>
                   <div className="stat-icon" style={{ background: 'rgba(255,255,255,0.2)' }}>
                     <svg className="icon-pulse" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2"><rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect><line x1="1" y1="10" x2="23" y2="10"></line></svg>
                   </div>
                   <div className="stat-content">
                     <div className="stat-value" style={{ color: 'white' }}>₹{walletBalance.toFixed(2)}</div>
                     <div className="stat-label" style={{ color: 'rgba(255,255,255,0.8)' }}>Wallet Balance</div>
-                    <small style={{ color: 'rgba(255,255,255,0.7)', fontSize: '11px' }}>Click to top-up</small>
+                    <small style={{ color: 'rgba(255,255,255,0.7)', fontSize: '10px' }}>Click to top-up</small>
+                  </div>
+                </div>
+                {/* My Mails Card */}
+                <div className="stat-card" onClick={() => setShowMails(!showMails)} style={{ cursor: 'pointer' }}>
+                  <div className="stat-icon" style={{ background: unreadCount > 0 ? 'rgba(255,255,255,0.2)' : 'var(--nav-link-hover)' }}>
+                    <svg className="icon-pulse" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={unreadCount > 0 ? 'white' : 'currentColor'} strokeWidth="2">
+                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                      <polyline points="22,6 12,13 2,6"></polyline>
+                    </svg>
+                  </div>
+                  <div className="stat-content">
+                    <div className="stat-value" style={{ color: unreadCount > 0 ? 'white' : 'var(--text-color)' }}>{mails.length}</div>
+                    <div className="stat-label" style={{ color: unreadCount > 0 ? 'rgba(255,255,255,0.8)' : 'var(--text-secondary)' }}>My Mails</div>
+                    {unreadCount > 0 && (
+                      <small style={{ color: 'rgba(255,255,255,0.9)', fontSize: '10px', fontWeight: '600' }}>{unreadCount} unread</small>
+                    )}
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Order History */}
-            <div className="stats-section">
+            {/* Activities Section */}
+            <div className="activities-section">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                <h3>Order History</h3>
-                <button onClick={() => setShowOrders(!showOrders)} style={{
-                  background: 'var(--btn-primary)',
+                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M3 3v18h18" />
+                    <path d="M18 17V9" />
+                    <path d="M13 17V5" />
+                    <path d="M8 17v-3" />
+                  </svg>
+                  Activities
+                </h3>
+                <button onClick={() => setShowActivities(!showActivities)} style={{
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
                   color: 'white',
                   border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '8px',
-                  cursor: 'pointer'
+                  padding: '10px 20px',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '13px'
+                }}>
+                  {showActivities ? 'Hide Activities' : 'View Activities'}
+                </button>
+              </div>
+
+              {showActivities && (
+                <div className="activities-content">
+                  {/* Date Range Selector */}
+                  <div className="date-range-selector">
+                    <div className="date-input-group">
+                      <label>From</label>
+                      <input
+                        type="date"
+                        value={activityFromDate}
+                        onChange={(e) => setActivityFromDate(e.target.value)}
+                        max={activityToDate}
+                      />
+                    </div>
+                    <div className="date-input-group">
+                      <label>To</label>
+                      <input
+                        type="date"
+                        value={activityToDate}
+                        onChange={(e) => setActivityToDate(e.target.value)}
+                        min={activityFromDate}
+                        max={new Date().toISOString().split('T')[0]}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Activity Chart */}
+                  <div className="activity-chart">
+                    <div className="chart-header">
+                      <div className="chart-legend">
+                        <span className="legend-item orders">
+                          <span className="legend-dot"></span> Orders
+                        </span>
+                        <span className="legend-item spending">
+                          <span className="legend-dot"></span> Spending (₹)
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="chart-container">
+                      {(() => {
+                        const activityData = getActivityData();
+                        const maxOrders = Math.max(...activityData.map(d => d.orders), 1);
+                        const maxSpending = Math.max(...activityData.map(d => d.spending), 100);
+                        const totalOrders = activityData.reduce((sum, d) => sum + d.orders, 0);
+                        const totalSpending = activityData.reduce((sum, d) => sum + d.spending, 0);
+
+                        return (
+                          <>
+                            <div className="chart-summary">
+                              <div className="summary-item">
+                                <span className="summary-value">{totalOrders}</span>
+                                <span className="summary-label">Total Orders</span>
+                              </div>
+                              <div className="summary-item">
+                                <span className="summary-value">₹{totalSpending.toFixed(2)}</span>
+                                <span className="summary-label">Total Spent</span>
+                              </div>
+                            </div>
+
+                            <div className="bars-container">
+                              {activityData.map((day, index) => (
+                                <div key={day.date} className="bar-group">
+                                  <div className="bar-wrapper">
+                                    <div
+                                      className="bar orders-bar"
+                                      style={{ height: `${(day.orders / maxOrders) * 100}%` }}
+                                      title={`${day.orders} orders`}
+                                    >
+                                      {day.orders > 0 && <span className="bar-value">{day.orders}</span>}
+                                    </div>
+                                    <div
+                                      className="bar spending-bar"
+                                      style={{ height: `${(day.spending / maxSpending) * 100}%` }}
+                                      title={`₹${day.spending.toFixed(2)}`}
+                                    >
+                                      {day.spending > 0 && <span className="bar-value">₹{Math.round(day.spending)}</span>}
+                                    </div>
+                                  </div>
+                                  <span className="bar-label">{day.displayDate}</span>
+                                </div>
+                              ))}
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Order History - Right Column */}
+            <div className="orders-section">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                <h3 style={{ margin: 0 }}>Order History</h3>
+                <button onClick={() => setShowOrders(!showOrders)} style={{
+                  background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                  color: 'white',
+                  border: 'none',
+                  padding: '10px 20px',
+                  borderRadius: '10px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '13px'
                 }}>
                   {showOrders ? 'Hide Orders' : `View Orders (${orders.length})`}
                 </button>
               </div>
 
               {showOrders && (
-                <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
+                <div className="orders-list">
                   {orders.length === 0 ? (
-                    <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px' }}>No orders yet</p>
+                    <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '30px' }}>No orders yet</p>
                   ) : (
                     orders.map(order => (
-                      <div key={order._id} style={{
-                        background: 'var(--card-bg)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: '12px',
-                        padding: '15px',
-                        marginBottom: '10px'
-                      }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                          <span style={{ fontWeight: '600' }}>Order #{order._id.slice(-6).toUpperCase()}</span>
+                      <div key={order._id} className="order-card">
+                        <div className="order-header">
+                          <span className="order-id">Order #{order._id.slice(-6).toUpperCase()}</span>
                           <span style={{
-                            padding: '4px 10px',
+                            padding: '5px 12px',
                             borderRadius: '20px',
-                            fontSize: '12px',
-                            background: order.status === 'delivered' ? '#28a745' : order.status === 'cancelled' ? '#dc3545' : '#ffc107',
-                            color: order.status === 'pending' ? '#333' : 'white'
+                            fontSize: '11px',
+                            fontWeight: '600',
+                            background: order.status === 'delivered' ? 'linear-gradient(135deg, #43a047, #2e7d32)' : order.status === 'cancelled' ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #ffa726, #f57c00)',
+                            color: 'white',
+                            textTransform: 'uppercase'
                           }}>
                             {order.status}
                           </span>
                         </div>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '14px' }}>
+                        <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '8px' }}>
                           {new Date(order.orderDate).toLocaleDateString('en-IN')} • {order.items.length} items
                         </p>
-                        <p style={{ fontWeight: '600', color: 'var(--btn-primary)' }}>₹{order.totalAmount?.toFixed(2)}</p>
+                        <p style={{ fontWeight: '700', color: '#667eea', fontSize: '16px', marginBottom: '8px' }}>₹{order.totalAmount?.toFixed(2)}</p>
+
+                        {/* Track Order Button */}
+                        {trackingEnabled && ['confirmed', 'packed', 'out_for_delivery'].includes(order.status) && (
+                          <a
+                            href={`/track-order/${order._id}`}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              marginTop: '8px',
+                              marginRight: '8px',
+                              padding: '8px 16px',
+                              background: 'linear-gradient(135deg, #43a047, #2e7d32)',
+                              color: 'white',
+                              textDecoration: 'none',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                              fontWeight: '600'
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                              <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            Track Order
+                          </a>
+                        )}
+
+                        {/* Reorder Button */}
+                        <button
+                          onClick={async () => {
+                            const success = await reorderItems(order.items);
+                            if (success) {
+                              // Track reordered items
+                              const newReorderedItems = [...reorderedItems];
+                              order.items.forEach(item => {
+                                const productName = item.productId?.name || item.name || 'Product';
+                                const existingIndex = newReorderedItems.findIndex(r => r.name === productName);
+                                if (existingIndex >= 0) {
+                                  newReorderedItems[existingIndex].count++;
+                                  newReorderedItems[existingIndex].lastReordered = new Date().toISOString();
+                                } else {
+                                  newReorderedItems.push({
+                                    name: productName,
+                                    count: 1,
+                                    lastReordered: new Date().toISOString()
+                                  });
+                                }
+                              });
+                              setReorderedItems(newReorderedItems);
+                              localStorage.setItem('reorderedItems', JSON.stringify(newReorderedItems));
+
+                              setMessage('Items added to cart!');
+                              setMessageType('success');
+                              setTimeout(() => setMessage(''), 3000);
+                            } else {
+                              setMessage('Some items could not be added');
+                              setMessageType('error');
+                              setTimeout(() => setMessage(''), 3000);
+                            }
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            marginTop: '8px',
+                            marginRight: '8px',
+                            padding: '8px 16px',
+                            background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="23 4 23 10 17 10" />
+                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                          </svg>
+                          Reorder
+                        </button>
+
+                        {/* View Bill Button */}
+                        <button
+                          onClick={() => {
+                            setSelectedBillOrder(order);
+                            setShowBillModal(true);
+                          }}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            marginTop: '8px',
+                            padding: '8px 16px',
+                            background: 'linear-gradient(135deg, #43a047, #2e7d32)',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '8px',
+                            fontSize: '12px',
+                            fontWeight: '600',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                            <polyline points="14 2 14 8 20 8" />
+                            <line x1="16" y1="13" x2="8" y2="13" />
+                            <line x1="16" y1="17" x2="8" y2="17" />
+                            <polyline points="10 9 9 9 8 9" />
+                          </svg>
+                          View Bill
+                        </button>
                       </div>
                     ))
                   )}
@@ -774,6 +1151,277 @@ const Profile = () => {
               </div>
             </div>
           </div>
+        )}
+
+        {/* My Mails Section */}
+        {showMails && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: 'rgba(0,0,0,0.7)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }} onClick={() => { setShowMails(false); setSelectedMail(null); }}>
+            <div style={{
+              background: 'var(--card-bg)',
+              borderRadius: '16px',
+              maxWidth: '700px',
+              width: '100%',
+              maxHeight: '80vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column'
+            }} onClick={e => e.stopPropagation()}>
+              <div style={{
+                padding: '20px',
+                borderBottom: '1px solid var(--border-color)',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center'
+              }}>
+                <h3 style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--text-color)' }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--btn-primary)" strokeWidth="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                  </svg>
+                  My Mails {unreadCount > 0 && <span style={{ background: 'var(--btn-danger)', color: 'white', padding: '2px 8px', borderRadius: '10px', fontSize: '12px' }}>{unreadCount} new</span>}
+                </h3>
+                <button onClick={() => { setShowMails(false); setSelectedMail(null); }} style={{
+                  background: 'transparent',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: 'var(--text-secondary)'
+                }}>
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+
+              <div style={{ flex: 1, overflow: 'auto', padding: '10px' }}>
+                {selectedMail ? (
+                  // Mail Detail View
+                  <div style={{ padding: '20px' }}>
+                    <button onClick={() => setSelectedMail(null)} style={{
+                      background: 'var(--nav-link-hover)',
+                      border: 'none',
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      marginBottom: '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      color: 'var(--text-color)'
+                    }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="19" y1="12" x2="5" y2="12"></line>
+                        <polyline points="12 19 5 12 12 5"></polyline>
+                      </svg>
+                      Back to Inbox
+                    </button>
+                    <h4 style={{ margin: '0 0 10px', color: 'var(--text-color)', fontSize: '20px' }}>{selectedMail.subject}</h4>
+                    <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginBottom: '20px' }}>
+                      From: Admin • {new Date(selectedMail.createdAt).toLocaleString('en-IN')}
+                    </p>
+                    <div style={{
+                      background: 'var(--nav-link-hover)',
+                      padding: '20px',
+                      borderRadius: '12px',
+                      whiteSpace: 'pre-wrap',
+                      lineHeight: '1.6',
+                      color: 'var(--text-color)'
+                    }}>
+                      {selectedMail.message}
+                    </div>
+                    <button
+                      onClick={() => handleDeleteMail(selectedMail._id)}
+                      style={{
+                        marginTop: '20px',
+                        background: 'var(--btn-danger)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '10px 20px',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px'
+                      }}
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      </svg>
+                      Delete Mail
+                    </button>
+                  </div>
+                ) : (
+                  // Mail List
+                  mails.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '60px 20px', color: 'var(--text-secondary)' }}>
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginBottom: '15px', opacity: 0.5 }}>
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                      </svg>
+                      <p>No mails yet</p>
+                    </div>
+                  ) : (
+                    mails.map(mail => (
+                      <div
+                        key={mail._id}
+                        onClick={() => openMail(mail)}
+                        style={{
+                          padding: '15px',
+                          borderRadius: '10px',
+                          marginBottom: '10px',
+                          background: mail.read ? 'transparent' : 'var(--nav-link-hover)',
+                          borderLeft: mail.read ? '3px solid var(--border-color)' : '3px solid var(--btn-primary)',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '5px' }}>
+                          <h5 style={{ margin: 0, color: 'var(--text-color)', fontWeight: mail.read ? '400' : '600' }}>
+                            {!mail.read && <span style={{ color: 'var(--btn-primary)', marginRight: '8px' }}>●</span>}
+                            {mail.subject}
+                          </h5>
+                          <span style={{ fontSize: '11px', color: 'var(--text-secondary)', whiteSpace: 'nowrap' }}>
+                            {new Date(mail.createdAt).toLocaleDateString('en-IN')}
+                          </span>
+                        </div>
+                        <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {mail.message.substring(0, 80)}...
+                        </p>
+                      </div>
+                    ))
+                  )
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reordered Items Section */}
+        {reorderedItems.length > 0 && (
+          <div style={{
+            position: 'fixed',
+            bottom: '90px',
+            right: '20px',
+            zIndex: 999
+          }}>
+            <button
+              onClick={() => setShowReorderedItems(!showReorderedItems)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '12px 20px',
+                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                color: 'white',
+                border: 'none',
+                borderRadius: '30px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(102, 126, 234, 0.4)'
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <polyline points="23 4 23 10 17 10" />
+                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+              </svg>
+              My Reordered Items ({reorderedItems.length})
+            </button>
+
+            {showReorderedItems && (
+              <div style={{
+                position: 'absolute',
+                bottom: '55px',
+                right: 0,
+                background: 'var(--card-bg)',
+                borderRadius: '16px',
+                padding: '20px',
+                width: '320px',
+                maxHeight: '400px',
+                overflowY: 'auto',
+                boxShadow: '0 8px 32px rgba(0, 0, 0, 0.2)',
+                border: '1px solid var(--border-color)'
+              }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                  <h4 style={{ margin: 0, color: 'var(--text-color)' }}>Frequently Reordered</h4>
+                  <button
+                    onClick={() => {
+                      setReorderedItems([]);
+                      localStorage.removeItem('reorderedItems');
+                    }}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#dc3545',
+                      fontSize: '12px',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Clear All
+                  </button>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {reorderedItems
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 10)
+                    .map((item, index) => (
+                      <div key={index} style={{
+                        padding: '12px',
+                        background: 'var(--bg-color)',
+                        borderRadius: '10px',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <div>
+                          <p style={{ margin: 0, fontWeight: '600', color: 'var(--text-color)', fontSize: '14px' }}>
+                            {item.name}
+                          </p>
+                          <p style={{ margin: 0, fontSize: '11px', color: 'var(--text-secondary)' }}>
+                            Last: {new Date(item.lastReordered).toLocaleDateString('en-IN')}
+                          </p>
+                        </div>
+                        <span style={{
+                          background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                          color: 'white',
+                          padding: '4px 12px',
+                          borderRadius: '20px',
+                          fontSize: '12px',
+                          fontWeight: '600'
+                        }}>
+                          ×{item.count}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Order Bill Modal */}
+        {showBillModal && selectedBillOrder && (
+          <OrderBill
+            order={selectedBillOrder}
+            user={user}
+            onClose={() => {
+              setShowBillModal(false);
+              setSelectedBillOrder(null);
+            }}
+          />
         )}
       </div>
     </div>

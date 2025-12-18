@@ -5,6 +5,7 @@ const Product = require('../models/Product.js');
 const Category = require('../models/Category.js');
 const User = require('../models/User.js');
 const Order = require('../models/Order.js');
+const Contribution = require('../models/Contribution.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
@@ -302,6 +303,9 @@ router.post('/login', async (req, res) => {
             permissions: admin.permissions
         }, process.env.JWT_SECRET, { expiresIn: '7d' });
 
+        // Log login contribution
+        await Contribution.log(admin._id, 'login', `${admin.username} logged in`);
+
         res.json({
             token,
             admin: {
@@ -405,6 +409,9 @@ router.post('/products', verifyAdmin, async (req, res) => {
         await product.save();
         await product.populate('category');
 
+        // Log contribution
+        await Contribution.log(req.admin.id, 'product_added', `Added product: ${product.name}`, { productId: product._id });
+
         console.log('Product saved successfully:', product._id);
         res.status(201).json(product);
     } catch (error) {
@@ -448,6 +455,9 @@ router.put('/products/:id', verifyAdmin, upload.single('image'), async (req, res
             return res.status(404).json({ message: 'Product not found' });
         }
 
+        // Log contribution
+        await Contribution.log(req.admin.id, 'product_updated', `Updated product: ${product.name}`, { productId: product._id });
+
         res.json(product);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -462,6 +472,9 @@ router.delete('/products/:id', verifyAdmin, async (req, res) => {
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
+
+        // Log contribution
+        await Contribution.log(req.admin.id, 'product_deleted', `Deleted product: ${product.name}`, { productId: product._id });
 
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
@@ -497,6 +510,9 @@ router.post('/categories', verifyAdmin, async (req, res) => {
 
         await category.save();
 
+        // Log contribution
+        await Contribution.log(req.admin.id, 'category_added', `Added category: ${category.name}`, { categoryId: category._id });
+
         console.log('Category saved successfully:', category._id);
         res.status(201).json(category);
     } catch (error) {
@@ -531,6 +547,9 @@ router.put('/categories/:id', verifyAdmin, upload.single('image'), async (req, r
             return res.status(404).json({ message: 'Category not found' });
         }
 
+        // Log contribution
+        await Contribution.log(req.admin.id, 'category_updated', `Updated category: ${category.name}`, { categoryId: category._id });
+
         res.json(category);
     } catch (error) {
         console.error('Error updating category:', error);
@@ -553,6 +572,9 @@ router.delete('/categories/:id', verifyAdmin, async (req, res) => {
         if (!category) {
             return res.status(404).json({ message: 'Category not found' });
         }
+
+        // Log contribution
+        await Contribution.log(req.admin.id, 'category_deleted', `Deleted category: ${category.name}`, { categoryId: category._id });
 
         res.json({ message: 'Category deleted successfully' });
     } catch (error) {
@@ -586,6 +608,9 @@ router.put('/users/:id', verifyAdmin, async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
+        // Log contribution
+        await Contribution.log(req.admin.id, 'user_updated', `Updated user: ${user.name}`, { userId: user._id });
+
         res.json({
             message: 'User updated successfully',
             user: {
@@ -608,6 +633,9 @@ router.delete('/users/:id', verifyAdmin, async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: 'User not found' });
         }
+
+        // Log contribution
+        await Contribution.log(req.admin.id, 'user_deleted', `Deleted user: ${user.name}`, { userId: user._id });
 
         res.json({ message: 'User deleted successfully' });
     } catch (error) {
@@ -668,6 +696,9 @@ router.put('/orders/:id', verifyAdmin, async (req, res) => {
             return res.status(404).json({ message: 'Order not found' });
         }
 
+        // Log contribution
+        await Contribution.log(req.admin.id, 'order_updated', `Updated order #${order.orderNumber || order._id} to ${status}`, { orderId: order._id, status });
+
         res.json({
             message: 'Order updated successfully',
             order
@@ -682,6 +713,10 @@ router.delete('/orders/:id', verifyAdmin, async (req, res) => {
     try {
         const order = await Order.findByIdAndDelete(req.params.id);
         if (!order) return res.status(404).json({ message: 'Order not found' });
+
+        // Log contribution
+        await Contribution.log(req.admin.id, 'order_deleted', `Deleted order #${order.orderNumber || order._id}`, { orderId: order._id });
+
         res.json({ message: 'Order deleted successfully' });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -1062,6 +1097,123 @@ router.put('/wallets/:userId', verifyWalletPermission, async (req, res) => {
             newBalance: user.walletBalance,
             user: { id: user._id, name: user.name, email: user.email }
         });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// ============ CONTRIBUTION TRACKING ============
+
+// Get my contributions
+router.get('/contributions/me', verifyAdmin, async (req, res) => {
+    try {
+        const { days = 7 } = req.query;
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - parseInt(days));
+
+        const contributions = await Contribution.find({
+            admin: req.admin.id,
+            createdAt: { $gte: startDate }
+        }).sort({ createdAt: -1 });
+
+        // Group by day for chart
+        const dailyStats = {};
+        for (let i = 0; i < parseInt(days); i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateKey = date.toISOString().split('T')[0];
+            dailyStats[dateKey] = 0;
+        }
+
+        contributions.forEach(c => {
+            const dateKey = c.createdAt.toISOString().split('T')[0];
+            if (dailyStats[dateKey] !== undefined) {
+                dailyStats[dateKey]++;
+            }
+        });
+
+        // Convert to array for chart
+        const chartData = Object.entries(dailyStats)
+            .map(([date, count]) => ({ date, count }))
+            .reverse();
+
+        res.json({
+            contributions,
+            chartData,
+            total: contributions.length
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Get all contributions (super admin only)
+router.get('/contributions/all', verifySuperAdmin, async (req, res) => {
+    try {
+        const { days = 7, adminId } = req.query;
+        const startDate = new Date();
+        startDate.setDate(startDate.getDate() - parseInt(days));
+
+        const query = { createdAt: { $gte: startDate } };
+        if (adminId) {
+            query.admin = adminId;
+        }
+
+        const contributions = await Contribution.find(query)
+            .populate('admin', 'username email role')
+            .sort({ createdAt: -1 });
+
+        // Group by admin for overview
+        const adminStats = {};
+        contributions.forEach(c => {
+            const adminKey = c.admin?._id?.toString() || 'unknown';
+            if (!adminStats[adminKey]) {
+                adminStats[adminKey] = {
+                    admin: c.admin,
+                    count: 0,
+                    actions: {}
+                };
+            }
+            adminStats[adminKey].count++;
+            adminStats[adminKey].actions[c.action] = (adminStats[adminKey].actions[c.action] || 0) + 1;
+        });
+
+        // Group by day for chart
+        const dailyStats = {};
+        for (let i = 0; i < parseInt(days); i++) {
+            const date = new Date();
+            date.setDate(date.getDate() - i);
+            const dateKey = date.toISOString().split('T')[0];
+            dailyStats[dateKey] = 0;
+        }
+
+        contributions.forEach(c => {
+            const dateKey = c.createdAt.toISOString().split('T')[0];
+            if (dailyStats[dateKey] !== undefined) {
+                dailyStats[dateKey]++;
+            }
+        });
+
+        const chartData = Object.entries(dailyStats)
+            .map(([date, count]) => ({ date, count }))
+            .reverse();
+
+        res.json({
+            contributions,
+            chartData,
+            adminStats: Object.values(adminStats),
+            total: contributions.length
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Get all admins for dropdown (super admin)
+router.get('/contributions/admins', verifySuperAdmin, async (req, res) => {
+    try {
+        const admins = await Admin.find({}, 'username email role');
+        res.json(admins);
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
