@@ -1,6 +1,6 @@
 {
   "rewrites": [
-    { "source": "/api/(.*)", "destination": "https://expressbasket.onrender.com/api/$1" },
+    { "source": "/api/(.*)", "destination": "https://expressbasket-saqp.onrender.com/api/$1" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
