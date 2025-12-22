@@ -432,6 +432,10 @@ router.post('/products', verifyAdminWithWriteProtection, async (req, res) => {
         // Log contribution
         await Contribution.log(req.admin.id, 'product_added', `Added product: ${product.name}`, { productId: product._id });
 
+        // Broadcast to all connected clients
+        const { broadcastProductUpdate } = require('../socketHandler.js');
+        broadcastProductUpdate('created', product);
+
         console.log('Product saved successfully:', product._id);
         res.status(201).json(product);
     } catch (error) {
@@ -478,6 +482,10 @@ router.put('/products/:id', verifyAdminWithWriteProtection, upload.single('image
         // Log contribution
         await Contribution.log(req.admin.id, 'product_updated', `Updated product: ${product.name}`, { productId: product._id });
 
+        // Broadcast to all connected clients
+        const { broadcastProductUpdate } = require('../socketHandler.js');
+        broadcastProductUpdate('updated', product);
+
         res.json(product);
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -495,6 +503,10 @@ router.delete('/products/:id', verifyAdminWithWriteProtection, async (req, res) 
 
         // Log contribution
         await Contribution.log(req.admin.id, 'product_deleted', `Deleted product: ${product.name}`, { productId: product._id });
+
+        // Broadcast to all connected clients
+        const { broadcastProductUpdate } = require('../socketHandler.js');
+        broadcastProductUpdate('deleted', { _id: product._id, name: product.name });
 
         res.json({ message: 'Product deleted successfully' });
     } catch (error) {
@@ -532,6 +544,10 @@ router.post('/categories', verifyAdminWithWriteProtection, async (req, res) => {
 
         // Log contribution
         await Contribution.log(req.admin.id, 'category_added', `Added category: ${category.name}`, { categoryId: category._id });
+
+        // Broadcast to all connected clients
+        const { broadcastCategoryUpdate } = require('../socketHandler.js');
+        broadcastCategoryUpdate('created', category);
 
         console.log('Category saved successfully:', category._id);
         res.status(201).json(category);
@@ -812,6 +828,10 @@ router.put('/orders/:id', verifyAdminWithWriteProtection, async (req, res) => {
 
         // Log contribution
         await Contribution.log(req.admin.id, 'order_updated', `Updated order #${order.orderNumber || order._id} to ${status}`, { orderId: order._id, status });
+
+        // Broadcast to the specific user
+        const { broadcastOrderUpdate } = require('../socketHandler.js');
+        broadcastOrderUpdate(order.userId._id, 'status_changed', order);
 
         res.json({
             message: 'Order updated successfully',

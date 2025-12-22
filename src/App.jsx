@@ -19,6 +19,7 @@ import ForgotPassword from './pages/client/ForgotPassword.jsx';
 import ResetPassword from './pages/client/ResetPassword.jsx';
 import OrderTracking from './pages/client/OrderTracking.jsx';
 import ViewBill from './pages/client/ViewBill.jsx';
+import Gamification from './pages/client/Gamification.jsx';
 
 // Admin Pages
 import AdminLogin from './pages/admin/AdminLogin.jsx';
@@ -110,6 +111,7 @@ function App() {
                   <Route path="/forgot-password" element={<ClientRoute maintenanceMode={maintenanceMode}><ForgotPassword /></ClientRoute>} />
                   <Route path="/reset-password/:token" element={<ClientRoute maintenanceMode={maintenanceMode}><ResetPassword /></ClientRoute>} />
                   <Route path="/profile" element={<ClientRoute maintenanceMode={maintenanceMode}><Layout><Profile /></Layout></ClientRoute>} />
+                  <Route path="/gamification" element={<ClientRoute maintenanceMode={maintenanceMode}><Layout><Gamification /></Layout></ClientRoute>} />
                   <Route path="/track-order/:orderId" element={<ClientRoute maintenanceMode={maintenanceMode}><Layout><OrderTracking /></Layout></ClientRoute>} />
                   <Route path="/bill/:orderId" element={<ClientRoute maintenanceMode={maintenanceMode}><ViewBill /></ClientRoute>} />
 

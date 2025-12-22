@@ -14,5 +14,26 @@ export default defineConfig({
         changeOrigin: true,
       }
     }
+  },
+  build: {
+    // Disable source maps in production to hide source code
+    sourcemap: false,
+    // Minify code to obfuscate
+    minify: 'terser',
+    terserOptions: {
+      compress: {
+        // Remove console.log in production
+        drop_console: true,
+        drop_debugger: true,
+      },
+    },
+    // Disable reporting chunk size warnings
+    chunkSizeWarningLimit: 1000,
+    rollupOptions: {
+      output: {
+        // Obfuscate file names
+        manualChunks: undefined,
+      }
+    }
   }
 });

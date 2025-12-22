@@ -3,6 +3,7 @@ import { Link, NavLink } from 'react-router-dom';
 import { useCart } from '../context/CartContext.jsx';
 import { useTheme } from '../context/ThemeContext.jsx';
 import { useUser } from '../context/UserContext.jsx';
+import { Gamepad2 } from 'lucide-react';
 import './Header.css';
 
 const Header = () => {
@@ -57,6 +58,9 @@ const Header = () => {
               <i className="expDel_shopping_cart"></i> Cart
               {cartCount > 0 && <span className="cart-count">{cartCount}</span>}
             </NavLink>
+            <NavLink to="/gamification" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
+              <Gamepad2 size={18} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '4px' }} /> Rewards
+            </NavLink>
             <NavLink to="/profile" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
               <i className="expDel_user"></i> Profile
             </NavLink>
@@ -85,6 +89,7 @@ const Header = () => {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             <i className={`expDel ${mobileMenuOpen ? 'times' : 'bars'}`}></i>
+            <span className="menu-text">Menu</span>
           </button>
 
           {/* Mobile Navigation */}
@@ -104,6 +109,9 @@ const Header = () => {
             </NavLink>
             <NavLink to="/cart" onClick={() => setMobileMenuOpen(false)}>
               <i className="expDel_shopping_cart"></i> Cart {cartCount > 0 && `(${cartCount})`}
+            </NavLink>
+            <NavLink to="/gamification" onClick={() => setMobileMenuOpen(false)}>
+              <Gamepad2 size={18} style={{ display: 'inline-block', verticalAlign: 'middle', marginRight: '6px' }} /> Rewards
             </NavLink>
             <NavLink to="/profile" onClick={() => setMobileMenuOpen(false)}>
               <i className="expDel_user"></i> Profile

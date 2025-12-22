@@ -213,6 +213,55 @@ router.post('/order', authenticateToken, async (req, res) => {
 
         await order.save();
 
+        // ===== GAMIFICATION: Award points for order =====
+        try {
+            let gamification = await Gamification.findOne({ userId: req.user.userId });
+            if (!gamification) {
+                gamification = new Gamification({ userId: req.user.userId });
+            }
+
+            // Calculate points: 10 points per ₹100 spent
+            const pointsEarned = Math.floor(totalAmount / 100) * 10;
+            await gamification.addPoints(pointsEarned, `Order placed (₹${totalAmount})`, order._id);
+
+            // Update stats
+            gamification.totalOrders += 1;
+            gamification.totalSpent += totalAmount;
+
+            // Check for achievements
+            const hour = new Date().getHours();
+
+            // First purchase achievement
+            if (gamification.totalOrders === 1) {
+                gamification.checkAchievement('first_purchase', ACHIEVEMENTS.first_purchase);
+            }
+
+            // Early bird achievement (before 7 AM)
+            if (hour < 7) {
+                gamification.checkAchievement('early_bird', ACHIEVEMENTS.early_bird);
+            }
+
+            // Night owl achievement (after 10 PM)
+            if (hour >= 22) {
+                gamification.checkAchievement('night_owl', ACHIEVEMENTS.night_owl);
+            }
+
+            // Century club achievement (₹10,000 total spent)
+            if (gamification.totalSpent >= 10000) {
+                gamification.checkAchievement('century_club', ACHIEVEMENTS.century_club);
+            }
+
+            // VIP shopper achievement (50 orders)
+            if (gamification.totalOrders >= 50) {
+                gamification.checkAchievement('vip_shopper', ACHIEVEMENTS.vip_shopper);
+            }
+
+            await gamification.save();
+        } catch (gamificationError) {
+            console.error('Gamification error:', gamificationError);
+            // Don't fail the order if gamification fails
+        }
+
         res.status(201).json({
             message: 'Order placed successfully',
             order: {
@@ -789,14 +838,19 @@ router.post('/forgot-password', async (req, res) => {
     try {
         const { email } = req.body;
 
+        console.log('🔐 Password reset request received for:', email);
+
         if (!email) {
             return res.status(400).json({ message: 'Email is required' });
         }
 
         const user = await User.findOne({ email });
         if (!user) {
+            console.log('❌ No user found with email:', email);
             return res.status(404).json({ message: 'No account found with this email' });
         }
+
+        console.log('✅ User found:', user.name);
 
         // Generate reset token
         const resetToken = crypto.randomBytes(32).toString('hex');
@@ -806,19 +860,27 @@ router.post('/forgot-password', async (req, res) => {
         user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
 
         await user.save();
+        console.log('✅ Reset token saved to database');
 
         // Send email
+        console.log('📧 Attempting to send password reset email...');
         const emailResult = await sendPasswordResetEmail(email, resetToken, user.name);
 
         if (!emailResult.success) {
-            return res.status(500).json({ message: 'Failed to send email. Please try again.' });
+            console.error('❌ Email sending failed:', emailResult.error);
+            return res.status(500).json({
+                message: emailResult.error || 'Failed to send email. Please try again.',
+                details: emailResult.details
+            });
         }
 
+        console.log('✅ Password reset email sent successfully!');
         res.json({
             message: 'Password reset email sent successfully! Check your inbox.',
             email: email
         });
     } catch (error) {
+        console.error('❌ Forgot password error:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -1381,7 +1443,7 @@ router.put('/admin/settings/tracking', authenticateAdminToken, async (req, res) 
         const Admin = require('../models/Admin.js');
         const admin = await Admin.findById(req.admin.id);
 
-        if (!admin || admin.role !== 'superadmin') {
+        if (!admin || admin.role !== 'super_admin') {
             return res.status(403).json({ message: 'Only super admin can toggle tracking' });
         }
 
@@ -1575,6 +1637,325 @@ router.post('/admin/server/maintenance', authenticateAdminToken, async (req, res
             status: settings.maintenanceMode ? 'offline' : 'online',
             updatedAt: settings.updatedAt
         });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// ============== GAMIFICATION SYSTEM ==============
+
+const Gamification = require('../models/Gamification.js');
+
+// Achievement definitions
+const ACHIEVEMENTS = {
+    first_purchase: {
+        id: 'first_purchase',
+        name: 'First Purchase',
+        description: 'Complete your first order',
+        icon: 'ShoppingBag',
+        points: 50,
+        category: 'shopping'
+    },
+    century_club: {
+        id: 'century_club',
+        name: 'Century Club',
+        description: 'Spend ₹10,000 total',
+        icon: 'Target',
+        points: 200,
+        category: 'shopping'
+    },
+    frequent_shopper: {
+        id: 'frequent_shopper',
+        name: 'Frequent Shopper',
+        description: '10 orders in a month',
+        icon: 'TrendingUp',
+        points: 150,
+        category: 'shopping'
+    },
+    vip_shopper: {
+        id: 'vip_shopper',
+        name: 'VIP Shopper',
+        description: '50 total orders',
+        icon: 'Crown',
+        points: 300,
+        category: 'shopping'
+    },
+    week_warrior: {
+        id: 'week_warrior',
+        name: 'Week Warrior',
+        description: '7-day check-in streak',
+        icon: 'CalendarCheck',
+        points: 100,
+        category: 'engagement'
+    },
+    month_master: {
+        id: 'month_master',
+        name: 'Month Master',
+        description: '30-day check-in streak',
+        icon: 'Flame',
+        points: 500,
+        category: 'engagement'
+    },
+    review_expert: {
+        id: 'review_expert',
+        name: 'Review Expert',
+        description: 'Write 10 reviews',
+        icon: 'Star',
+        points: 150,
+        category: 'engagement'
+    },
+    early_bird: {
+        id: 'early_bird',
+        name: 'Early Bird',
+        description: 'Order before 7 AM',
+        icon: 'Sunrise',
+        points: 50,
+        category: 'special'
+    },
+    night_owl: {
+        id: 'night_owl',
+        name: 'Night Owl',
+        description: 'Order after 10 PM',
+        icon: 'Moon',
+        points: 50,
+        category: 'special'
+    }
+};
+
+// Reward catalog
+const REWARDS = [
+    { id: 'discount_10', name: '₹10 Discount Coupon', pointsCost: 100, value: 10, type: 'discount' },
+    { id: 'discount_30', name: '₹30 Discount Coupon', pointsCost: 250, value: 30, type: 'discount' },
+    { id: 'discount_75', name: '₹75 Discount Coupon', pointsCost: 500, value: 75, type: 'discount' },
+    { id: 'discount_200', name: '₹200 Discount Coupon', pointsCost: 1000, value: 200, type: 'discount' },
+    { id: 'free_delivery_month', name: 'Free Delivery for a Month', pointsCost: 2000, value: 0, type: 'free_delivery' },
+    { id: 'premium_upgrade', name: 'Premium Membership Upgrade', pointsCost: 5000, value: 0, type: 'premium' }
+];
+
+// Initialize gamification for user
+const initializeGamification = async (userId) => {
+    let gamification = await Gamification.findOne({ userId });
+
+    if (!gamification) {
+        gamification = new Gamification({ userId });
+        await gamification.save();
+    }
+
+    return gamification;
+};
+
+// Daily check-in
+router.post('/gamification/check-in', authenticateToken, async (req, res) => {
+    try {
+        let gamification = await initializeGamification(req.user.userId);
+
+        const result = gamification.dailyCheckIn();
+
+        // If check-in failed (already checked in today), return early
+        if (!result.success) {
+            return res.json(result);
+        }
+
+        // Check for streak achievements
+        if (gamification.checkInStreak === 7) {
+            gamification.checkAchievement('week_warrior', ACHIEVEMENTS.week_warrior);
+        }
+        if (gamification.checkInStreak === 30) {
+            gamification.checkAchievement('month_master', ACHIEVEMENTS.month_master);
+        }
+
+        // Save once after all operations
+        await gamification.save();
+
+        res.json({
+            success: result.success,
+            message: result.message || `Checked in! Earned ${result.points} points`,
+            points: result.points,
+            streak: result.streak,
+            totalPoints: gamification.points,
+            level: gamification.level,
+            levelName: gamification.levelName
+        });
+    } catch (error) {
+        console.error('Check-in error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Get user's gamification stats
+router.get('/gamification/stats', authenticateToken, async (req, res) => {
+    try {
+        let gamification = await initializeGamification(req.user.userId);
+
+        // Calculate progress to next level
+        const levelThresholds = [0, 101, 301, 601, 1001, 1501];
+        const currentLevelThreshold = levelThresholds[gamification.level - 1];
+        const nextLevelThreshold = levelThresholds[gamification.level] || 2000;
+        const progressToNextLevel = ((gamification.points - currentLevelThreshold) / (nextLevelThreshold - currentLevelThreshold)) * 100;
+
+        res.json({
+            points: gamification.points,
+            level: gamification.level,
+            levelName: gamification.levelName,
+            progressToNextLevel: Math.min(progressToNextLevel, 100),
+            nextLevelThreshold,
+            achievements: gamification.achievements,
+            achievementCount: gamification.achievements.length,
+            checkInStreak: gamification.checkInStreak,
+            lastCheckIn: gamification.lastCheckIn,
+            totalOrders: gamification.totalOrders,
+            totalSpent: gamification.totalSpent,
+            reviewsWritten: gamification.reviewsWritten,
+            pointHistory: gamification.pointHistory.slice(-10).reverse() // Last 10 transactions
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Get leaderboard
+router.get('/gamification/leaderboard', async (req, res) => {
+    try {
+        const { period = 'all' } = req.query;
+
+        let leaderboard;
+
+        if (period === 'all') {
+            // All-time leaderboard
+            leaderboard = await Gamification.find()
+                .sort({ points: -1 })
+                .limit(50)
+                .populate('userId', 'name email')
+                .select('userId points level levelName achievements');
+        } else if (period === 'monthly') {
+            // Monthly leaderboard (points earned this month)
+            const startOfMonth = new Date();
+            startOfMonth.setDate(1);
+            startOfMonth.setHours(0, 0, 0, 0);
+
+            const allGamification = await Gamification.find()
+                .populate('userId', 'name email');
+
+            leaderboard = allGamification.map(g => {
+                const monthlyPoints = g.pointHistory
+                    .filter(p => p.createdAt >= startOfMonth && p.type === 'earn')
+                    .reduce((sum, p) => sum + p.amount, 0);
+
+                return {
+                    userId: g.userId,
+                    points: monthlyPoints,
+                    level: g.level,
+                    levelName: g.levelName,
+                    achievements: g.achievements
+                };
+            })
+                .filter(g => g.points > 0)
+                .sort((a, b) => b.points - a.points)
+                .slice(0, 50);
+        } else if (period === 'weekly') {
+            // Weekly leaderboard
+            const startOfWeek = new Date();
+            startOfWeek.setDate(startOfWeek.getDate() - 7);
+            startOfWeek.setHours(0, 0, 0, 0);
+
+            const allGamification = await Gamification.find()
+                .populate('userId', 'name email');
+
+            leaderboard = allGamification.map(g => {
+                const weeklyPoints = g.pointHistory
+                    .filter(p => p.createdAt >= startOfWeek && p.type === 'earn')
+                    .reduce((sum, p) => sum + p.amount, 0);
+
+                return {
+                    userId: g.userId,
+                    points: weeklyPoints,
+                    level: g.level,
+                    levelName: g.levelName,
+                    achievements: g.achievements
+                };
+            })
+                .filter(g => g.points > 0)
+                .sort((a, b) => b.points - a.points)
+                .slice(0, 50);
+        }
+
+        res.json(leaderboard);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Get all achievements
+router.get('/gamification/achievements', async (req, res) => {
+    try {
+        res.json(Object.values(ACHIEVEMENTS));
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Get available rewards
+router.get('/gamification/rewards', async (req, res) => {
+    try {
+        res.json(REWARDS);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Redeem reward
+router.post('/gamification/redeem', authenticateToken, async (req, res) => {
+    try {
+        const { rewardId } = req.body;
+
+        const reward = REWARDS.find(r => r.id === rewardId);
+        if (!reward) {
+            return res.status(404).json({ message: 'Reward not found' });
+        }
+
+        let gamification = await initializeGamification(req.user.userId);
+
+        if (gamification.points < reward.pointsCost) {
+            return res.status(400).json({
+                message: 'Insufficient points',
+                required: reward.pointsCost,
+                current: gamification.points
+            });
+        }
+
+        // Set expiration date (30 days from now)
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + 30);
+
+        await gamification.redeemPoints(reward.pointsCost, {
+            ...reward,
+            expiresAt
+        });
+
+        res.json({
+            message: `Successfully redeemed ${reward.name}!`,
+            pointsRemaining: gamification.points,
+            reward: {
+                ...reward,
+                expiresAt
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Get user's redeemed rewards
+router.get('/gamification/my-rewards', authenticateToken, async (req, res) => {
+    try {
+        let gamification = await initializeGamification(req.user.userId);
+
+        // Filter out expired and used rewards
+        const activeRewards = gamification.redeemedRewards.filter(r => {
+            return !r.usedAt && (!r.expiresAt || new Date(r.expiresAt) > new Date());
+        });
+
+        res.json(activeRewards);
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }

@@ -310,6 +310,12 @@
   transform: scale(1.05);
 }
 
+.menu-text {
+  margin-left: 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
 /* ========== Mobile Navigation ========== */
 .mobile-nav {
   position: absolute;
@@ -408,16 +414,16 @@
   }
 
   .logo-text {
-    display: none;
+    font-size: 16px;
   }
 
   .logo a {
-    font-size: 20px;
+    font-size: 16px;
   }
 
   .rocket-icon {
-    width: 28px;
-    height: 28px;
+    width: 24px;
+    height: 24px;
   }
 
   .theme-toggle-animated {

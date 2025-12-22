@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from '../../utils/axios';
 import ProductCard from '../../components/ProductCard.jsx';
+import { useSocket } from '../../context/SocketContext';
 import './Home.css';
 
 const Home = () => {
@@ -11,10 +12,39 @@ const Home = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
+  const { socket } = useSocket() || {};
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  // Socket listeners for real-time updates
+  useEffect(() => {
+    if (!socket) return;
+
+    // Listen for product updates
+    const handleProductUpdate = (data) => {
+      console.log('Product updated:', data.action);
+      // Refetch featured products when any product changes
+      fetchData();
+    };
+
+    // Listen for category updates
+    const handleCategoryUpdate = (data) => {
+      console.log('Category updated:', data.action);
+      // Refetch categories when any category changes
+      fetchData();
+    };
+
+    socket.on('product_updated', handleProductUpdate);
+    socket.on('category_updated', handleCategoryUpdate);
+
+    // Cleanup listeners on unmount
+    return () => {
+      socket.off('product_updated', handleProductUpdate);
+      socket.off('category_updated', handleCategoryUpdate);
+    };
+  }, [socket]);
 
   const fetchData = async () => {
     try {

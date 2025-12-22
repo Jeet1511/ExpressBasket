@@ -5,25 +5,46 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api'
 
 axios.defaults.baseURL = API_BASE_URL;
 
-// Add request interceptor for debugging
+// Show errors in a user-friendly way without exposing file paths
+const showError = (status, endpoint, errorData) => {
+  const message = `API Error ${status}: ${endpoint}`;
+  const details = errorData?.message || 'Request failed';
+
+  // Log to console for debugging (only errors)
+  console.error(`❌ ${status} ${endpoint}`, details);
+
+  // Optional: Show toast notification (if you have a toast system)
+  // You can uncomment this if you want visual error notifications
+  // toast.error(`${message}\n${details}`);
+};
+
+// Add request interceptor (silent for success)
 axios.interceptors.request.use(
   (config) => {
-    console.log('API Request:', config.method?.toUpperCase(), config.url);
+    // Silent - no logging for requests
     return config;
   },
   (error) => {
+    console.error('❌ Request failed to send');
     return Promise.reject(error);
   }
 );
 
-// Add response interceptor for debugging
+// Add response interceptor (log only errors)
 axios.interceptors.response.use(
   (response) => {
-    console.log('API Response:', response.status, response.config.url);
+    // Silent for successful responses
+    // You can monitor these in the Network tab
     return response;
   },
   (error) => {
-    console.error('API Error:', error.response?.status, error.response?.data || error.message);
+    const endpoint = error.config?.url?.replace(/^.*\/api/, '/api') || 'unknown';
+    const status = error.response?.status || 'Network Error';
+    const errorData = error.response?.data;
+
+    // Show error details
+    showError(status, endpoint, errorData);
+
     return Promise.reject(error);
   }
 );

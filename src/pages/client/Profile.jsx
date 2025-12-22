@@ -788,15 +788,38 @@ const Profile = () => {
                 </div>
 
                 {/* Loyalty Badge Card */}
-                <div className="stat-card loyalty-card" onClick={() => setShowBadgeModal(true)}>
+                <div
+                  className="stat-card loyalty-card"
+                  onClick={() => setShowBadgeModal(true)}
+                  style={{
+                    background: (() => {
+                      const badgeType = stats.loyaltyBadge?.type || 'none';
+                      switch (badgeType) {
+                        case 'platinum':
+                          return 'linear-gradient(135deg, #a78bfa, #8b5cf6)';
+                        case 'gold':
+                          return 'linear-gradient(135deg, #ffe066, #ffc107)';
+                        case 'silver':
+                          return 'linear-gradient(135deg, #e0e0e0, #bdbdbd)';
+                        default:
+                          return 'linear-gradient(135deg, #6c757d, #495057)';
+                      }
+                    })()
+                  }}
+                >
                   <div className="stat-icon loyalty">
                     <svg className="icon-spin-slow" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                   </div>
                   <div className="stat-content">
-                    <div className="stat-value" style={{ textTransform: 'capitalize' }}>
+                    <div className="stat-value" style={{
+                      textTransform: 'capitalize',
+                      color: (stats.loyaltyBadge?.type === 'platinum' || stats.loyaltyBadge?.type === 'none') ? 'white' : '#333'
+                    }}>
                       {stats.loyaltyBadge?.type === 'none' ? 'None' : stats.loyaltyBadge?.type || 'None'}
                     </div>
-                    <div className="stat-label">Loyalty Badge</div>
+                    <div className="stat-label" style={{
+                      color: (stats.loyaltyBadge?.type === 'platinum' || stats.loyaltyBadge?.type === 'none') ? 'rgba(255, 255, 255, 0.9)' : '#555'
+                    }}>Loyalty Badge</div>
                     {stats.loyaltyBadge?.type && stats.loyaltyBadge.type !== 'none' && stats.loyaltyBadge.expiresAt && (
                       <div style={{
                         fontSize: '11px',

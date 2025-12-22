@@ -11,19 +11,22 @@ const AuthContainer = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--gradient-primary);
+  background: ${props => props.theme === 'dark' ? '#111827' : '#f3f4f6'};
   padding: 20px;
   position: relative;
+  transition: background 0.3s ease;
 `;
 
 const AuthBox = styled.div`
-  background: var(--card-bg);
+  background: ${props => props.theme === 'dark' ? '#1f2937' : 'white'};
   border-radius: 20px;
-  box-shadow: 0 15px 35px var(--shadow-dark);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, ${props => props.theme === 'dark' ? '0.3' : '0.08'});
   width: 100%;
-  max-width: 400px;
+  max-width: 450px;
   padding: 40px;
   position: relative;
+  border: 1px solid ${props => props.theme === 'dark' ? '#374151' : '#e5e7eb'};
+  transition: all 0.3s ease;
 `;
 
 const ThemeToggle = styled.button`
@@ -57,37 +60,37 @@ const ThemeToggle = styled.button`
 const AuthTabs = styled.div`
   display: flex;
   margin-bottom: 30px;
-  border-bottom: 2px solid var(--border-light);
+  background: ${props => props.theme === 'dark' ? '#374151' : '#f3f4f6'};
+  border-radius: 10px;
+  padding: 4px;
+  transition: background 0.3s ease;
 `;
 
 const AuthTab = styled.button`
   flex: 1;
-  padding: 15px;
-  background: none;
+  padding: 12px 20px;
+  background: ${props => props.$active ? '#10b981' : 'transparent'};
   border: none;
-  font-size: 18px;
+  font-size: 14px;
   font-weight: 600;
-  color: ${props => props.active ? '#667eea' : 'var(--text-secondary)'};
-  border-bottom: 2px solid ${props => props.active ? '#667eea' : 'transparent'};
+  color: ${props => props.$active ? 'white' : (props.theme === 'dark' ? '#9ca3af' : '#6b7280')};
+  border-radius: 8px;
   cursor: pointer;
   transition: all 0.3s;
-  text-shadow: ${props => props.active ? '0 0 10px rgba(102, 126, 234, 0.5)' : 'none'};
+  box-shadow: ${props => props.$active ? '0 2px 8px rgba(16, 185, 129, 0.3)' : 'none'};
   
   &:hover {
-    color: #667eea;
-    text-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+    color: ${props => props.$active ? 'white' : '#10b981'};
   }
 `;
 
 const AuthTitle = styled.h2`
   text-align: center;
-  margin-bottom: 30px;
-  color: white;
+  margin-bottom: 25px;
+  color: ${props => props.theme === 'dark' ? 'white' : '#1f2937'};
   font-weight: 700;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  padding: 12px 20px;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+  font-size: 24px;
+  transition: color 0.3s ease;
 `;
 
 const AuthForm = styled.form`
@@ -101,62 +104,58 @@ const FormGroup = styled.div`
 `;
 
 const FormLabel = styled.label`
-  display: inline-block;
+  display: block;
   margin-bottom: 8px;
-  color: white;
-  font-weight: 700;
-  background: linear-gradient(135deg, #667eea, #764ba2);
-  padding: 5px 14px;
-  border-radius: 6px;
-  box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-  font-size: 13px;
+  color: ${props => props.theme === 'dark' ? '#e5e7eb' : '#374151'};
+  font-weight: 600;
+  font-size: 14px;
+  transition: color 0.3s ease;
 `;
 
 const FormInput = styled.input`
   width: 100%;
-  padding: 14px 16px;
-  border: 2px solid var(--input-border);
-  border-radius: 10px;
-  font-size: 16px;
+  padding: 12px 16px;
+  border: 2px solid ${props => props.theme === 'dark' ? '#4b5563' : '#e5e7eb'};
+  border-radius: 8px;
+  font-size: 14px;
   transition: all 0.3s ease;
-  background-color: var(--input-bg) !important;
-  color: var(--input-text) !important;
+  background: ${props => props.theme === 'dark' ? '#374151' : '#f9fafb'};
+  color: ${props => props.theme === 'dark' ? 'white' : '#1f2937'};
   
   &::placeholder {
-    color: #667eea !important;
-    opacity: 0.8;
-    font-weight: 500;
+    color: ${props => props.theme === 'dark' ? '#9ca3af' : '#9ca3af'};
   }
   
   &:focus {
     outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.15);
+    border-color: #10b981;
+    background: ${props => props.theme === 'dark' ? '#4b5563' : 'white'};
+    box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
   }
 `;
 
 
 const SubmitButton = styled.button`
   width: 100%;
-  padding: 15px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  padding: 14px;
+  background: #10b981;
   color: white;
   border: none;
-  border-radius: 10px;
-  font-size: 18px;
+  border-radius: 8px;
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s;
   margin-top: 10px;
-  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
   
   &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    background: #059669;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
   }
   
   &:disabled {
-    background: linear-gradient(135deg, #a0a0a0, #808080);
+    background: #9ca3af;
     cursor: not-allowed;
     box-shadow: none;
   }
@@ -347,8 +346,8 @@ const LoginSignup = () => {
   };
 
   return (
-    <AuthContainer>
-      <AuthBox>
+    <AuthContainer theme={theme}>
+      <AuthBox theme={theme}>
         <ThemeToggle onClick={toggleTheme} aria-label="Toggle theme">
           {theme === 'light' ? (
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -370,13 +369,13 @@ const LoginSignup = () => {
         </ThemeToggle>
         <AuthTabs>
           <AuthTab
-            active={isLogin}
+            $active={isLogin}
             onClick={() => setIsLogin(true)}
           >
             Login
           </AuthTab>
           <AuthTab
-            active={!isLogin}
+            $active={!isLogin}
             onClick={() => setIsLogin(false)}
           >
             Sign Up
@@ -391,13 +390,14 @@ const LoginSignup = () => {
           {!isLogin && (
             <>
               <FormGroup>
-                <FormLabel>Full Name</FormLabel>
+                <FormLabel theme={theme}>Full Name</FormLabel>
                 <FormInput
                   type="text"
                   name="name"
                   value={formData.name}
                   onChange={handleChange}
                   placeholder="Enter full name"
+                  theme={theme}
                 />
                 {errors.name && <ErrorMessage>{errors.name}</ErrorMessage>}
               </FormGroup>

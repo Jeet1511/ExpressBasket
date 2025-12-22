@@ -4,6 +4,7 @@ import { useCart } from '../../context/CartContext.jsx';
 import { useUser } from '../../context/UserContext.jsx';
 import axios from '../../utils/axios';
 import Swal from 'sweetalert2';
+import { Ticket } from 'lucide-react';
 
 const CartContainer = styled.div`
   max-width: 1200px;
@@ -127,9 +128,9 @@ const SummaryRow = styled.div`
   display: flex;
   justify-content: space-between;
   margin-bottom: 15px;
-  font-size: ${props => props.total ? '18px' : '16px'};
-  font-weight: ${props => props.total ? '600' : '400'};
-  color: ${props => props.total ? 'var(--text-color)' : 'var(--text-secondary)'};
+  font-size: ${props => props.$total ? '18px' : '16px'};
+  font-weight: ${props => props.$total ? '600' : '400'};
+  color: ${props => props.$total ? 'var(--text-color)' : 'var(--text-secondary)'};
 `;
 
 const EmptyCart = styled.div`
@@ -246,11 +247,15 @@ const Cart = () => {
   const [friendError, setFriendError] = useState('');
   const [previousOrders, setPreviousOrders] = useState([]);
   const [reorderLoading, setReorderLoading] = useState(null);
+  const [availableCoupons, setAvailableCoupons] = useState([]);
+  const [selectedCoupon, setSelectedCoupon] = useState(null);
+  const [couponDiscount, setCouponDiscount] = useState(0);
 
   useEffect(() => {
     if (user) {
       fetchWalletBalance();
       fetchPreviousOrders();
+      fetchAvailableCoupons();
     }
   }, [user]);
 
@@ -292,6 +297,34 @@ const Cart = () => {
     } catch (error) {
       console.error('Error fetching wallet:', error);
     }
+  };
+
+  const fetchAvailableCoupons = async () => {
+    try {
+      const token = localStorage.getItem('userToken');
+      const response = await axios.get('/gamification/my-rewards', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      // Filter only discount coupons that are not used and not expired
+      const validCoupons = response.data.filter(coupon =>
+        coupon.type === 'discount' &&
+        !coupon.usedAt &&
+        new Date(coupon.expiresAt) > new Date()
+      );
+      setAvailableCoupons(validCoupons);
+    } catch (error) {
+      console.error('Error fetching coupons:', error);
+    }
+  };
+
+  const applyCoupon = (coupon) => {
+    setSelectedCoupon(coupon);
+    setCouponDiscount(coupon.value);
+  };
+
+  const removeCoupon = () => {
+    setSelectedCoupon(null);
+    setCouponDiscount(0);
   };
 
   const handleQuantityChange = (productId, newQuantity) => {
@@ -480,7 +513,7 @@ const Cart = () => {
     deliveryCharge = 0;
   }
 
-  const grandTotal = discountedTotal + deliveryCharge;
+  const grandTotal = discountedTotal + deliveryCharge - couponDiscount;
 
   if (cart.length === 0) {
     return (
@@ -762,7 +795,106 @@ const Cart = () => {
             </div>
           )}
 
-          <SummaryRow total>
+          {/* Coupon Section */}
+          {user && availableCoupons.length > 0 && (
+            <div style={{
+              background: 'var(--input-bg)',
+              padding: '15px',
+              borderRadius: '8px',
+              marginBottom: '15px',
+              border: '2px dashed var(--btn-primary)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <Ticket size={18} />
+                <strong style={{ color: 'var(--text-color)' }}>Apply Coupon</strong>
+              </div>
+
+              {selectedCoupon ? (
+                <div style={{
+                  background: 'rgba(76, 175, 80, 0.1)',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  border: '1px solid #4CAF50'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <div style={{ fontWeight: 'bold', color: '#4CAF50', marginBottom: '4px' }}>
+                        ✅ {selectedCoupon.name}
+                      </div>
+                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                        Saving ₹{selectedCoupon.value}
+                      </div>
+                    </div>
+                    <button
+                      onClick={removeCoupon}
+                      style={{
+                        background: '#f44336',
+                        color: 'white',
+                        border: 'none',
+                        padding: '6px 12px',
+                        borderRadius: '4px',
+                        cursor: 'pointer',
+                        fontSize: '12px'
+                      }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  {availableCoupons.map((coupon, index) => (
+                    <div
+                      key={index}
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        padding: '8px',
+                        background: 'var(--card-bg)',
+                        borderRadius: '6px',
+                        border: '1px solid var(--border-color)'
+                      }}
+                    >
+                      <div>
+                        <div style={{ fontWeight: '600', color: 'var(--text-color)', fontSize: '13px' }}>
+                          {coupon.name}
+                        </div>
+                        <div style={{ fontSize: '11px', color: '#4CAF50' }}>
+                          Save ₹{coupon.value}
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => applyCoupon(coupon)}
+                        style={{
+                          background: 'var(--btn-primary)',
+                          color: 'white',
+                          border: 'none',
+                          padding: '6px 16px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          fontSize: '12px',
+                          fontWeight: '600'
+                        }}
+                      >
+                        Apply
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Coupon Discount Row */}
+          {selectedCoupon && (
+            <SummaryRow style={{ color: '#4CAF50' }}>
+              <span><Ticket size={16} style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }} /> Coupon Discount</span>
+              <span>-₹{couponDiscount.toFixed(2)}</span>
+            </SummaryRow>
+          )}
+
+          <SummaryRow $total>
             <span>Total</span>
             <span>₹{grandTotal.toFixed(2)}</span>
           </SummaryRow>

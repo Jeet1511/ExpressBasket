@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import styled from 'styled-components';
 import axios from '../../utils/axios';
 import ProductCard from '../../components/ProductCard.jsx';
+import { useSocket } from '../../context/SocketContext';
 
 const StoreContainer = styled.div`
   max-width: 1200px;
@@ -95,12 +96,12 @@ const Pagination = styled.div`
 const PageButton = styled.button`
   padding: 8px 15px;
   border: 1px solid var(--border-color);
-  background: ${props => props.active ? 'var(--btn-primary)' : 'var(--card-bg)'};
-  color: ${props => props.active ? 'white' : 'var(--text-color)'};
+  background: ${props => props.$active ? 'var(--btn-primary)' : 'var(--card-bg)'};
+  color: ${props => props.$active ? 'white' : 'var(--text-color)'};
   border-radius: 5px;
   
   &:hover {
-    background-color: ${props => props.active ? 'var(--btn-primary-hover)' : 'var(--nav-link-hover)'};
+    background-color: ${props => props.$active ? 'var(--btn-primary-hover)' : 'var(--nav-link-hover)'};
   }
 `;
 
@@ -128,6 +129,7 @@ const Store = () => {
   const [sortBy, setSortBy] = useState('featured');
   const [currentPage, setCurrentPage] = useState(1);
   const [searchParams] = useSearchParams();
+  const { socket } = useSocket() || {};
   const productsPerPage = 12;
 
   useEffect(() => {
@@ -145,6 +147,32 @@ const Store = () => {
       setSearchTerm(searchParam);
     }
   }, [searchParams]);
+
+  // Socket listeners for real-time updates
+  useEffect(() => {
+    if (!socket) return;
+
+    // Listen for product updates
+    const handleProductUpdate = (data) => {
+      console.log('Product updated:', data.action);
+      fetchProducts();
+    };
+
+    // Listen for category updates
+    const handleCategoryUpdate = (data) => {
+      console.log('Category updated:', data.action);
+      fetchCategories();
+    };
+
+    socket.on('product_updated', handleProductUpdate);
+    socket.on('category_updated', handleCategoryUpdate);
+
+    // Cleanup listeners on unmount
+    return () => {
+      socket.off('product_updated', handleProductUpdate);
+      socket.off('category_updated', handleCategoryUpdate);
+    };
+  }, [socket]);
 
   const fetchProducts = async () => {
     try {
@@ -299,7 +327,7 @@ const Store = () => {
               {[...Array(totalPages)].map((_, index) => (
                 <PageButton
                   key={index + 1}
-                  active={currentPage === index + 1}
+                  $active={currentPage === index + 1}
                   onClick={() => setCurrentPage(index + 1)}
                 >
                   {index + 1}
