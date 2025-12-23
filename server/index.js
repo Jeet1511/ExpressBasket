@@ -40,16 +40,20 @@ const corsOptions = {
     if (allowedOrigins.length === 0 || allowedOrigins.indexOf(origin) !== -1) return callback(null, true);
     // Log blocked origins for easier debugging in Render logs
     console.warn(`CORS: blocked origin ${origin}`);
-    // Do not throw an error here — return false so request proceeds without CORS headers
-    return callback(null, false);
+    // Allow the request anyway - just log the warning
+    return callback(null, true);
   },
   credentials: true,
   optionsSuccessStatus: 200,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+  exposedHeaders: ['Content-Range', 'X-Content-Range']
 };
 
+// Apply CORS middleware FIRST - before any other middleware
 app.use(cors(corsOptions));
+
+// Handle preflight requests explicitly
 app.options('*', cors(corsOptions));
 
 // Initialize Socket.io with CORS
@@ -67,24 +71,6 @@ initSocketHandler(io);
 // Make io accessible in routes
 app.set('io', io);
 
-// Fallback middleware: ensure CORS headers are present even if cors() didn't run
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  if (!origin) return next();
-  if (allowedOrigins.indexOf('*') !== -1) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-  } else if (allowedOrigins.indexOf(origin) !== -1) {
-    res.setHeader('Access-Control-Allow-Origin', origin);
-  } else {
-    // not allowed origin — header intentionally not set
-    return next();
-  }
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type,Authorization');
-  if (req.method === 'OPTIONS') return res.sendStatus(200);
-  next();
-});
 // HTTP request logging for easier debugging in Render logs
 const morgan = require('morgan');
 app.use(morgan('combined'));
