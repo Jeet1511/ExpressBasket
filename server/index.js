@@ -14,7 +14,10 @@ const Routes = require('./routes/route.js');
 const productRoutes = require('./routes/productRoutes.js');
 const categoryRoutes = require('./routes/categoryRoutes.js');
 const adminRoutes = require('./routes/adminRoutes.js');
+const deliveryRoutes = require('./routes/delivery.routes.js');
+const faceRecognitionRoutes = require('./routes/faceRecognitionRoutes.js');
 const { initSocketHandler } = require('./socketHandler.js');
+// NOTE: faceRecognitionService disabled due to TensorFlow version conflicts
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -79,8 +82,14 @@ app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.resolve(__dirname, './uploads')));
 
 // Connect to MongoDB (fail fast so admin/login works reliably)
-Connection().then(() => {
+Connection().then(async () => {
   console.log('Database connected');
+
+  // NOTE: Server-side face recognition disabled due to TensorFlow version conflicts
+  // The client-side face recognition in FaceCapture.jsx will be used instead
+  // This is actually more reliable as face-api.js works best in browser environments
+  console.log('ℹ️ Face recognition uses client-side processing for better compatibility');
+
 }).catch((err) => {
   console.error('Database connection error:', err.message);
   process.exit(1);
@@ -102,6 +111,8 @@ app.use('/api', Routes);
 app.use('/api/products', productRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/admin/face-recognition', faceRecognitionRoutes);
+app.use('/api', deliveryRoutes);
 
 // Basic API info route
 app.get('/', (req, res) => {

@@ -1,0 +1,716 @@
+/* Orders Map - Professional Redesign */
+
+.orders-map-page {
+    padding: 24px;
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Loading State */
+.om-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    gap: 16px;
+}
+
+.om-spinner {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--border-color);
+    border-top-color: var(--btn-primary);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Header */
+.om-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.om-header-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.om-header-icon {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--btn-primary), #20c997);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.om-header-text h1 {
+    margin: 0;
+    font-size: 26px;
+    font-weight: 700;
+    color: var(--text-color);
+}
+
+.om-header-text p {
+    margin: 4px 0 0;
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.om-header-actions {
+    display: flex;
+    gap: 12px;
+}
+
+/* Buttons */
+.om-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.om-btn-primary {
+    background: linear-gradient(135deg, var(--btn-primary), #20c997);
+    color: white;
+    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+}
+
+.om-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+}
+
+.om-btn-secondary {
+    background: var(--nav-link-hover);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+}
+
+.om-btn-secondary:hover {
+    background: var(--border-color);
+}
+
+.om-btn-cancel {
+    background: var(--nav-link-hover);
+    color: var(--text-color);
+    width: 100%;
+    padding: 14px;
+}
+
+.om-btn-cancel:hover {
+    background: var(--border-color);
+}
+
+/* Stats Grid */
+.om-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 16px;
+    margin-bottom: 28px;
+}
+
+.om-stat-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 14px;
+    padding: 18px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    position: relative;
+    overflow: hidden;
+}
+
+.om-stat-card::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: var(--stat-color);
+    transform: scaleY(0);
+    transition: transform 0.3s ease;
+}
+
+.om-stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.om-stat-card:hover::before,
+.om-stat-card.active::before {
+    transform: scaleY(1);
+}
+
+.om-stat-card.active {
+    background: linear-gradient(135deg, var(--stat-color), color-mix(in srgb, var(--stat-color) 70%, #000));
+    border-color: transparent;
+}
+
+.om-stat-icon {
+    width: 44px;
+    height: 44px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--stat-color);
+    flex-shrink: 0;
+}
+
+.om-stat-card.active .om-stat-icon {
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+}
+
+.om-stat-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.om-stat-count {
+    font-size: 28px;
+    font-weight: 700;
+    color: var(--text-color);
+    line-height: 1;
+}
+
+.om-stat-card.active .om-stat-count {
+    color: white;
+}
+
+.om-stat-label {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.om-stat-card.active .om-stat-label {
+    color: rgba(255, 255, 255, 0.85);
+}
+
+/* Orders Section */
+.om-orders-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.om-section-header {
+    padding: 20px 24px;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--nav-link-hover);
+}
+
+.om-section-header h2 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.om-count-badge {
+    background: var(--btn-primary);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* Empty State */
+.om-empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-secondary);
+}
+
+.om-empty svg {
+    opacity: 0.3;
+    margin-bottom: 16px;
+}
+
+.om-empty h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    color: var(--text-color);
+}
+
+.om-empty p {
+    margin: 0;
+    font-size: 14px;
+}
+
+/* Orders List */
+.om-orders-list {
+    max-height: 600px;
+    overflow-y: auto;
+    padding: 16px;
+}
+
+.om-order-card {
+    background: var(--nav-link-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    transition: all 0.3s ease;
+}
+
+.om-order-card:last-child {
+    margin-bottom: 0;
+}
+
+.om-order-card:hover {
+    border-color: var(--btn-primary);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.om-order-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+}
+
+.om-order-id {
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--text-color);
+    margin-bottom: 4px;
+}
+
+.om-order-customer {
+    font-size: 14px;
+    color: var(--text-color);
+    margin-bottom: 4px;
+}
+
+.om-order-location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.om-order-amount {
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--btn-primary);
+}
+
+.om-order-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+.om-status-badge {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+    text-transform: capitalize;
+}
+
+.om-action-btns {
+    display: flex;
+    gap: 10px;
+}
+
+.om-action-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.om-action-btn.assign {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.om-action-btn.assign:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.om-action-btn.view {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+    color: white;
+}
+
+.om-action-btn.view:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.4);
+}
+
+/* Modal */
+.om-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+    padding: 20px;
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+.om-modal {
+    background: var(--card-bg);
+    border-radius: 20px;
+    max-width: 550px;
+    width: 100%;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(30px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.om-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 24px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+}
+
+.om-modal-header h2 {
+    margin: 0;
+    font-size: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.om-modal-close {
+    width: 36px;
+    height: 36px;
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    border-radius: 50%;
+    color: white;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+}
+
+.om-modal-close:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+.om-modal-body {
+    padding: 24px;
+    overflow-y: auto;
+    flex: 1;
+}
+
+.om-modal-footer {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border-color);
+}
+
+/* Order Summary */
+.om-order-summary {
+    background: var(--nav-link-hover);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 24px;
+}
+
+.om-summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.om-summary-row:last-child {
+    border-bottom: none;
+}
+
+.om-summary-row span {
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.om-summary-row strong {
+    color: var(--text-color);
+    font-size: 14px;
+}
+
+.om-summary-row strong.amount {
+    color: var(--btn-primary);
+    font-size: 16px;
+}
+
+/* Partners Section */
+.om-partners-section h3 {
+    margin: 0 0 16px;
+    font-size: 16px;
+    color: var(--text-color);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.om-no-partners {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-secondary);
+}
+
+.om-no-partners svg {
+    opacity: 0.5;
+    margin-bottom: 12px;
+}
+
+.om-partners-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.om-partner-card {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    background: var(--nav-link-hover);
+    border: 2px solid transparent;
+    border-radius: 12px;
+    margin-bottom: 10px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.om-partner-card:hover {
+    border-color: var(--btn-primary);
+    background: var(--card-bg);
+}
+
+.om-partner-avatar {
+    width: 48px;
+    height: 48px;
+    background: linear-gradient(135deg, var(--btn-primary), #20c997);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.om-partner-info {
+    flex: 1;
+}
+
+.om-partner-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-color);
+    margin-bottom: 4px;
+}
+
+.om-partner-vehicle {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin-bottom: 2px;
+}
+
+.om-partner-stats {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+
+.om-partner-status {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.om-partner-status.available {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+}
+
+/* Keep existing map/tracking styles */
+.map-section,
+.map-loading,
+.map-error,
+.map-empty,
+.order-details-panel,
+.panel-header,
+.panel-content,
+.detail-row,
+.status-badge,
+.order-items,
+.tracking-modal-overlay,
+.tracking-modal-map,
+.tracking-header,
+.tracking-status-bar,
+.map-container,
+.tracking-controls,
+.control-btn {
+    /* Keep original styles */
+}
+
+/* Modal Overlay for existing features */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .orders-map-page {
+        padding: 16px;
+    }
+
+    .om-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .om-header-actions {
+        width: 100%;
+    }
+
+    .om-btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .om-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .om-stat-card {
+        padding: 14px;
+    }
+
+    .om-stat-icon {
+        width: 36px;
+        height: 36px;
+    }
+
+    .om-stat-count {
+        font-size: 22px;
+    }
+
+    .om-order-main {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .om-order-actions {
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+
+    .om-action-btns {
+        justify-content: stretch;
+    }
+
+    .om-action-btn {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .om-modal {
+        max-height: 90vh;
+        border-radius: 16px 16px 0 0;
+        margin-top: auto;
+    }
+}

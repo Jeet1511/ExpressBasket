@@ -34,9 +34,62 @@ const adminSchema = new mongoose.Schema({
     tags: [{
         type: String
     }],
+    profilePicture: {
+        type: String,
+        default: null
+    },
+    likes: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'Admin'
+    }],
+    likeBoost: {
+        type: Number,
+        default: 0
+    },
     isActive: {
         type: Boolean,
         default: true
+    },
+    // Face Recognition fields
+    faceRecognition: {
+        enabled: {
+            type: Boolean,
+            default: false
+        },
+        descriptor: {
+            type: [Number], // 128-dimension face descriptor array
+            default: null
+        },
+        registeredAt: {
+            type: Date,
+            default: null
+        },
+        approvedBy: {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: 'Admin',
+            default: null
+        },
+        approvedAt: {
+            type: Date,
+            default: null
+        },
+        lastUsed: {
+            type: Date,
+            default: null
+        },
+        requestStatus: {
+            type: String,
+            enum: ['none', 'pending', 'approved', 'rejected'],
+            default: 'none'
+        },
+        requestedAt: {
+            type: Date,
+            default: null
+        },
+        rejectionReason: {
+            type: String,
+            default: null
+        }
     },
     createdAt: {
         type: Date,

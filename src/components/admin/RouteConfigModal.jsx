@@ -1,17 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from '../../utils/axios.js';
-import { MapContainer, TileLayer, Marker, Polyline, Popup } from 'react-leaflet';
-import 'leaflet/dist/leaflet.css';
-import L from 'leaflet';
 import './RouteConfigModal.css';
-
-// Fix Leaflet marker icons
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
-});
 
 const RouteConfigModal = ({ order, onClose, onRouteSet }) => {
     const [packagingPoints, setPackagingPoints] = useState([]);
@@ -190,38 +179,38 @@ const RouteConfigModal = ({ order, onClose, onRouteSet }) => {
                         <p>{order.shippingAddress?.street}, {order.shippingAddress?.city} {order.shippingAddress?.pincode}</p>
                     </div>
 
-                    {/* Map Preview */}
+                    {/* Route Preview */}
                     <div className="config-section">
                         <h3>🗺️ Route Preview</h3>
                         <div className="map-preview">
                             {routePoints.length >= 2 ? (
-                                <MapContainer center={[mapCenter.lat, mapCenter.lng]} zoom={8} style={{ height: '300px', width: '100%' }}>
-                                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                <div className="route-display">
+                                    <div className="route-step">
+                                        <span className="step-icon">🏭</span>
+                                        <div className="step-info">
+                                            <strong>Start: {selectedPackaging?.name}</strong>
+                                            <small>{selectedPackaging?.address}</small>
+                                        </div>
+                                    </div>
 
-                                    {/* Packaging Point */}
-                                    {selectedPackaging?.coordinates && (
-                                        <Marker position={[selectedPackaging.coordinates.lat, selectedPackaging.coordinates.lng]}>
-                                            <Popup>🏭 {selectedPackaging.name}</Popup>
-                                        </Marker>
-                                    )}
-
-                                    {/* Waypoints */}
-                                    {waypoints.map((wp, idx) => wp.coordinates && (
-                                        <Marker key={idx} position={[wp.coordinates.lat, wp.coordinates.lng]}>
-                                            <Popup>📍 {wp.name}</Popup>
-                                        </Marker>
+                                    {waypoints.map((wp, idx) => (
+                                        <div key={idx} className="route-step">
+                                            <span className="step-icon">📍</span>
+                                            <div className="step-info">
+                                                <strong>Stop {idx + 1}: {wp.name}</strong>
+                                                <small>{wp.address || wp.pincode}</small>
+                                            </div>
+                                        </div>
                                     ))}
 
-                                    {/* Destination */}
-                                    {order.shippingAddress?.coordinates && (
-                                        <Marker position={[order.shippingAddress.coordinates.lat, order.shippingAddress.coordinates.lng]}>
-                                            <Popup>🏠 Delivery Address</Popup>
-                                        </Marker>
-                                    )}
-
-                                    {/* Route Line */}
-                                    <Polyline positions={routePoints.map(p => [p.lat, p.lng])} color="#28a745" weight={4} />
-                                </MapContainer>
+                                    <div className="route-step">
+                                        <span className="step-icon">🏠</span>
+                                        <div className="step-info">
+                                            <strong>Destination</strong>
+                                            <small>{order.shippingAddress?.city} {order.shippingAddress?.pincode}</small>
+                                        </div>
+                                    </div>
+                                </div>
                             ) : (
                                 <div className="map-placeholder">
                                     <p>Select packaging point to preview route</p>

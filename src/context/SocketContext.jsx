@@ -18,6 +18,12 @@ export const SocketProvider = ({ children }) => {
     const [membershipUpdate, setMembershipUpdate] = useState(null);
     const [walletUpdate, setWalletUpdate] = useState(null);
 
+    // Support chat notifications
+    const [supportAccepted, setSupportAccepted] = useState(null);
+    const [supportNewMessage, setSupportNewMessage] = useState(null);
+    const [supportClosed, setSupportClosed] = useState(null);
+    const [supportNewRequest, setSupportNewRequest] = useState(null);
+
     const socketRef = useRef(null);
 
     useEffect(() => {
@@ -119,6 +125,32 @@ export const SocketProvider = ({ children }) => {
             setWalletUpdate(data);
         });
 
+        // ==================== SUPPORT CHAT EVENTS ====================
+
+        // Support request accepted by admin
+        socket.on('support_accepted', (data) => {
+            console.log('Support accepted:', data);
+            setSupportAccepted(data);
+        });
+
+        // New message in support chat
+        socket.on('support_new_message', (data) => {
+            console.log('Support new message:', data);
+            setSupportNewMessage(data);
+        });
+
+        // Support chat closed
+        socket.on('support_closed', (data) => {
+            console.log('Support closed:', data);
+            setSupportClosed(data);
+        });
+
+        // New support request (for admin panel)
+        socket.on('support_new_request', (data) => {
+            console.log('New support request:', data);
+            setSupportNewRequest(data);
+        });
+
         // Cleanup on unmount
         return () => {
             if (socket) {
@@ -152,6 +184,22 @@ export const SocketProvider = ({ children }) => {
         setWalletUpdate(null);
     }, []);
 
+    const clearSupportAccepted = useCallback(() => {
+        setSupportAccepted(null);
+    }, []);
+
+    const clearSupportNewMessage = useCallback(() => {
+        setSupportNewMessage(null);
+    }, []);
+
+    const clearSupportClosed = useCallback(() => {
+        setSupportClosed(null);
+    }, []);
+
+    const clearSupportNewRequest = useCallback(() => {
+        setSupportNewRequest(null);
+    }, []);
+
     const value = {
         socket: socketRef.current,
         isConnected,
@@ -168,7 +216,16 @@ export const SocketProvider = ({ children }) => {
         membershipUpdate,
         clearMembershipUpdate,
         walletUpdate,
-        clearWalletUpdate
+        clearWalletUpdate,
+        // Support chat events
+        supportAccepted,
+        clearSupportAccepted,
+        supportNewMessage,
+        clearSupportNewMessage,
+        supportClosed,
+        clearSupportClosed,
+        supportNewRequest,
+        clearSupportNewRequest
     };
 
     return (

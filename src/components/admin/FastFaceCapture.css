@@ -1,0 +1,305 @@
+/* FastFaceCapture - Lightweight face capture styles */
+
+.fast-face-capture {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 20px;
+}
+
+/* Camera Container */
+.ffc-camera-container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    aspect-ratio: 4/3;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #1a1a2e;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.ffc-webcam {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.ffc-captured-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transform: scaleX(-1); /* Mirror to match webcam */
+}
+
+/* Face Guide Overlay */
+.ffc-face-guide {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+.ffc-face-oval {
+    position: relative;
+    width: 55%;
+    height: 70%;
+    border: 3px dashed rgba(74, 222, 128, 0.6);
+    border-radius: 50%;
+    animation: pulse-oval 2s ease-in-out infinite;
+}
+
+@keyframes pulse-oval {
+    0%, 100% {
+        border-color: rgba(74, 222, 128, 0.6);
+        transform: scale(1);
+    }
+    50% {
+        border-color: rgba(74, 222, 128, 0.9);
+        transform: scale(1.02);
+    }
+}
+
+/* Corner highlights */
+.ffc-corner {
+    position: absolute;
+    width: 20px;
+    height: 20px;
+    border: 3px solid #4ade80;
+}
+
+.ffc-corner-tl {
+    top: -3px;
+    left: -3px;
+    border-right: none;
+    border-bottom: none;
+    border-top-left-radius: 50%;
+}
+
+.ffc-corner-tr {
+    top: -3px;
+    right: -3px;
+    border-left: none;
+    border-bottom: none;
+    border-top-right-radius: 50%;
+}
+
+.ffc-corner-bl {
+    bottom: -3px;
+    left: -3px;
+    border-right: none;
+    border-top: none;
+    border-bottom-left-radius: 50%;
+}
+
+.ffc-corner-br {
+    bottom: -3px;
+    right: -3px;
+    border-left: none;
+    border-top: none;
+    border-bottom-right-radius: 50%;
+}
+
+/* Countdown Overlay */
+.ffc-countdown-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.ffc-countdown-number {
+    font-size: 120px;
+    font-weight: 700;
+    color: white;
+    text-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    animation: countdown-pop 1s ease-out;
+}
+
+@keyframes countdown-pop {
+    0% {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+    50% {
+        transform: scale(1.2);
+    }
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* Loading Overlay */
+.ffc-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.6);
+}
+
+.ffc-spinner {
+    color: #4ade80;
+    animation: spin 1s linear infinite;
+}
+
+.ffc-spinner-small {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Status */
+.ffc-status {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 20px;
+    background: var(--card-bg, #1e1e2d);
+    border-radius: 12px;
+    color: var(--text-secondary, #a0a0a0);
+    font-size: 14px;
+    font-weight: 500;
+    border: 1px solid var(--border-color, #333);
+}
+
+.ffc-status.ready {
+    color: #4ade80;
+    border-color: rgba(74, 222, 128, 0.3);
+    background: rgba(74, 222, 128, 0.1);
+}
+
+.ffc-status.error {
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.ffc-status-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Instructions */
+.ffc-instructions {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+}
+
+.ffc-instruction-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-secondary, #a0a0a0);
+    font-size: 13px;
+}
+
+.ffc-instruction-item svg {
+    color: #4ade80;
+}
+
+/* Action Buttons */
+.ffc-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    width: 100%;
+    max-width: 400px;
+}
+
+.ffc-capture-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 24px;
+    background: linear-gradient(135deg, #4ade80, #22c55e);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(74, 222, 128, 0.3);
+}
+
+.ffc-capture-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74, 222, 128, 0.4);
+}
+
+.ffc-capture-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.ffc-retry-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    padding: 16px 24px;
+    background: var(--card-bg, #1e1e2d);
+    color: var(--text-color, #fff);
+    border: 2px solid var(--border-color, #333);
+    border-radius: 12px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.ffc-retry-btn:hover {
+    background: var(--border-color, #333);
+    transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+    .ffc-camera-container {
+        max-width: 100%;
+        border-radius: 12px;
+    }
+
+    .ffc-instructions {
+        flex-direction: column;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .ffc-capture-btn,
+    .ffc-retry-btn {
+        padding: 14px 20px;
+        font-size: 15px;
+    }
+
+    .ffc-countdown-number {
+        font-size: 80px;
+    }
+}

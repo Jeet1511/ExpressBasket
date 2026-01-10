@@ -6,7 +6,9 @@ import { useSocket } from '../../context/SocketContext';
 import axios from '../../utils/axios';
 import useTrackingStatus from '../../hooks/useTrackingStatus.js';
 import OrderBill from '../../components/OrderBill';
+import CustomerDeliveryTracking from '../../components/client/CustomerDeliveryTracking';
 import Swal from 'sweetalert2';
+import { ShoppingCart, DollarSign, Star, Wallet, Headphones, Mail, Send, X, MessageCircle } from 'lucide-react';
 import './Profile.css';
 
 const Profile = () => {
@@ -18,7 +20,15 @@ const Profile = () => {
     membershipUpdate,
     clearMembershipUpdate,
     walletUpdate,
-    clearWalletUpdate
+    clearWalletUpdate,
+    orderUpdate,
+    clearOrderUpdate,
+    supportAccepted,
+    clearSupportAccepted,
+    supportNewMessage,
+    clearSupportNewMessage,
+    supportClosed,
+    clearSupportClosed
   } = useSocket() || {};
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
@@ -91,6 +101,17 @@ const Profile = () => {
   });
   const [showReorderedItems, setShowReorderedItems] = useState(false);
 
+  // Delivery tracking modal state
+  const [showTrackingModal, setShowTrackingModal] = useState(false);
+  const [selectedTrackingOrder, setSelectedTrackingOrder] = useState(null);
+
+  // Support chat state
+  const [showSupportModal, setShowSupportModal] = useState(false);
+  const [supportChat, setSupportChat] = useState(null);
+  const [supportMessages, setSupportMessages] = useState([]);
+  const [supportMessage, setSupportMessage] = useState('');
+  const [supportStatus, setSupportStatus] = useState('none'); // none, pending, active
+
   // Calculate activity data based on orders and date range
   const getActivityData = () => {
     const fromDate = new Date(activityFromDate);
@@ -144,6 +165,7 @@ const Profile = () => {
       fetchBadgePrices();
       fetchWallet();
       fetchMails();
+      fetchSupportStatus();
     }
   }, [user]);
 
@@ -177,6 +199,53 @@ const Profile = () => {
       }
     }
   }, [newMailNotification]);
+
+  // Real-time support chat handlers
+  useEffect(() => {
+    // Support accepted - admin connected
+    if (supportAccepted) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: '🎧 Support Connected!',
+        text: `${supportAccepted.chat?.adminName || 'An agent'} has joined your chat`,
+        showConfirmButton: false,
+        timer: 5000
+      });
+      setSupportStatus('active');
+      setSupportChat(prev => ({ ...prev, id: supportAccepted.chat?.chatId, status: 'active' }));
+      if (clearSupportAccepted) clearSupportAccepted();
+    }
+  }, [supportAccepted]);
+
+  useEffect(() => {
+    // New message in support chat
+    if (supportNewMessage && showSupportModal && supportChat?.id) {
+      fetchSupportMessages(supportChat.id);
+      if (clearSupportNewMessage) clearSupportNewMessage();
+    }
+  }, [supportNewMessage]);
+
+  useEffect(() => {
+    // Support chat closed
+    if (supportClosed) {
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'info',
+        title: 'Chat Closed',
+        text: 'Support chat has been closed',
+        showConfirmButton: false,
+        timer: 4000
+      });
+      setSupportStatus('none');
+      setSupportChat(null);
+      setSupportMessages([]);
+      setShowSupportModal(false);
+      if (clearSupportClosed) clearSupportClosed();
+    }
+  }, [supportClosed]);
 
   // Real-time membership update handler
   useEffect(() => {
@@ -231,6 +300,50 @@ const Profile = () => {
     }
   }, [walletUpdate]);
 
+  // Real-time order update handler
+  useEffect(() => {
+    if (orderUpdate) {
+      console.log('📦 Order update received via socket:', orderUpdate);
+
+      // Refresh orders list to get latest data
+      fetchOrders();
+
+      // If tracking modal is open and this is the tracked order, update it
+      if (selectedTrackingOrder && orderUpdate.order?._id === selectedTrackingOrder._id) {
+        console.log('🔄 Updating selected tracking order with fresh data');
+        setSelectedTrackingOrder(orderUpdate.order);
+      }
+
+      // Show notification for status changes
+      if (orderUpdate.type === 'status_changed') {
+        const statusMessages = {
+          'confirmed': '✅ Your order has been confirmed!',
+          'packed': '📦 Your order has been packed!',
+          'out_for_delivery': '🚚 Your order is out for delivery!',
+          'delivered': '🎉 Your order has been delivered!'
+        };
+
+        const message = statusMessages[orderUpdate.order?.status] || 'Your order has been updated';
+
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'info',
+          title: 'Order Update',
+          text: message,
+          showConfirmButton: false,
+          timer: 4000,
+          timerProgressBar: true
+        });
+      }
+
+      if (clearOrderUpdate) {
+        clearOrderUpdate();
+      }
+    }
+  }, [orderUpdate, selectedTrackingOrder]);
+
+
   const fetchMails = async () => {
     try {
       const token = localStorage.getItem('userToken');
@@ -241,6 +354,90 @@ const Profile = () => {
       setUnreadCount(response.data.unreadCount);
     } catch (error) {
       console.error('Error fetching mails:', error);
+    }
+  };
+
+  // Support chat functions
+  const fetchSupportStatus = async () => {
+    try {
+      const token = localStorage.getItem('userToken');
+      const response = await axios.get('/user/support/active', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (response.data.hasActiveChat) {
+        setSupportChat(response.data.chat);
+        setSupportStatus(response.data.chat.status);
+      } else {
+        setSupportChat(null);
+        setSupportStatus('none');
+      }
+    } catch (error) {
+      console.error('Error fetching support status:', error);
+    }
+  };
+
+  const requestSupport = async () => {
+    try {
+      const token = localStorage.getItem('userToken');
+      const response = await axios.post('/user/support/request',
+        { initialMessage: 'Hello, I need help with my account.' },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setMessage(response.data.message);
+      setMessageType('success');
+      setSupportStatus('pending');
+      setSupportChat({ id: response.data.chatId, status: 'pending' });
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Failed to request support');
+      setMessageType('error');
+    }
+  };
+
+  const fetchSupportMessages = async (chatId) => {
+    try {
+      const token = localStorage.getItem('userToken');
+      const response = await axios.get(`/user/support/chat/${chatId}/messages`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setSupportMessages(response.data.messages);
+      setSupportStatus(response.data.status);
+    } catch (error) {
+      console.error('Error fetching support messages:', error);
+    }
+  };
+
+  const sendSupportMessage = async () => {
+    if (!supportMessage.trim() || !supportChat?.id) return;
+    try {
+      const token = localStorage.getItem('userToken');
+      await axios.post(`/user/support/chat/${supportChat.id}/message`,
+        { message: supportMessage },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setSupportMessage('');
+      fetchSupportMessages(supportChat.id);
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Failed to send message');
+      setMessageType('error');
+    }
+  };
+
+  const closeSupportChat = async () => {
+    if (!supportChat?.id) return;
+    try {
+      const token = localStorage.getItem('userToken');
+      await axios.post(`/user/support/chat/${supportChat.id}/close`, {},
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      setMessage('Support chat closed successfully');
+      setMessageType('success');
+      setShowSupportModal(false);
+      setSupportChat(null);
+      setSupportStatus('none');
+      setSupportMessages([]);
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Failed to close chat');
+      setMessageType('error');
     }
   };
 
@@ -720,13 +917,38 @@ const Profile = () => {
                     <label>State</label>
                     <input type="text" name="address.state" value={editFormData.address.state} onChange={handleEditChange} required />
                   </div>
+                </div>
+                <div className="form-row" style={{ alignItems: 'flex-end' }}>
                   <div className="form-group">
                     <label>Pincode</label>
                     <input type="text" name="address.pincode" value={editFormData.address.pincode} onChange={handleEditChange} required />
                   </div>
+                  <div className="form-group">
+                    <button
+                      type="button"
+                      onClick={() => window.location.href = '/set-location'}
+                      style={{
+                        padding: '12px 20px',
+                        background: 'linear-gradient(135deg, #1a8754, #20c997)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '8px',
+                        cursor: 'pointer',
+                        fontSize: '13px',
+                        fontWeight: '600',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        whiteSpace: 'nowrap',
+                        marginBottom: '0'
+                      }}
+                    >
+                      📍 Set Delivery Location
+                    </button>
+                  </div>
                 </div>
-                <div className="form-actions">
-                  <button type="submit" className="save-btn">
+                <div className="form-actions" style={{ display: 'flex', justifyContent: 'center', marginTop: '20px' }}>
+                  <button type="submit" className="save-btn" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
                     <svg className="icon-bounce" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg>
                     Save Changes
                   </button>
@@ -791,35 +1013,15 @@ const Profile = () => {
                 <div
                   className="stat-card loyalty-card"
                   onClick={() => setShowBadgeModal(true)}
-                  style={{
-                    background: (() => {
-                      const badgeType = stats.loyaltyBadge?.type || 'none';
-                      switch (badgeType) {
-                        case 'platinum':
-                          return 'linear-gradient(135deg, #a78bfa, #8b5cf6)';
-                        case 'gold':
-                          return 'linear-gradient(135deg, #ffe066, #ffc107)';
-                        case 'silver':
-                          return 'linear-gradient(135deg, #e0e0e0, #bdbdbd)';
-                        default:
-                          return 'linear-gradient(135deg, #6c757d, #495057)';
-                      }
-                    })()
-                  }}
                 >
                   <div className="stat-icon loyalty">
                     <svg className="icon-spin-slow" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon></svg>
                   </div>
                   <div className="stat-content">
-                    <div className="stat-value" style={{
-                      textTransform: 'capitalize',
-                      color: (stats.loyaltyBadge?.type === 'platinum' || stats.loyaltyBadge?.type === 'none') ? 'white' : '#333'
-                    }}>
+                    <div className="stat-value" style={{ textTransform: 'capitalize' }}>
                       {stats.loyaltyBadge?.type === 'none' ? 'None' : stats.loyaltyBadge?.type || 'None'}
                     </div>
-                    <div className="stat-label" style={{
-                      color: (stats.loyaltyBadge?.type === 'platinum' || stats.loyaltyBadge?.type === 'none') ? 'rgba(255, 255, 255, 0.9)' : '#555'
-                    }}>Loyalty Badge</div>
+                    <div className="stat-label">Loyalty Badge</div>
                     {stats.loyaltyBadge?.type && stats.loyaltyBadge.type !== 'none' && stats.loyaltyBadge.expiresAt && (
                       <div style={{
                         fontSize: '11px',
@@ -890,6 +1092,34 @@ const Profile = () => {
                     <div className="stat-value">₹{walletBalance.toFixed(2)}</div>
                     <div className="stat-label">Wallet Balance</div>
                     <small className="stat-action">Click to top-up</small>
+                  </div>
+                </div>
+
+                {/* Support Card */}
+                <div
+                  className="stat-card support-card"
+                  onClick={() => {
+                    if (supportStatus === 'none') {
+                      requestSupport();
+                    } else {
+                      setShowSupportModal(true);
+                      if (supportChat?.id) {
+                        fetchSupportMessages(supportChat.id);
+                      }
+                    }
+                  }}
+                >
+                  <div className="stat-icon support-icon">
+                    <Headphones className="icon-pulse" size={24} color="white" />
+                  </div>
+                  <div className="stat-content">
+                    <div className="stat-value">
+                      {supportStatus === 'none' ? 'Contact' : supportStatus === 'pending' ? 'Pending' : 'Active'}
+                    </div>
+                    <div className="stat-label">Support</div>
+                    <small className="stat-action">
+                      {supportStatus === 'none' ? 'Request help' : supportStatus === 'pending' ? 'Waiting...' : 'Open chat'}
+                    </small>
                   </div>
                 </div>
 
@@ -1070,8 +1300,42 @@ const Profile = () => {
                         </p>
                         <p style={{ fontWeight: '700', color: '#667eea', fontSize: '16px', marginBottom: '8px' }}>₹{order.totalAmount?.toFixed(2)}</p>
 
-                        {/* Track Order Button */}
-                        {trackingEnabled && ['confirmed', 'packed', 'out_for_delivery'].includes(order.status) && (
+                        {/* Track Delivery Button - Only for out_for_delivery orders */}
+                        {order.status === 'out_for_delivery' && (
+                          <button
+                            onClick={() => {
+                              setSelectedTrackingOrder(order);
+                              setShowTrackingModal(true);
+                            }}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              marginTop: '8px',
+                              marginRight: '8px',
+                              padding: '8px 16px',
+                              background: 'linear-gradient(135deg, #10b981, #059669)',
+                              color: 'white',
+                              border: 'none',
+                              borderRadius: '8px',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              cursor: 'pointer',
+                              transition: 'transform 0.2s'
+                            }}
+                            onMouseEnter={(e) => e.target.style.transform = 'translateY(-2px)'}
+                            onMouseLeave={(e) => e.target.style.transform = 'translateY(0)'}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                              <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            🚚 Track Delivery
+                          </button>
+                        )}
+
+                        {/* Track Order Button - For other statuses */}
+                        {trackingEnabled && ['confirmed', 'packed'].includes(order.status) && (
                           <a
                             href={`/track-order/${order._id}`}
                             style={{
@@ -1097,92 +1361,120 @@ const Profile = () => {
                           </a>
                         )}
 
-                        {/* Reorder Button */}
-                        <button
-                          onClick={async () => {
-                            const success = await reorderItems(order.items);
-                            if (success) {
-                              // Track reordered items
-                              const newReorderedItems = [...reorderedItems];
-                              order.items.forEach(item => {
-                                const productName = item.productId?.name || item.name || 'Product';
-                                const existingIndex = newReorderedItems.findIndex(r => r.name === productName);
-                                if (existingIndex >= 0) {
-                                  newReorderedItems[existingIndex].count++;
-                                  newReorderedItems[existingIndex].lastReordered = new Date().toISOString();
-                                } else {
-                                  newReorderedItems.push({
-                                    name: productName,
-                                    count: 1,
-                                    lastReordered: new Date().toISOString()
+                        {/* Delivery OTP - Show to customer when order is out for delivery */}
+                        {['assigned', 'out_for_delivery'].includes(order.status) && order.deliveryOTP && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '12px',
+                            marginTop: '12px',
+                            padding: '12px 16px',
+                            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.15))',
+                            borderRadius: '10px',
+                            border: '1px solid rgba(16, 185, 129, 0.3)'
+                          }}>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2">
+                              <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+                              <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                            </svg>
+                            <div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-secondary)', marginBottom: '2px' }}>Delivery OTP (Share with delivery partner)</div>
+                              <div style={{ fontSize: '20px', fontWeight: '700', color: '#10b981', letterSpacing: '4px' }}>{order.deliveryOTP}</div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Reorder & View Bill Buttons - Only show for DELIVERED or CANCELLED orders */}
+                        {['delivered', 'cancelled'].includes(order.status) && (
+                          <>
+                            {/* Reorder Button */}
+                            <button
+                              onClick={async () => {
+                                const success = await reorderItems(order.items);
+                                if (success) {
+                                  // Track reordered items
+                                  const newReorderedItems = [...reorderedItems];
+                                  order.items.forEach(item => {
+                                    const productName = item.productId?.name || item.name || 'Product';
+                                    const existingIndex = newReorderedItems.findIndex(r => r.name === productName);
+                                    if (existingIndex >= 0) {
+                                      newReorderedItems[existingIndex].count++;
+                                      newReorderedItems[existingIndex].lastReordered = new Date().toISOString();
+                                    } else {
+                                      newReorderedItems.push({
+                                        name: productName,
+                                        count: 1,
+                                        lastReordered: new Date().toISOString()
+                                      });
+                                    }
                                   });
+                                  setReorderedItems(newReorderedItems);
+                                  localStorage.setItem('reorderedItems', JSON.stringify(newReorderedItems));
+
+                                  setMessage('Items added to cart!');
+                                  setMessageType('success');
+                                  setTimeout(() => setMessage(''), 3000);
+                                } else {
+                                  setMessage('Some items could not be added');
+                                  setMessageType('error');
+                                  setTimeout(() => setMessage(''), 3000);
                                 }
-                              });
-                              setReorderedItems(newReorderedItems);
-                              localStorage.setItem('reorderedItems', JSON.stringify(newReorderedItems));
+                              }}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                marginTop: '8px',
+                                marginRight: '8px',
+                                padding: '8px 16px',
+                                background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="23 4 23 10 17 10" />
+                                <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
+                              </svg>
+                              Reorder
+                            </button>
 
-                              setMessage('Items added to cart!');
-                              setMessageType('success');
-                              setTimeout(() => setMessage(''), 3000);
-                            } else {
-                              setMessage('Some items could not be added');
-                              setMessageType('error');
-                              setTimeout(() => setMessage(''), 3000);
-                            }
-                          }}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            marginTop: '8px',
-                            marginRight: '8px',
-                            padding: '8px 16px',
-                            background: 'linear-gradient(135deg, #667eea, #764ba2)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <polyline points="23 4 23 10 17 10" />
-                            <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10" />
-                          </svg>
-                          Reorder
-                        </button>
-
-                        {/* View Bill Button */}
-                        <button
-                          onClick={() => {
-                            setSelectedBillOrder(order);
-                            setShowBillModal(true);
-                          }}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            marginTop: '8px',
-                            padding: '8px 16px',
-                            background: 'linear-gradient(135deg, #43a047, #2e7d32)',
-                            color: 'white',
-                            border: 'none',
-                            borderRadius: '8px',
-                            fontSize: '12px',
-                            fontWeight: '600',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                            <polyline points="14 2 14 8 20 8" />
-                            <line x1="16" y1="13" x2="8" y2="13" />
-                            <line x1="16" y1="17" x2="8" y2="17" />
-                            <polyline points="10 9 9 9 8 9" />
-                          </svg>
-                          View Bill
-                        </button>
+                            {/* View Bill Button */}
+                            <button
+                              onClick={() => {
+                                setSelectedBillOrder(order);
+                                setShowBillModal(true);
+                              }}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '8px',
+                                marginTop: '8px',
+                                padding: '8px 16px',
+                                background: 'linear-gradient(135deg, #43a047, #2e7d32)',
+                                color: 'white',
+                                border: 'none',
+                                borderRadius: '8px',
+                                fontSize: '12px',
+                                fontWeight: '600',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                                <polyline points="14 2 14 8 20 8" />
+                                <line x1="16" y1="13" x2="8" y2="13" />
+                                <line x1="16" y1="17" x2="8" y2="17" />
+                                <polyline points="10 9 9 9 8 9" />
+                              </svg>
+                              View Bill
+                            </button>
+                          </>
+                        )}
                       </div>
                     ))
                   )}
@@ -1750,6 +2042,90 @@ const Profile = () => {
           />
         )}
       </div>
+
+      {/* Delivery Tracking Modal */}
+      {showTrackingModal && selectedTrackingOrder && (
+        <CustomerDeliveryTracking
+          order={selectedTrackingOrder}
+          onClose={() => {
+            setShowTrackingModal(false);
+            setSelectedTrackingOrder(null);
+          }}
+        />
+      )}
+
+      {/* Support Chat Modal */}
+      {showSupportModal && (
+        <div className="support-modal-overlay" onClick={() => setShowSupportModal(false)}>
+          <div className="support-modal" onClick={e => e.stopPropagation()}>
+            <div className="support-modal-header">
+              <div className="support-header-info">
+                <Headphones size={24} />
+                <div>
+                  <h3>Support Chat</h3>
+                  <span className={`support-status-badge ${supportStatus}`}>
+                    {supportStatus === 'pending' ? 'Waiting for agent...' :
+                      supportStatus === 'active' ? `Connected with ${supportChat?.admin?.name || 'Support'}` :
+                        'Chat Closed'}
+                  </span>
+                </div>
+              </div>
+              <button className="support-close-btn" onClick={() => setShowSupportModal(false)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="support-messages-container">
+              {supportMessages.length === 0 ? (
+                <div className="support-empty-state">
+                  <MessageCircle size={48} />
+                  <p>
+                    {supportStatus === 'pending'
+                      ? 'Your request has been sent. An admin will connect with you shortly.'
+                      : 'No messages yet. Start the conversation!'}
+                  </p>
+                </div>
+              ) : (
+                supportMessages.map((msg, index) => (
+                  <div
+                    key={index}
+                    className={`support-message ${msg.sender === 'User' ? 'user' : 'admin'}`}
+                  >
+                    <div className="support-message-content">{msg.message}</div>
+                    <div className="support-message-time">
+                      {new Date(msg.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {supportStatus === 'active' && (
+              <div className="support-input-container">
+                <input
+                  type="text"
+                  value={supportMessage}
+                  onChange={e => setSupportMessage(e.target.value)}
+                  onKeyPress={e => e.key === 'Enter' && sendSupportMessage()}
+                  placeholder="Type your message..."
+                  className="support-input"
+                />
+                <button className="support-send-btn" onClick={sendSupportMessage}>
+                  <Send size={20} />
+                </button>
+              </div>
+            )}
+
+            <div className="support-modal-footer">
+              {supportStatus !== 'closed' && (
+                <button className="support-end-btn" onClick={closeSupportChat}>
+                  End Chat
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

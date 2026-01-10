@@ -85,6 +85,18 @@ const userSchema = new mongoose.Schema({
             default: Date.now
         }
     }],
+    // Delivery Location (from map picker)
+    deliveryLocation: {
+        address: String,
+        coordinates: {
+            lat: Number,
+            lng: Number
+        },
+        lastUpdated: {
+            type: Date,
+            default: Date.now
+        }
+    },
     // Password Reset
     resetPasswordToken: {
         type: String

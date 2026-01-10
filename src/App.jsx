@@ -17,9 +17,9 @@ import LoginSignup from './pages/client/LoginSignup.jsx';
 import Profile from './pages/client/Profile.jsx';
 import ForgotPassword from './pages/client/ForgotPassword.jsx';
 import ResetPassword from './pages/client/ResetPassword.jsx';
-import OrderTracking from './pages/client/OrderTracking.jsx';
 import ViewBill from './pages/client/ViewBill.jsx';
 import Gamification from './pages/client/Gamification.jsx';
+import SetLocation from './pages/client/SetLocation.jsx';
 
 // Admin Pages
 import AdminLogin from './pages/admin/AdminLogin.jsx';
@@ -29,20 +29,35 @@ import EditProduct from './pages/admin/EditProduct.jsx';
 import ManageProducts from './pages/admin/ManageProducts.jsx';
 import ManageCategories from './pages/admin/ManageCategories.jsx';
 import ManageAdmins from './pages/admin/ManageAdmins.jsx';
+import AdminDirectory from './pages/admin/AdminDirectory.jsx';
 import ManageUsers from './pages/admin/ManageUsers.jsx';
 import ManageOrders from './pages/admin/ManageOrders.jsx';
+import OrdersMap from './pages/admin/OrdersMap.jsx';
 import ManageMemberships from './pages/admin/ManageMemberships.jsx';
 import ManageWallets from './pages/admin/ManageWallets.jsx';
 import ManageDeliveryPartners from './pages/admin/ManageDeliveryPartners.jsx';
 import TrackingToggle from './pages/admin/TrackingToggle.jsx';
 import ManageMails from './pages/admin/ManageMails.jsx';
 import ServerManagement from './pages/admin/ServerManagement.jsx';
+import ManageFaceRecognition from './pages/admin/ManageFaceRecognition.jsx';
+import RequestFaceRegistration from './pages/admin/RequestFaceRegistration.jsx';
+import SupportManagement from './pages/admin/SupportManagement.jsx';
+import DeliveryIssues from './pages/admin/DeliveryIssues.jsx';
+
+// Partner Pages
+import PartnerAuth from './pages/partner/PartnerAuth.jsx';
+import PartnerDashboard from './pages/partner/PartnerDashboard.jsx';
+import PartnerDeliveries from './pages/partner/PartnerDeliveries.jsx';
+import PartnerEarnings from './pages/partner/PartnerEarnings.jsx';
+import PartnerProfile from './pages/partner/PartnerProfile.jsx';
 
 // Components
 import Header from './components/Header.jsx';
 import Layout from './components/Layout.jsx';
 import AdminLayout from './components/admin/AdminLayout.jsx';
 import ProtectedAdminRoute from './components/admin/ProtectedAdminRoute.jsx';
+import PartnerLayout from './components/partner/PartnerLayout.jsx';
+import PartnerProtectedRoute from './components/partner/PartnerProtectedRoute.jsx';
 import MaintenanceOverlay from './components/admin/MaintenanceOverlay.jsx';
 
 // Global Styles
@@ -112,7 +127,7 @@ function App() {
                   <Route path="/reset-password/:token" element={<ClientRoute maintenanceMode={maintenanceMode}><ResetPassword /></ClientRoute>} />
                   <Route path="/profile" element={<ClientRoute maintenanceMode={maintenanceMode}><Layout><Profile /></Layout></ClientRoute>} />
                   <Route path="/gamification" element={<ClientRoute maintenanceMode={maintenanceMode}><Layout><Gamification /></Layout></ClientRoute>} />
-                  <Route path="/track-order/:orderId" element={<ClientRoute maintenanceMode={maintenanceMode}><Layout><OrderTracking /></Layout></ClientRoute>} />
+                  <Route path="/set-location" element={<ClientRoute maintenanceMode={maintenanceMode}><Layout><SetLocation /></Layout></ClientRoute>} />
                   <Route path="/bill/:orderId" element={<ClientRoute maintenanceMode={maintenanceMode}><ViewBill /></ClientRoute>} />
 
                   {/* Admin Routes - NOT affected by maintenance mode */}
@@ -156,6 +171,13 @@ function App() {
                     </ProtectedAdminRoute>
                   } />
 
+                  {/* Admin Directory - accessible to all admins */}
+                  <Route path="/admin/directory" element={
+                    <ProtectedAdminRoute>
+                      <AdminLayout><AdminDirectory /></AdminLayout>
+                    </ProtectedAdminRoute>
+                  } />
+
                   {/* Users - requires manage_users permission */}
                   <Route path="/admin/users" element={
                     <ProtectedAdminRoute requiredPermission="manage_users">
@@ -167,6 +189,13 @@ function App() {
                   <Route path="/admin/orders" element={
                     <ProtectedAdminRoute requiredPermission="manage_orders">
                       <AdminLayout><ManageOrders /></AdminLayout>
+                    </ProtectedAdminRoute>
+                  } />
+
+                  {/* Orders Map - accessible to all admins */}
+                  <Route path="/admin/orders-map" element={
+                    <ProtectedAdminRoute>
+                      <AdminLayout><OrdersMap /></AdminLayout>
                     </ProtectedAdminRoute>
                   } />
 
@@ -184,9 +213,9 @@ function App() {
                     </ProtectedAdminRoute>
                   } />
 
-                  {/* Delivery Partners - requires manage_orders permission */}
+                  {/* Delivery Partners - accessible to all admins */}
                   <Route path="/admin/delivery-partners" element={
-                    <ProtectedAdminRoute requiredPermission="manage_orders">
+                    <ProtectedAdminRoute>
                       <AdminLayout><ManageDeliveryPartners /></AdminLayout>
                     </ProtectedAdminRoute>
                   } />
@@ -210,6 +239,57 @@ function App() {
                     <ProtectedAdminRoute>
                       <AdminLayout><ServerManagement /></AdminLayout>
                     </ProtectedAdminRoute>
+                  } />
+
+                  {/* Face Recognition Management - Super Admin Only */}
+                  <Route path="/admin/face-recognition" element={
+                    <ProtectedAdminRoute>
+                      <AdminLayout><ManageFaceRecognition /></AdminLayout>
+                    </ProtectedAdminRoute>
+                  } />
+
+                  {/* Request Face Registration - All Admins */}
+                  <Route path="/admin/request-face-registration" element={
+                    <ProtectedAdminRoute>
+                      <AdminLayout><RequestFaceRegistration /></AdminLayout>
+                    </ProtectedAdminRoute>
+                  } />
+
+                  {/* Support Management - All Admins */}
+                  <Route path="/admin/support" element={
+                    <ProtectedAdminRoute>
+                      <AdminLayout><SupportManagement /></AdminLayout>
+                    </ProtectedAdminRoute>
+                  } />
+
+                  {/* Delivery Issues - All Admins */}
+                  <Route path="/admin/delivery-issues" element={
+                    <ProtectedAdminRoute>
+                      <AdminLayout><DeliveryIssues /></AdminLayout>
+                    </ProtectedAdminRoute>
+                  } />
+
+                  {/* Partner Routes - Delivery Partner Panel */}
+                  <Route path="/partner" element={<PartnerAuth />} />
+                  <Route path="/partner/dashboard" element={
+                    <PartnerProtectedRoute>
+                      <PartnerLayout><PartnerDashboard /></PartnerLayout>
+                    </PartnerProtectedRoute>
+                  } />
+                  <Route path="/partner/deliveries" element={
+                    <PartnerProtectedRoute>
+                      <PartnerLayout><PartnerDeliveries /></PartnerLayout>
+                    </PartnerProtectedRoute>
+                  } />
+                  <Route path="/partner/earnings" element={
+                    <PartnerProtectedRoute>
+                      <PartnerLayout><PartnerEarnings /></PartnerLayout>
+                    </PartnerProtectedRoute>
+                  } />
+                  <Route path="/partner/profile" element={
+                    <PartnerProtectedRoute>
+                      <PartnerLayout><PartnerProfile /></PartnerLayout>
+                    </PartnerProtectedRoute>
                   } />
                 </Routes>
               </AppContainer>

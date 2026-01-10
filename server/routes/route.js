@@ -6,6 +6,10 @@ const Product = require('../models/Product.js');
 const Settings = require('../models/Settings.js');
 const Mail = require('../models/Mail.js');
 const PaymentRequest = require('../models/PaymentRequest.js');
+const GiftCode = require('../models/GiftCode.js');
+const Gamification = require('../models/Gamification.js');
+const SupportChat = require('../models/SupportChat.js');
+const Admin = require('../models/Admin.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
@@ -144,13 +148,53 @@ router.get('/user/profile', authenticateToken, async (req, res) => {
     }
 });
 
+// Get user by ID (for fetching delivery location)
+router.get('/users/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id).select('-password');
+        if (!user) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+        res.json({ user });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
 // Update user profile
 router.put('/user/profile', authenticateToken, async (req, res) => {
     try {
-        const { name, phone, address } = req.body;
+        const { name, phone, address, deliveryLocation } = req.body;
+
+        const updateData = { name, phone };
+
+        // Handle delivery location if provided
+        if (deliveryLocation) {
+            updateData.deliveryLocation = {
+                address: deliveryLocation.address,
+                coordinates: deliveryLocation.coordinates,
+                nearestHub: deliveryLocation.nearestHub,
+                lastUpdated: new Date()
+            };
+
+            // Auto-populate address from delivery location if addressComponents provided
+            if (deliveryLocation.addressComponents) {
+                const addr = deliveryLocation.addressComponents;
+                updateData.address = {
+                    street: addr.street || addr.road || addr.suburb || '',
+                    city: addr.city || addr.town || addr.village || '',
+                    state: addr.state || '',
+                    pincode: addr.postcode || addr.pincode || ''
+                };
+            }
+        } else if (address) {
+            // Manual address update if no delivery location
+            updateData.address = address;
+        }
+
         const updatedUser = await User.findByIdAndUpdate(
             req.user.userId,
-            { name, phone, address },
+            updateData,
             { new: true }
         ).select('-password');
 
@@ -167,7 +211,7 @@ router.put('/user/profile', authenticateToken, async (req, res) => {
 // Create order (User only)
 router.post('/order', authenticateToken, async (req, res) => {
     try {
-        const { items, shippingAddress, paymentMethod } = req.body;
+        const { items, shippingAddress, paymentMethod, giftCode } = req.body;
 
         if (!items || items.length === 0) {
             return res.status(400).json({ message: 'No items in order' });
@@ -202,16 +246,78 @@ router.post('/order', authenticateToken, async (req, res) => {
             await product.save();
         }
 
+        // Validate and apply gift code if provided
+        let discount = 0;
+        let appliedGiftCode = null;
+
+        if (giftCode) {
+            try {
+                const code = await GiftCode.findOne({
+                    code: giftCode,
+                    userId: req.user.userId,
+                    isUsed: false,
+                    expiresAt: { $gt: new Date() }
+                });
+
+                if (!code) {
+                    return res.status(400).json({ message: 'Invalid, expired, or already used gift code' });
+                }
+
+                discount = code.discountAmount;
+                appliedGiftCode = {
+                    code: code.code,
+                    discountAmount: code.discountAmount
+                };
+            } catch (error) {
+                console.error('Gift code validation error:', error);
+                return res.status(400).json({ message: 'Error validating gift code' });
+            }
+        }
+
+        // Apply discount
+        const finalAmount = Math.max(0, totalAmount - discount);
+
+        // Get user's delivery location for routing
+        const user = await User.findById(req.user.userId).select('deliveryLocation');
+        const deliveryLocation = user?.deliveryLocation || null;
+
         // Create order
         const order = new Order({
             userId: req.user.userId,
             items: orderItems,
-            totalAmount,
+            totalAmount: finalAmount,
             shippingAddress,
-            paymentMethod: paymentMethod || 'cod'
+            paymentMethod: paymentMethod || 'cod',
+            deliveryLocation: deliveryLocation ? {
+                coordinates: deliveryLocation.coordinates,
+                address: deliveryLocation.address
+            } : null
         });
 
         await order.save();
+
+        // Mark gift code as used AFTER successful order creation (atomic operation)
+        if (giftCode) {
+            try {
+                await GiftCode.useCode(giftCode, order._id);
+            } catch (error) {
+                console.error('Error marking gift code as used:', error);
+                // Order is already created, so just log the error
+            }
+        }
+
+        // ===== BROADCAST NEW ORDER TO ADMINS FOR REAL-TIME UPDATES =====
+        try {
+            const { broadcastNewOrder } = require('../socketHandler.js');
+            // Populate order with user details for admin display
+            const populatedOrder = await Order.findById(order._id)
+                .populate('userId', 'name email phone');
+            broadcastNewOrder(populatedOrder);
+        } catch (socketError) {
+            console.error('Socket broadcast error:', socketError);
+            // Don't fail the order if broadcast fails
+        }
+
 
         // ===== GAMIFICATION: Award points for order =====
         try {
@@ -276,13 +382,199 @@ router.post('/order', authenticateToken, async (req, res) => {
     }
 });
 
-// Get user orders (User only)
+// Get user orders (User only) - includes delivery OTP for active orders
 router.get('/user/orders', authenticateToken, async (req, res) => {
     try {
+        const Delivery = require('../models/Delivery.js');
+
         const orders = await Order.find({ userId: req.user.userId })
             .sort({ orderDate: -1 });
-        res.json(orders);
+
+        // For each active order, get the delivery OTP
+        const ordersWithOTP = await Promise.all(orders.map(async (order) => {
+            const orderObj = order.toObject();
+
+            // Only get OTP for active delivery statuses
+            if (['assigned', 'out_for_delivery'].includes(order.status)) {
+                const delivery = await Delivery.findOne({
+                    order: order._id,
+                    status: { $in: ['pending_acceptance', 'accepted', 'picked_up', 'in_transit'] }
+                });
+                if (delivery) {
+                    orderObj.deliveryOTP = delivery.otp;
+                }
+            }
+
+            return orderObj;
+        }));
+
+        res.json(ordersWithOTP);
     } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Get single order by ID (User only)
+router.get('/user/orders/:id', authenticateToken, async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id);
+
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        // Verify the order belongs to the requesting user
+        if (order.userId.toString() !== req.user.userId) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        res.json(order);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Get delivery progress for user's order
+router.get('/user/orders/:id/progress', authenticateToken, async (req, res) => {
+    try {
+        const { getProgressInfo } = require('../utils/progressUtils.js');
+
+        const order = await Order.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        // Verify the order belongs to the requesting user
+        if (order.userId.toString() !== req.user.userId) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        // Check if order has delivery progress tracking
+        if (!order.deliveryProgress || !order.deliveryProgress.startTime) {
+            return res.json({
+                hasProgress: false,
+                message: 'Delivery progress tracking not started for this order'
+            });
+        }
+
+        // Calculate current progress
+        const progressInfo = getProgressInfo(
+            order.deliveryProgress.startTime,
+            order.deliveryProgress.estimatedDeliveryMinutes
+        );
+
+        // When progress reaches 100%, show WAITING FOR CONFIRMATION (don't auto-complete)
+        // Delivery partner must enter OTP from customer to complete
+        if (progressInfo.progress >= 100 && order.status === 'out_for_delivery') {
+            console.log(`📍 Delivery partner has REACHED customer for order ${order._id.toString().slice(-6)}`);
+
+            // Update progress to 100% but DON'T change status - wait for OTP
+            order.deliveryProgress.currentProgress = 100;
+            order.deliveryProgress.lastUpdated = new Date();
+            await order.save();
+
+            return res.json({
+                hasProgress: true,
+                orderId: order._id,
+                status: 'out_for_delivery', // Still out_for_delivery until OTP confirmed
+                reached: true, // New flag to indicate partner has arrived
+                progress: 100,
+                remainingMinutes: 0,
+                remainingTime: 'WAITING FOR CONFIRMATION',
+                message: 'Partner has arrived! Waiting for OTP confirmation',
+                color: '#f59e0b', // Orange - waiting
+                isDelayed: false,
+                startTime: order.deliveryProgress.startTime,
+                estimatedMinutes: order.deliveryProgress.estimatedDeliveryMinutes
+            });
+        }
+
+        // Update the order's current progress in database
+        await Order.findByIdAndUpdate(req.params.id, {
+            'deliveryProgress.currentProgress': progressInfo.progress,
+            'deliveryProgress.lastUpdated': new Date()
+        });
+
+        res.json({
+            hasProgress: true,
+            orderId: order._id,
+            status: order.status,
+            ...progressInfo,
+            startTime: order.deliveryProgress.startTime,
+            estimatedMinutes: order.deliveryProgress.estimatedDeliveryMinutes,
+            completedAt: order.deliveryProgress.completedAt
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// TEMPORARY: Manually initialize timer data for an order (for testing)
+router.post('/user/orders/:id/init-timer', authenticateToken, async (req, res) => {
+    try {
+        const order = await Order.findById(req.params.id).populate('userId', 'loyaltyBadge');
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        // Verify the order belongs to the requesting user
+        if (order.userId._id.toString() !== req.user.userId) {
+            return res.status(403).json({ message: 'Access denied' });
+        }
+
+        // Get membership tier
+        const membershipTier = order.userId?.loyaltyBadge?.type || 'none';
+
+        // Generate estimated delivery time based on membership tier
+        let minTime, maxTime;
+        switch (membershipTier.toLowerCase()) {
+            case 'platinum':
+                minTime = 10;
+                maxTime = 15;
+                break;
+            case 'gold':
+                minTime = 15;
+                maxTime = 20;
+                break;
+            case 'silver':
+                minTime = 20;
+                maxTime = 25;
+                break;
+            default:
+                minTime = 25;
+                maxTime = 30;
+                break;
+        }
+
+        const estimatedMinutes = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
+        const startTime = new Date();
+
+        // Initialize timer data
+        order.deliveryStartTime = startTime;
+        order.estimatedDeliveryMinutes = estimatedMinutes;
+        order.deliveryProgress = {
+            startTime: startTime,
+            estimatedDeliveryMinutes: estimatedMinutes,
+            currentProgress: 0,
+            lastUpdated: startTime
+        };
+
+        await order.save();
+
+        console.log(`✅ Timer initialized for order ${order._id.toString().slice(-6)}: ${estimatedMinutes} minutes`);
+
+        res.json({
+            success: true,
+            message: 'Timer data initialized successfully',
+            order: {
+                id: order._id,
+                deliveryStartTime: order.deliveryStartTime,
+                estimatedDeliveryMinutes: order.estimatedDeliveryMinutes,
+                membershipTier: membershipTier
+            }
+        });
+    } catch (error) {
+        console.error('Error initializing timer:', error);
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -1084,6 +1376,69 @@ router.put('/admin/orders/:orderId/status', authenticateAdminWithWriteProtection
             return res.status(404).json({ message: 'Order not found' });
         }
 
+        // Handle delivery progress tracking when status changes to out_for_delivery
+        if (status === 'out_for_delivery') {
+            // Populate user to get membership tier from loyaltyBadge
+            await order.populate('userId', 'loyaltyBadge');
+
+            console.log('🔍 Membership Detection Debug:', {
+                userId: order.userId?._id,
+                hasLoyaltyBadge: !!order.userId?.loyaltyBadge,
+                loyaltyBadge: order.userId?.loyaltyBadge,
+                badgeType: order.userId?.loyaltyBadge?.type
+            });
+
+            // Get membership tier from loyaltyBadge
+            const membershipTier = order.userId?.loyaltyBadge?.type || 'none';
+
+            // Generate random estimated delivery time based on membership tier
+            let minTime, maxTime;
+            switch (membershipTier.toLowerCase()) {
+                case 'platinum':
+                    minTime = 10;
+                    maxTime = 15;
+                    break;
+                case 'gold':
+                    minTime = 15;
+                    maxTime = 20;
+                    break;
+                case 'silver':
+                    minTime = 20;
+                    maxTime = 25;
+                    break;
+                default: // 'none' or any other
+                    minTime = 25;
+                    maxTime = 30;
+                    break;
+            }
+
+            // Generate random time between min and max (inclusive)
+            const estimatedMinutes = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
+            const startTime = new Date();
+
+            console.log(`🚚 Initializing delivery progress:`, {
+                orderId: order._id.toString().slice(-6),
+                membershipTier: membershipTier.toUpperCase(),
+                timeRange: `${minTime}-${maxTime} minutes`,
+                assignedTime: `${estimatedMinutes} minutes`,
+                startTime: startTime.toISOString()
+            });
+
+            // CRITICAL: Set deliveryProgress fields explicitly
+            order.deliveryProgress = {
+                startTime: startTime,
+                estimatedDeliveryMinutes: estimatedMinutes,
+                currentProgress: 0,
+                lastUpdated: startTime
+            };
+
+            // ALSO set at order level for backward compatibility
+            order.deliveryStartTime = startTime;
+            order.estimatedDeliveryMinutes = estimatedMinutes;
+
+            console.log(`📦 Update data being saved:`, JSON.stringify(order.deliveryProgress, null, 2));
+        }
+
         order.status = status;
         order.statusHistory.push({
             status,
@@ -1094,9 +1449,22 @@ router.put('/admin/orders/:orderId/status', authenticateAdminWithWriteProtection
 
         if (status === 'delivered') {
             order.deliveredDate = new Date();
+            if (order.deliveryProgress) {
+                order.deliveryProgress = {
+                    ...order.deliveryProgress.toObject(),
+                    currentProgress: 100,
+                    completedAt: new Date(),
+                    lastUpdated: new Date()
+                };
+            }
         }
 
         await order.save();
+
+        // VERIFICATION: Log what was actually saved
+        if (status === 'out_for_delivery') {
+            console.log(`✅ Saved deliveryProgress:`, JSON.stringify(order.deliveryProgress, null, 2));
+        }
 
         res.json({ message: 'Order status updated', order });
     } catch (error) {
@@ -1601,6 +1969,108 @@ router.delete('/user/mails/:id', authenticateToken, async (req, res) => {
     }
 });
 
+// Admin: Broadcast mail to all users (Super Admin only)
+router.post('/admin/mails/broadcast', authenticateAdminToken, async (req, res) => {
+    try {
+        const { subject, message } = req.body;
+
+        // Verify super admin role
+        const Admin = require('../models/Admin.js');
+        const admin = await Admin.findById(req.admin.id);
+
+        if (!admin || admin.role !== 'super_admin') {
+            return res.status(403).json({ message: 'Only Super Admin can broadcast messages' });
+        }
+
+        if (!subject || !message) {
+            return res.status(400).json({ message: 'Subject and message are required' });
+        }
+
+        // Get all users with email and name
+        const users = await User.find({}).select('_id name email');
+
+        if (users.length === 0) {
+            return res.status(404).json({ message: 'No users found' });
+        }
+
+        console.log(`📢 Broadcasting message to ${users.length} users...`);
+
+        // Create mail for each user
+        const mailPromises = users.map(user => {
+            const mail = new Mail({
+                from: req.admin.id,
+                to: user._id,
+                subject,
+                message,
+                type: 'normal'
+            });
+            return mail.save();
+        });
+
+        const savedMails = await Promise.all(mailPromises);
+
+        // Send real-time notifications to all users
+        const { sendMailNotification } = require('../socketHandler.js');
+        savedMails.forEach(mail => {
+            sendMailNotification(mail.to.toString(), {
+                _id: mail._id,
+                subject: mail.subject,
+                message: mail.message,
+                type: mail.type,
+                createdAt: mail.createdAt
+            });
+        });
+
+        console.log(`✅ In-app notifications sent to ${users.length} users`);
+
+        // Send emails to all users (async, don't wait for completion)
+        const { sendBroadcastEmail } = require('../config/emailConfig.js');
+        let emailsSent = 0;
+        let emailsFailed = 0;
+
+        console.log(`📧 Sending emails to ${users.length} users...`);
+
+        // Send emails in batches to avoid overwhelming the email server
+        const batchSize = 10;
+        for (let i = 0; i < users.length; i += batchSize) {
+            const batch = users.slice(i, i + batchSize);
+            const emailPromises = batch.map(async (user) => {
+                try {
+                    const result = await sendBroadcastEmail(user.email, user.name, subject, message);
+                    if (result.success) {
+                        emailsSent++;
+                    } else {
+                        emailsFailed++;
+                    }
+                } catch (error) {
+                    emailsFailed++;
+                    console.error(`Failed to send email to ${user.email}:`, error.message);
+                }
+            });
+            await Promise.all(emailPromises);
+            // Small delay between batches
+            if (i + batchSize < users.length) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+        }
+
+        console.log(`✅ Broadcast completed: ${emailsSent} emails sent, ${emailsFailed} failed`);
+
+        res.status(201).json({
+            message: `Broadcast sent successfully to ${users.length} users`,
+            count: users.length,
+            subject: subject,
+            emailStats: {
+                sent: emailsSent,
+                failed: emailsFailed
+            }
+        });
+    } catch (error) {
+        console.error('❌ Broadcast error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
 // ============ SERVER MAINTENANCE MODE ============
 
 // Public: Get server status (maintenance mode)
@@ -1643,8 +2113,6 @@ router.post('/admin/server/maintenance', authenticateAdminToken, async (req, res
 });
 
 // ============== GAMIFICATION SYSTEM ==============
-
-const Gamification = require('../models/Gamification.js');
 
 // Achievement definitions
 const ACHIEVEMENTS = {
@@ -1915,7 +2383,14 @@ router.post('/gamification/redeem', authenticateToken, async (req, res) => {
 
         let gamification = await initializeGamification(req.user.userId);
 
+        console.log('=== REDEEM START ===');
+        console.log(`User ID: ${req.user.userId}`);
+        console.log(`Reward: ${reward.name} (${reward.pointsCost} points)`);
+        console.log(`BEFORE - Points: ${gamification.points}`);
+        console.log(`BEFORE - Redeemed Rewards: ${gamification.redeemedRewards.length}`);
+
         if (gamification.points < reward.pointsCost) {
+            console.log(`INSUFFICIENT POINTS: Need ${reward.pointsCost}, Have ${gamification.points}`);
             return res.status(400).json({
                 message: 'Insufficient points',
                 required: reward.pointsCost,
@@ -1927,10 +2402,28 @@ router.post('/gamification/redeem', authenticateToken, async (req, res) => {
         const expiresAt = new Date();
         expiresAt.setDate(expiresAt.getDate() + 30);
 
-        await gamification.redeemPoints(reward.pointsCost, {
+        // Redeem points and add reward
+        console.log('Calling redeemPoints()...');
+        gamification.redeemPoints(reward.pointsCost, {
             ...reward,
             expiresAt
         });
+
+        console.log(`AFTER redeemPoints() - Points: ${gamification.points}`);
+        console.log(`AFTER redeemPoints() - Redeemed Rewards: ${gamification.redeemedRewards.length}`);
+        console.log(`Modified paths: ${gamification.modifiedPaths()}`);
+        console.log(`Is modified: ${gamification.isModified()}`);
+
+        // Save the gamification document to persist changes
+        console.log('Calling save()...');
+        await gamification.save();
+        console.log('Save completed!');
+
+        // Verify the save worked by fetching fresh from DB
+        const verifyGamification = await Gamification.findOne({ userId: req.user.userId });
+        console.log(`VERIFY from DB - Points: ${verifyGamification.points}`);
+        console.log(`VERIFY from DB - Redeemed Rewards: ${verifyGamification.redeemedRewards.length}`);
+        console.log('=== REDEEM END ===\n');
 
         res.json({
             message: `Successfully redeemed ${reward.name}!`,
@@ -1941,6 +2434,9 @@ router.post('/gamification/redeem', authenticateToken, async (req, res) => {
             }
         });
     } catch (error) {
+        console.error('=== REDEEM ERROR ===');
+        console.error(error);
+        console.error('===================\n');
         res.status(500).json({ message: 'Server error', error: error.message });
     }
 });
@@ -1956,6 +2452,391 @@ router.get('/gamification/my-rewards', authenticateToken, async (req, res) => {
         });
 
         res.json(activeRewards);
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// ===== GIFT CODE SYSTEM =====
+
+// Redeem points for gift code
+router.post('/gamification/redeem-gift-code', authenticateToken, async (req, res) => {
+    try {
+        const { rewardId, pointCost, discountAmount } = req.body;
+
+        if (!rewardId || !pointCost || !discountAmount) {
+            return res.status(400).json({ message: 'Missing required fields' });
+        }
+
+        // Get user's gamification profile
+        const gamification = await Gamification.findOne({ userId: req.user.userId });
+        if (!gamification) {
+            return res.status(404).json({ message: 'Gamification profile not found' });
+        }
+
+        // Check if user has enough points
+        if (gamification.points < pointCost) {
+            return res.status(400).json({
+                message: 'Insufficient points',
+                required: pointCost,
+                current: gamification.points
+            });
+        }
+
+        // Deduct points
+        gamification.points -= pointCost;
+        gamification.pointHistory.push({
+            amount: -pointCost,
+            reason: `Redeemed gift code: ₹${discountAmount} discount`,
+            type: 'redeem'
+        });
+        gamification.markModified('pointHistory');
+        await gamification.save();
+
+        // Create gift code
+        const giftCode = await GiftCode.createGiftCode(req.user.userId, discountAmount);
+
+        res.json({
+            message: 'Gift code created successfully!',
+            code: giftCode.code,
+            discountAmount: giftCode.discountAmount,
+            expiresAt: giftCode.expiresAt,
+            pointsRemaining: gamification.points
+        });
+    } catch (error) {
+        console.error('Error redeeming gift code:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Get user's gift codes
+router.get('/gift-codes/my-codes', authenticateToken, async (req, res) => {
+    try {
+        const codes = await GiftCode.find({
+            userId: req.user.userId
+        }).sort({ createdAt: -1 });
+
+        res.json({ codes });
+    } catch (error) {
+        console.error('Error fetching gift codes:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Validate gift code
+router.get('/gift-codes/validate/:code', authenticateToken, async (req, res) => {
+    try {
+        const code = await GiftCode.findOne({
+            code: req.params.code,
+            userId: req.user.userId,
+            isUsed: false,
+            expiresAt: { $gt: new Date() }
+        });
+
+        if (!code) {
+            return res.status(404).json({ message: 'Invalid, expired, or already used code' });
+        }
+
+        res.json({
+            code: code.code,
+            discountAmount: code.discountAmount,
+            expiresAt: code.expiresAt
+        });
+    } catch (error) {
+        console.error('Error validating gift code:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Migration endpoint - Add sample coordinates to orders
+router.post('/admin/migrate-order-coordinates', async (req, res) => {
+    try {
+        // Sample coordinates for different cities in India
+        const sampleLocations = [
+            { lat: 19.0760, lng: 72.8777, city: 'Mumbai' },
+            { lat: 28.7041, lng: 77.1025, city: 'Delhi' },
+            { lat: 12.9716, lng: 77.5946, city: 'Bangalore' },
+            { lat: 22.5726, lng: 88.3639, city: 'Kolkata' },
+            { lat: 17.3850, lng: 78.4867, city: 'Hyderabad' },
+            { lat: 13.0827, lng: 80.2707, city: 'Chennai' },
+            { lat: 23.0225, lng: 72.5714, city: 'Ahmedabad' },
+            { lat: 18.5204, lng: 73.8567, city: 'Pune' }
+        ];
+
+        // Find orders without coordinates
+        const orders = await Order.find({
+            $or: [
+                { 'shippingAddress.coordinates': { $exists: false } },
+                { 'shippingAddress.coordinates.lat': { $exists: false } }
+            ]
+        });
+
+        let updated = 0;
+        for (const order of orders) {
+            // Pick a random location
+            const location = sampleLocations[Math.floor(Math.random() * sampleLocations.length)];
+
+            // Add some random offset to make each order unique
+            const latOffset = (Math.random() - 0.5) * 0.1; // ±0.05 degrees
+            const lngOffset = (Math.random() - 0.5) * 0.1;
+
+            if (!order.shippingAddress) {
+                order.shippingAddress = {};
+            }
+
+            order.shippingAddress.coordinates = {
+                lat: location.lat + latOffset,
+                lng: location.lng + lngOffset
+            };
+
+            if (!order.shippingAddress.city) {
+                order.shippingAddress.city = location.city;
+                order.shippingAddress.state = 'India';
+            }
+
+            await order.save({ validateBeforeSave: false });
+            updated++;
+        }
+
+        res.json({
+            message: 'Migration completed successfully',
+            ordersUpdated: updated,
+            totalOrders: orders.length
+        });
+    } catch (error) {
+        console.error('Migration error:', error);
+        console.error('Error stack:', error.stack);
+        res.status(500).json({ message: 'Migration failed', error: error.message, stack: error.stack });
+    }
+});
+
+// ============ SUPPORT CHAT SYSTEM ============
+
+// Request support chat (creates a pending chat request)
+router.post('/user/support/request', authenticateToken, async (req, res) => {
+    try {
+        const userId = req.user.userId;
+
+        // Check if user already has an active or pending support chat
+        const existingChat = await SupportChat.findOne({
+            user: userId,
+            status: { $in: ['pending', 'active'] }
+        });
+
+        if (existingChat) {
+            return res.status(400).json({
+                message: existingChat.status === 'pending'
+                    ? 'You already have a pending support request'
+                    : 'You already have an active chat with support',
+                chatId: existingChat._id
+            });
+        }
+
+        // Create new support chat request
+        const supportChat = new SupportChat({
+            user: userId,
+            status: 'pending',
+            messages: [{
+                sender: userId,
+                senderModel: 'User',
+                message: req.body.initialMessage || 'Hello, I need help with my account.',
+                timestamp: new Date()
+            }]
+        });
+
+        await supportChat.save();
+
+        // Get user info for notification
+        const user = await User.findById(userId).select('name email');
+
+        // Send real-time notification to all admins via WebSocket
+        const { broadcastSupportRequest } = require('../socketHandler.js');
+        broadcastSupportRequest({
+            id: supportChat._id,
+            user: { _id: userId, name: user?.name, email: user?.email },
+            firstMessage: req.body.initialMessage || 'Hello, I need help with my account.',
+            createdAt: supportChat.createdAt
+        });
+
+        console.log(`📧 Support request from ${user?.name || userId} - Broadcast to all admins`);
+
+        res.status(201).json({
+            message: 'Support request sent successfully! An admin will connect with you shortly.',
+            chatId: supportChat._id,
+            status: supportChat.status
+        });
+    } catch (error) {
+        console.error('Support request error:', error);
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Get user's active support chat
+router.get('/user/support/active', authenticateToken, async (req, res) => {
+    try {
+        const chat = await SupportChat.findOne({
+            user: req.user.userId,
+            status: { $in: ['pending', 'active'] }
+        }).populate('admin', 'name email');
+
+        if (!chat) {
+            return res.json({ hasActiveChat: false });
+        }
+
+        res.json({
+            hasActiveChat: true,
+            chat: {
+                id: chat._id,
+                status: chat.status,
+                admin: chat.admin ? { name: chat.admin.name } : null,
+                messagesCount: chat.messages.length,
+                createdAt: chat.createdAt
+            }
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Get chat messages
+router.get('/user/support/chat/:chatId/messages', authenticateToken, async (req, res) => {
+    try {
+        const chat = await SupportChat.findOne({
+            _id: req.params.chatId,
+            user: req.user.userId
+        }).populate('admin', 'name');
+
+        if (!chat) {
+            return res.status(404).json({ message: 'Chat not found' });
+        }
+
+        res.json({
+            chatId: chat._id,
+            status: chat.status,
+            admin: chat.admin ? { name: chat.admin.name } : null,
+            messages: chat.messages.map(msg => ({
+                id: msg._id,
+                sender: msg.senderModel,
+                message: msg.message,
+                timestamp: msg.timestamp
+            }))
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Send message in chat
+router.post('/user/support/chat/:chatId/message', authenticateToken, async (req, res) => {
+    try {
+        const { message } = req.body;
+
+        if (!message || !message.trim()) {
+            return res.status(400).json({ message: 'Message cannot be empty' });
+        }
+
+        const chat = await SupportChat.findOne({
+            _id: req.params.chatId,
+            user: req.user.userId,
+            status: 'active'
+        });
+
+        if (!chat) {
+            return res.status(404).json({ message: 'Active chat not found' });
+        }
+
+        const newMessage = {
+            sender: req.user.userId,
+            senderModel: 'User',
+            message: message.trim(),
+            timestamp: new Date()
+        };
+
+        chat.messages.push(newMessage);
+        await chat.save();
+
+        // Send real-time notification to admin via WebSocket
+        const { broadcastSupportMessage } = require('../socketHandler.js');
+        broadcastSupportMessage(req.user.userId, chat.admin, {
+            chatId: chat._id,
+            sender: 'User',
+            message: newMessage.message,
+            timestamp: newMessage.timestamp
+        });
+
+        res.json({
+            success: true,
+            message: 'Message sent',
+            newMessage: chat.messages[chat.messages.length - 1]
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Close support chat
+router.post('/user/support/chat/:chatId/close', authenticateToken, async (req, res) => {
+    try {
+        const chat = await SupportChat.findOne({
+            _id: req.params.chatId,
+            user: req.user.userId,
+            status: { $in: ['pending', 'active'] }
+        });
+
+        if (!chat) {
+            return res.status(404).json({ message: 'Chat not found' });
+        }
+
+        chat.status = 'closed';
+        chat.closedAt = new Date();
+        chat.closedBy = 'user';
+
+        await chat.save();
+
+        res.json({
+            success: true,
+            message: 'Support chat closed successfully'
+        });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Get user's chat history
+router.get('/user/support/history', authenticateToken, async (req, res) => {
+    try {
+        const chats = await SupportChat.find({
+            user: req.user.userId
+        })
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .select('status createdAt closedAt messagesCount');
+
+        res.json({ chats });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// ============ NOTIFICATION COUNT ENDPOINTS ============
+
+// Get pending orders count (for admin notification badge)
+router.get('/orders/pending-count', authenticateAdminToken, async (req, res) => {
+    try {
+        const count = await Order.countDocuments({
+            status: { $in: ['pending', 'confirmed'] }
+        });
+        res.json({ count });
+    } catch (error) {
+        res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Get pending support requests count (for admin notification badge)
+router.get('/support/pending-count', authenticateAdminToken, async (req, res) => {
+    try {
+        const count = await SupportChat.countDocuments({ status: 'pending' });
+        res.json({ count });
     } catch (error) {
         res.status(500).json({ message: 'Server error', error: error.message });
     }

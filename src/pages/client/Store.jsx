@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import axios from '../../utils/axios';
 import ProductCard from '../../components/ProductCard.jsx';
 import { useSocket } from '../../context/SocketContext';
+import { Sparkles } from 'lucide-react';
 
 const StoreContainer = styled.div`
   max-width: 1200px;
@@ -120,6 +121,17 @@ const NoProducts = styled.div`
   grid-column: 1 / -1;
 `;
 
+// Animation for the sparkle icon
+const sparkle = keyframes`
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  50% { transform: scale(1.2) rotate(15deg); opacity: 0.8; }
+`;
+
+// Styled wrapper for animated sparkle icon
+const AnimatedSparkle = styled(Sparkles)`
+  animation: ${sparkle} 1.5s ease-in-out infinite;
+`;
+
 const Store = () => {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -142,9 +154,17 @@ const Store = () => {
     const searchParam = searchParams.get('search');
     if (categoryParam) {
       setSelectedCategory(categoryParam);
+      setCurrentPage(1); // Reset to first page when category changes
+    } else {
+      // Reset to 'all' if no category param
+      setSelectedCategory('all');
     }
     if (searchParam) {
       setSearchTerm(searchParam);
+      setCurrentPage(1); // Reset to first page when search changes
+    } else {
+      // Clear search if no search param
+      setSearchTerm('');
     }
   }, [searchParams]);
 
@@ -195,6 +215,9 @@ const Store = () => {
     }
   };
 
+  // Get highlight parameter for featured product from chatbot
+  const highlightedProductId = searchParams.get('highlight');
+
   const filteredProducts = products.filter(product => {
     // Guard fields
     const name = product.name || '';
@@ -211,8 +234,15 @@ const Store = () => {
     return matchesSearch && matchesCategory;
   });
 
-  // Sort products
+  // Sort products - put highlighted product first, then apply regular sorting
   const sortedProducts = [...filteredProducts].sort((a, b) => {
+    // If there's a highlighted product, put it first
+    if (highlightedProductId) {
+      if (a._id === highlightedProductId) return -1;
+      if (b._id === highlightedProductId) return 1;
+    }
+
+    // Regular sorting
     switch (sortBy) {
       case 'price-low':
         return a.price - b.price;
@@ -311,7 +341,40 @@ const Store = () => {
         <>
           <ProductGrid>
             {currentProducts.map(product => (
-              <ProductCard key={product._id} product={product} />
+              <div
+                key={product._id}
+                style={product._id === highlightedProductId ? {
+                  position: 'relative',
+                  animation: 'pulse 2s ease-in-out',
+                  borderRadius: '12px',
+                  boxShadow: '0 0 20px rgba(26, 135, 84, 0.5)',
+                  border: '2px solid #1a8754'
+                } : {}}
+              >
+                {product._id === highlightedProductId && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '-10px',
+                    left: '50%',
+                    transform: 'translateX(-50%)',
+                    background: 'linear-gradient(135deg, #1a8754, #20c997)',
+                    color: 'white',
+                    padding: '4px 12px',
+                    borderRadius: '20px',
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    zIndex: 10,
+                    whiteSpace: 'nowrap',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px'
+                  }}>
+                    <AnimatedSparkle size={12} />
+                    Selected Product
+                  </div>
+                )}
+                <ProductCard product={product} />
+              </div>
             ))}
           </ProductGrid>
 

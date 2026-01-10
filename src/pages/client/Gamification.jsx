@@ -91,11 +91,11 @@ const StatsGrid = styled.div`
 `;
 
 const StatCard = styled.div`
-  background: linear-gradient(135deg, ${props => props.$gradient || '#667eea, #764ba2'});
+  background: linear-gradient(135deg, ${props => props.$gradient || '#1a8754, #20c997'});
   padding: 30px;
   border-radius: 15px;
   color: white;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
   
   @media (max-width: 768px) {
     padding: 20px;
@@ -141,7 +141,7 @@ const SectionTitle = styled.h2`
 `;
 
 const CheckInButton = styled.button`
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #1a8754, #20c997);
   color: white;
   border: none;
   padding: 15px 40px;
@@ -149,10 +149,12 @@ const CheckInButton = styled.button`
   font-size: 18px;
   font-weight: bold;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 15px rgba(26, 135, 84, 0.3);
   
   &:hover {
     transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(26, 135, 84, 0.4);
   }
   
   &:disabled {
@@ -245,6 +247,12 @@ const RewardName = styled.div`
   color: var(--text-color);
 `;
 
+const RewardDesc = styled.div`
+  color: var(--text-secondary);
+  font-size: 14px;
+  margin-bottom: 10px;
+`;
+
 const RewardCost = styled.div`
   color: var(--text-secondary);
   margin-bottom: 15px;
@@ -286,6 +294,8 @@ const Gamification = () => {
   const [achievements, setAchievements] = useState([]);
   const [leaderboard, setLeaderboard] = useState([]);
   const [rewards, setRewards] = useState([]);
+  const [myCodes, setMyCodes] = useState([]);
+  const [giftCodeFilter, setGiftCodeFilter] = useState('active'); // active, redeemed, expired
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [leaderboardPeriod, setLeaderboardPeriod] = useState('all');
@@ -299,6 +309,7 @@ const Gamification = () => {
       return;
     }
     fetchData();
+    fetchMyCodes();
   }, []);
 
   useEffect(() => {
@@ -437,6 +448,64 @@ const Gamification = () => {
     }
   };
 
+  const fetchMyCodes = async () => {
+    try {
+      const token = localStorage.getItem('userToken');
+      const res = await axios.get('/gift-codes/my-codes', {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setMyCodes(res.data.codes || []);
+    } catch (error) {
+      console.error('Error fetching gift codes:', error);
+    }
+  };
+
+  const handleRedeemGiftCode = async (reward) => {
+    const result = await Swal.fire({
+      title: 'Redeem Gift Code',
+      text: 'Convert your points into a gift code that can be used for discounts on orders?',
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonColor: '#4caf50',
+      cancelButtonColor: '#f44336',
+      confirmButtonText: 'Yes, redeem!'
+    });
+
+    if (!result.isConfirmed) return;
+
+    // Debug logging
+    console.log('=== REDEEM DEBUG ===');
+    console.log('Reward object:', reward);
+
+    try {
+      const token = localStorage.getItem('userToken');
+      const res = await axios.post('/gamification/redeem-gift-code', {
+        rewardId: reward.id || reward._id,
+        pointCost: reward.pointsCost || reward.pointCost,
+        discountAmount: reward.value || reward.discountAmount || reward.discount || reward.amount || 50
+      }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      await Swal.fire({
+        title: 'Success!',
+        html: `<p>${res.data.message}</p><p><strong>Your Code: ${res.data.code}</strong></p>`,
+        icon: 'success',
+        confirmButtonColor: '#4caf50'
+      });
+
+      fetchData();
+      fetchMyCodes();
+    } catch (error) {
+      Swal.fire({
+        title: 'Error',
+        text: error.response?.data?.message || 'Redemption failed',
+        icon: 'error',
+        confirmButtonColor: '#f44336'
+      });
+    }
+  };
+
   if (loading) {
     return <Container><div style={{ textAlign: 'center', padding: '50px', color: 'var(--text-color)' }}>Loading...</div></Container>;
   }
@@ -471,7 +540,7 @@ const Gamification = () => {
       </Header>
 
       <StatsGrid>
-        <StatCard $gradient="#667eea, #764ba2">
+        <StatCard $gradient="#1a8754, #20c997">
           <StatValue>{stats.points}</StatValue>
           <StatLabel>Total Points</StatLabel>
         </StatCard>
@@ -497,18 +566,18 @@ const Gamification = () => {
 
         {/* Streak Bonus Info */}
         <div style={{
-          background: 'linear-gradient(135deg, #667eea, #764ba2)',
-          padding: '15px',
+          background: 'var(--input-bg)',
+          padding: '15px 20px',
           borderRadius: '10px',
           marginBottom: '20px',
-          color: 'white',
-          textAlign: 'center'
+          textAlign: 'center',
+          border: '1px solid var(--border-color)'
         }}>
-          <div style={{ fontSize: '14px', marginBottom: '5px' }}>🎁 Streak Bonus</div>
-          <div style={{ fontSize: '18px', fontWeight: 'bold' }}>
+          <div style={{ fontSize: '14px', marginBottom: '5px', color: '#f59e0b' }}>🎁 Streak Bonus</div>
+          <div style={{ fontSize: '16px', fontWeight: 'bold', color: 'var(--text-color)' }}>
             Complete 30 days for +30% bonus on all future check-ins!
           </div>
-          <div style={{ fontSize: '12px', marginTop: '5px', opacity: 0.9 }}>
+          <div style={{ fontSize: '12px', marginTop: '5px', color: 'var(--text-secondary)' }}>
             Progress: {stats.checkInStreak % 30}/30 days
           </div>
         </div>
@@ -517,6 +586,188 @@ const Gamification = () => {
         <CheckInButton onClick={handleCheckIn}>
           Check In Now
         </CheckInButton>
+      </Section>
+
+      {/* My Gift Codes Section */}
+      <Section>
+        <SectionTitle><Gift size={24} style={{ marginRight: '8px' }} /> My Gift Codes</SectionTitle>
+        <p style={{ marginBottom: '20px', color: 'var(--text-secondary)' }}>
+          Your gift codes - redeem points below to get more!
+        </p>
+
+        {/* Tabs */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '2px solid var(--border-color)', paddingBottom: '10px' }}>
+          {['active', 'redeemed', 'expired'].map(filter => (
+            <button
+              key={filter}
+              onClick={() => setGiftCodeFilter(filter)}
+              style={{
+                background: giftCodeFilter === filter ? 'var(--btn-primary)' : 'transparent',
+                color: giftCodeFilter === filter ? 'white' : 'var(--text-color)',
+                border: 'none',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontSize: '14px',
+                fontWeight: '600',
+                textTransform: 'capitalize',
+                transition: 'all 0.3s'
+              }}
+            >
+              {filter}
+            </button>
+          ))}
+        </div>
+
+        {/* Gift Code List */}
+        {(() => {
+          const now = new Date();
+          const filteredCodes = myCodes.filter(code => {
+            if (giftCodeFilter === 'active') {
+              return !code.isUsed && new Date(code.expiresAt) > now;
+            } else if (giftCodeFilter === 'redeemed') {
+              return code.isUsed;
+            } else { // expired
+              return !code.isUsed && new Date(code.expiresAt) <= now;
+            }
+          });
+
+          if (filteredCodes.length === 0) {
+            return (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                <Gift size={48} style={{ opacity: 0.3, marginBottom: '10px' }} />
+                <div>No {giftCodeFilter} gift codes</div>
+                {giftCodeFilter === 'active' && (
+                  <div style={{ fontSize: '13px', marginTop: '8px' }}>
+                    Redeem rewards below to get gift codes!
+                  </div>
+                )}
+              </div>
+            );
+          }
+
+          return (
+            <RewardsGrid>
+              {filteredCodes.map((code) => (
+                <RewardCard
+                  key={code._id}
+                  style={{
+                    opacity: code.isUsed || new Date(code.expiresAt) <= now ? 0.6 : 1,
+                    border: `2px solid ${code.isUsed ? '#9E9E9E' : 'var(--btn-primary)'}`
+                  }}
+                >
+                  <RewardName style={{ fontFamily: 'monospace', fontSize: '18px' }}>
+                    {code.code}
+                  </RewardName>
+                  <RewardDesc>₹{code.discountAmount} discount</RewardDesc>
+                  <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '10px' }}>
+                    {code.isUsed
+                      ? `Used on ${new Date(code.usedAt).toLocaleDateString()}`
+                      : `Expires: ${new Date(code.expiresAt).toLocaleDateString()}`
+                    }
+                  </div>
+                  {code.isUsed && (
+                    <div style={{
+                      marginTop: '10px',
+                      padding: '6px 12px',
+                      background: 'rgba(76, 175, 80, 0.1)',
+                      borderRadius: '4px',
+                      color: '#4CAF50',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}>
+                      ✓ Redeemed
+                    </div>
+                  )}
+                  {!code.isUsed && new Date(code.expiresAt) <= now && (
+                    <div style={{
+                      marginTop: '10px',
+                      padding: '6px 12px',
+                      background: 'rgba(244, 67, 54, 0.1)',
+                      borderRadius: '4px',
+                      color: '#f44336',
+                      fontSize: '12px',
+                      fontWeight: '600'
+                    }}>
+                      ⏰ Expired
+                    </div>
+                  )}
+                </RewardCard>
+              ))}
+            </RewardsGrid>
+          );
+        })()}
+      </Section>
+
+      {/* Redeem Rewards Section */}
+      <Section>
+        <SectionTitle><Gift size={24} style={{ marginRight: '8px' }} /> Redeem Rewards</SectionTitle>
+        <p style={{ marginBottom: '20px', color: 'var(--text-secondary)' }}>
+          Convert your points into gift codes for discounts
+        </p>
+        <RewardsGrid>
+          {rewards && rewards.filter(r => r.type === 'discount').map(reward => {
+            const cost = reward.pointsCost || reward.pointCost || 0;
+            const canAfford = stats.points >= cost;
+            return (
+              <RewardCard key={reward.id || reward._id} style={{ position: 'relative', paddingTop: '30px' }}>
+                {/* Points Badge */}
+                <div style={{
+                  position: 'absolute',
+                  top: '-12px',
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  background: canAfford ? 'linear-gradient(135deg, #1a8754, #20c997)' : 'linear-gradient(135deg, #e67e22, #f39c12)',
+                  color: 'white',
+                  padding: '6px 16px',
+                  borderRadius: '20px',
+                  fontSize: '13px',
+                  fontWeight: 'bold',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  <Zap size={14} fill="white" /> {cost} Points
+                </div>
+
+                <RewardName style={{ marginTop: '10px' }}>{reward.name}</RewardName>
+
+                {/* Show discount value prominently */}
+                <div style={{
+                  fontSize: '28px',
+                  fontWeight: 'bold',
+                  color: 'var(--btn-primary)',
+                  margin: '15px 0'
+                }}>
+                  ₹{reward.value || reward.discountAmount || reward.discount || '0'} OFF
+                </div>
+
+                <RewardDesc>{reward.description}</RewardDesc>
+
+                {/* Show if user can afford */}
+                {!canAfford && (
+                  <div style={{
+                    fontSize: '12px',
+                    color: '#dc3545',
+                    margin: '10px 0 5px',
+                    fontWeight: '500'
+                  }}>
+                    Need {cost - stats.points} more points
+                  </div>
+                )}
+
+                <RedeemButton
+                  onClick={() => handleRedeemGiftCode(reward)}
+                  disabled={!canAfford}
+                  style={{ marginTop: '15px' }}
+                >
+                  {!canAfford ? 'Not Enough Points' : 'Redeem Now'}
+                </RedeemButton>
+              </RewardCard>
+            );
+          })}
+        </RewardsGrid>
       </Section>
 
       <Section>
@@ -558,61 +809,6 @@ const Gamification = () => {
         </LeaderboardTable>
       </Section>
 
-      <Section>
-        <SectionTitle><CreditCard size={24} style={{ marginRight: '8px' }} /> My Rewards</SectionTitle>
-        <p style={{ marginBottom: '20px', color: 'var(--text-secondary)' }}>
-          Your active discount coupons and rewards
-        </p>
-        {stats.myRewards && stats.myRewards.length > 0 ? (
-          <RewardsGrid>
-            {stats.myRewards.map((reward, index) => (
-              <RewardCard key={index} $canAfford={true}>
-                <RewardName>{reward.name}</RewardName>
-                <div style={{ color: '#4CAF50', fontWeight: 'bold', marginBottom: '10px' }}>
-                  {reward.type === 'discount' && `₹${reward.value} OFF`}
-                  {reward.type === 'free_delivery' && 'FREE DELIVERY'}
-                  {reward.type === 'premium' && 'PREMIUM ACCESS'}
-                </div>
-                <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '5px' }}>
-                  Expires: {new Date(reward.expiresAt).toLocaleDateString()}
-                </div>
-                <div style={{ fontSize: '11px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                  {reward.usedAt ? (
-                    <><CheckCircle size={14} color="#4CAF50" /> Used</>
-                  ) : (
-                    <><Ticket size={14} color="#667eea" /> Available to use</>
-                  )}
-                </div>
-              </RewardCard>
-            ))}
-          </RewardsGrid>
-        ) : (
-          <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>
-            <p>No active rewards yet. Redeem points below to get discount coupons!</p>
-          </div>
-        )}
-      </Section>
-
-      <Section>
-        <SectionTitle><Gift size={24} style={{ marginRight: '8px' }} /> Redeem Rewards</SectionTitle>
-        <p style={{ marginBottom: '20px', color: 'var(--text-secondary)' }}>
-          You have {stats.points} points available
-        </p>
-        <RewardsGrid>
-          {rewards.map(reward => (
-            <RewardCard key={reward.id} $canAfford={stats.points >= reward.pointsCost}>
-              <RewardName>{reward.name}</RewardName>
-              <RewardCost>{reward.pointsCost} points</RewardCost>
-              <RedeemButton
-                disabled={stats.points < reward.pointsCost}
-                onClick={() => handleRedeem(reward.id)}
-              >
-                {stats.points >= reward.pointsCost ? 'Redeem' : 'Not Enough Points'}
-              </RedeemButton>
-            </RewardCard>
-          ))}
-        </RewardsGrid>
-      </Section>
     </Container>
   );
 };

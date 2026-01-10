@@ -4,7 +4,7 @@ import { useCart } from '../../context/CartContext.jsx';
 import { useUser } from '../../context/UserContext.jsx';
 import axios from '../../utils/axios';
 import Swal from 'sweetalert2';
-import { Ticket } from 'lucide-react';
+import { Ticket, Gift } from 'lucide-react';
 
 const CartContainer = styled.div`
   max-width: 1200px;
@@ -247,15 +247,17 @@ const Cart = () => {
   const [friendError, setFriendError] = useState('');
   const [previousOrders, setPreviousOrders] = useState([]);
   const [reorderLoading, setReorderLoading] = useState(null);
-  const [availableCoupons, setAvailableCoupons] = useState([]);
-  const [selectedCoupon, setSelectedCoupon] = useState(null);
-  const [couponDiscount, setCouponDiscount] = useState(0);
+  const [allGiftCodes, setAllGiftCodes] = useState([]);
+  const [giftCodeFilter, setGiftCodeFilter] = useState('active'); // active, redeemed, expired
+  const [giftCodeInput, setGiftCodeInput] = useState('');
+  const [giftCodeDiscount, setGiftCodeDiscount] = useState(0);
+  const [appliedGiftCode, setAppliedGiftCode] = useState(null);
 
   useEffect(() => {
     if (user) {
       fetchWalletBalance();
       fetchPreviousOrders();
-      fetchAvailableCoupons();
+      fetchAllGiftCodes();
     }
   }, [user]);
 
@@ -299,32 +301,59 @@ const Cart = () => {
     }
   };
 
-  const fetchAvailableCoupons = async () => {
+  const fetchAllGiftCodes = async () => {
     try {
       const token = localStorage.getItem('userToken');
-      const response = await axios.get('/gamification/my-rewards', {
+      const response = await axios.get('/gift-codes/my-codes', {
         headers: { Authorization: `Bearer ${token}` }
       });
-      // Filter only discount coupons that are not used and not expired
-      const validCoupons = response.data.filter(coupon =>
-        coupon.type === 'discount' &&
-        !coupon.usedAt &&
-        new Date(coupon.expiresAt) > new Date()
-      );
-      setAvailableCoupons(validCoupons);
+      setAllGiftCodes(response.data.codes || []);
     } catch (error) {
-      console.error('Error fetching coupons:', error);
+      console.error('Error fetching gift codes:', error);
     }
   };
 
-  const applyCoupon = (coupon) => {
-    setSelectedCoupon(coupon);
-    setCouponDiscount(coupon.value);
+  const applyGiftCode = async (codeToApply = null) => {
+    // Use the passed code or fall back to input field value
+    const code = codeToApply || giftCodeInput.trim();
+
+    if (!code) {
+      Swal.fire({
+        title: 'Invalid Code',
+        text: 'Please enter a gift code',
+        icon: 'warning'
+      });
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('userToken');
+      const res = await axios.get(`/gift-codes/validate/${code}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      setAppliedGiftCode(res.data.code);
+      setGiftCodeDiscount(res.data.discountAmount);
+      setGiftCodeInput(code); // Update input field to show the applied code
+
+      Swal.fire({
+        title: 'Code Applied!',
+        text: `₹${res.data.discountAmount} discount applied`,
+        icon: 'success'
+      });
+    } catch (error) {
+      Swal.fire({
+        title: 'Invalid Code',
+        text: error.response?.data?.message || 'Failed to apply gift code',
+        icon: 'error'
+      });
+    }
   };
 
-  const removeCoupon = () => {
-    setSelectedCoupon(null);
-    setCouponDiscount(0);
+  const removeGiftCode = () => {
+    setAppliedGiftCode(null);
+    setGiftCodeDiscount(0);
+    setGiftCodeInput('');
   };
 
   const handleQuantityChange = (productId, newQuantity) => {
@@ -401,13 +430,17 @@ const Cart = () => {
       }
 
       try {
+        // STEP 1: Create order first (before deducting payment)
+        // This prevents money being deducted if order creation fails
+        await placeOrder(user.address, 'wallet', appliedGiftCode);
+
+        // STEP 2: Only deduct wallet payment if order was created successfully
         const token = localStorage.getItem('userToken');
         await axios.post('/user/wallet/pay',
           { amount: grandTotal, description: `Order payment` },
           { headers: { Authorization: `Bearer ${token}` } }
         );
 
-        await placeOrder(user.address, 'wallet');
         setShowPaymentModal(false);
 
         Swal.fire({
@@ -416,11 +449,15 @@ const Cart = () => {
           icon: 'success'
         });
 
+        // Refresh wallet balance
         fetchWalletBalance();
       } catch (error) {
+        // Determine if error is from order creation or payment
+        const errorMessage = error.response?.data?.message || error.message || 'Failed to process order';
+
         Swal.fire({
-          title: 'Payment Failed',
-          text: error.response?.data?.message || 'Failed to process payment',
+          title: 'Order Failed',
+          text: errorMessage,
           icon: 'error'
         });
       }
@@ -513,7 +550,7 @@ const Cart = () => {
     deliveryCharge = 0;
   }
 
-  const grandTotal = discountedTotal + deliveryCharge - couponDiscount;
+  const grandTotal = discountedTotal + deliveryCharge - giftCodeDiscount;
 
   if (cart.length === 0) {
     return (
@@ -582,7 +619,7 @@ const Cart = () => {
                       alignItems: 'center',
                       gap: '8px',
                       padding: '10px 20px',
-                      background: 'linear-gradient(135deg, #667eea, #764ba2)',
+                      background: 'linear-gradient(135deg, #1a8754, #20c997)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '10px',
@@ -683,7 +720,7 @@ const Cart = () => {
                       alignItems: 'center',
                       gap: '6px',
                       padding: '12px 18px',
-                      background: reorderLoading === order._id ? 'var(--bg-color)' : 'linear-gradient(135deg, #667eea, #764ba2)',
+                      background: reorderLoading === order._id ? 'var(--bg-color)' : 'linear-gradient(135deg, #1a8754, #20c997)',
                       color: 'white',
                       border: 'none',
                       borderRadius: '12px',
@@ -795,102 +832,123 @@ const Cart = () => {
             </div>
           )}
 
-          {/* Coupon Section */}
-          {user && availableCoupons.length > 0 && (
-            <div style={{
-              background: 'var(--input-bg)',
-              padding: '15px',
-              borderRadius: '8px',
-              marginBottom: '15px',
-              border: '2px dashed var(--btn-primary)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                <Ticket size={18} />
-                <strong style={{ color: 'var(--text-color)' }}>Apply Coupon</strong>
-              </div>
 
-              {selectedCoupon ? (
-                <div style={{
-                  background: 'rgba(76, 175, 80, 0.1)',
-                  padding: '10px',
-                  borderRadius: '6px',
-                  border: '1px solid #4CAF50'
-                }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div>
-                      <div style={{ fontWeight: 'bold', color: '#4CAF50', marginBottom: '4px' }}>
-                        ✅ {selectedCoupon.name}
-                      </div>
-                      <div style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
-                        Saving ₹{selectedCoupon.value}
-                      </div>
-                    </div>
-                    <button
-                      onClick={removeCoupon}
-                      style={{
-                        background: '#f44336',
-                        color: 'white',
-                        border: 'none',
-                        padding: '6px 12px',
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        fontSize: '12px'
-                      }}
-                    >
-                      Remove
-                    </button>
+
+
+          {/* Gift Codes Section with Tabs */}
+          <div style={{
+            background: 'rgba(26, 135, 84, 0.05)',
+            padding: '15px',
+            borderRadius: '8px',
+            marginBottom: '15px',
+            border: '2px dashed #1a8754'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '15px' }}>
+              <Gift size={18} />
+              <strong style={{ color: 'var(--text-color)' }}>My Gift Codes</strong>
+            </div>
+
+            {/* Tabs */}
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '15px', borderBottom: '2px solid var(--border-color)', paddingBottom: '10px' }}>
+              {['active', 'redeemed', 'expired'].map(filter => (
+                <button
+                  key={filter}
+                  onClick={() => setGiftCodeFilter(filter)}
+                  style={{
+                    background: giftCodeFilter === filter ? '#1a8754' : 'transparent',
+                    color: giftCodeFilter === filter ? 'white' : 'var(--text-color)',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '13px',
+                    fontWeight: '600',
+                    textTransform: 'capitalize',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {filter}
+                </button>
+              ))}
+            </div>
+
+            {/* Gift Code List */}
+            {(() => {
+              const now = new Date();
+              const filteredCodes = allGiftCodes.filter(code => {
+                if (giftCodeFilter === 'active') {
+                  return !code.isUsed && new Date(code.expiresAt) > now;
+                } else if (giftCodeFilter === 'redeemed') {
+                  return code.isUsed;
+                } else { // expired
+                  return !code.isUsed && new Date(code.expiresAt) <= now;
+                }
+              });
+
+              if (filteredCodes.length === 0) {
+                return (
+                  <div style={{ textAlign: 'center', padding: '20px', color: 'var(--text-secondary)' }}>
+                    No {giftCodeFilter} gift codes
                   </div>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  {availableCoupons.map((coupon, index) => (
+                );
+              }
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  {filteredCodes.map((code) => (
                     <div
-                      key={index}
+                      key={code._id}
                       style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        padding: '8px',
                         background: 'var(--card-bg)',
+                        padding: '12px',
                         borderRadius: '6px',
-                        border: '1px solid var(--border-color)'
+                        border: `1px solid ${code.isUsed ? '#9E9E9E' : '#1a8754'}`,
+                        opacity: code.isUsed || new Date(code.expiresAt) <= now ? 0.6 : 1
                       }}
                     >
-                      <div>
-                        <div style={{ fontWeight: '600', color: 'var(--text-color)', fontSize: '13px' }}>
-                          {coupon.name}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontFamily: 'monospace', fontWeight: 'bold', color: '#1a8754', fontSize: '14px', marginBottom: '4px' }}>
+                            {code.code}
+                          </div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-secondary)', marginBottom: '2px' }}>
+                            ₹{code.discountAmount} discount
+                          </div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                            {code.isUsed ? `Used on ${new Date(code.usedAt).toLocaleDateString()}` : `Expires: ${new Date(code.expiresAt).toLocaleDateString()}`}
+                          </div>
                         </div>
-                        <div style={{ fontSize: '11px', color: '#4CAF50' }}>
-                          Save ₹{coupon.value}
-                        </div>
+                        {!code.isUsed && new Date(code.expiresAt) > now && (
+                          <button
+                            onClick={() => applyGiftCode(code.code)}
+                            style={{
+                              background: appliedGiftCode === code.code ? '#4CAF50' : '#1a8754',
+                              color: 'white',
+                              border: 'none',
+                              padding: '8px 16px',
+                              borderRadius: '4px',
+                              cursor: 'pointer',
+                              fontSize: '12px',
+                              fontWeight: '600',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {appliedGiftCode === code.code ? '✓ Applied' : 'Apply'}
+                          </button>
+                        )}
                       </div>
-                      <button
-                        onClick={() => applyCoupon(coupon)}
-                        style={{
-                          background: 'var(--btn-primary)',
-                          color: 'white',
-                          border: 'none',
-                          padding: '6px 16px',
-                          borderRadius: '4px',
-                          cursor: 'pointer',
-                          fontSize: '12px',
-                          fontWeight: '600'
-                        }}
-                      >
-                        Apply
-                      </button>
                     </div>
                   ))}
                 </div>
-              )}
-            </div>
-          )}
+              );
+            })()}
+          </div>
 
-          {/* Coupon Discount Row */}
-          {selectedCoupon && (
-            <SummaryRow style={{ color: '#4CAF50' }}>
-              <span><Ticket size={16} style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }} /> Coupon Discount</span>
-              <span>-₹{couponDiscount.toFixed(2)}</span>
+          {/* Gift Code Discount Row */}
+          {appliedGiftCode && (
+            <SummaryRow style={{ color: '#1a8754' }}>
+              <span><Gift size={16} style={{ marginRight: '6px', display: 'inline-block', verticalAlign: 'middle' }} /> Gift Code Discount</span>
+              <span>-₹{giftCodeDiscount.toFixed(2)}</span>
             </SummaryRow>
           )}
 

@@ -1,0 +1,442 @@
+/* ========== PARTNER LAYOUT ========== */
+.partner-layout {
+    display: flex;
+    min-height: 100vh;
+    background: #0f172a;
+}
+
+/* Navigation Sidebar - Fixed height, sticky position */
+.partner-nav {
+    width: 260px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    background: #1e293b;
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid #334155;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+/* Header */
+.partner-nav-header {
+    padding: 20px;
+    border-bottom: 1px solid #334155;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.partner-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-icon {
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+
+.brand-text {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f1f5f9;
+    letter-spacing: -0.3px;
+}
+
+/* Status Section */
+.partner-status-section {
+    padding: 16px 20px;
+    border-bottom: 1px solid #334155;
+}
+
+.status-toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px;
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 12px;
+    border: 1px solid #334155;
+}
+
+.status-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.status-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+}
+
+.status-dot.online {
+    background: #22c55e;
+    box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+    animation: statusPulse 2s infinite;
+}
+
+.status-dot.offline {
+    background: #64748b;
+}
+
+@keyframes statusPulse {
+
+    0%,
+    100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    50% {
+        opacity: 0.7;
+        transform: scale(1.1);
+    }
+}
+
+.status-text {
+    font-size: 14px;
+    font-weight: 600;
+    color: #e2e8f0;
+}
+
+/* Modern iOS-style Toggle Switch */
+.modern-toggle {
+    position: relative;
+    width: 48px;
+    height: 26px;
+    background: #475569;
+    border: none;
+    border-radius: 26px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    padding: 0;
+}
+
+.modern-toggle:hover {
+    background: #64748b;
+}
+
+.modern-toggle.active {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+.modern-toggle.active:hover {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+}
+
+.toggle-slider {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+.modern-toggle.active .toggle-slider {
+    transform: translateX(22px);
+}
+
+/* Navigation Links */
+.partner-nav-links {
+    flex: 1;
+    padding: 16px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow-y: auto;
+    max-height: calc(100vh - 320px);
+}
+
+/* Custom Scrollbar for Nav Links */
+.partner-nav-links::-webkit-scrollbar {
+    width: 6px;
+}
+
+.partner-nav-links::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+}
+
+.partner-nav-links::-webkit-scrollbar-thumb {
+    background: rgba(16, 185, 129, 0.4);
+    border-radius: 3px;
+}
+
+.partner-nav-links::-webkit-scrollbar-thumb:hover {
+    background: rgba(16, 185, 129, 0.6);
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    color: #94a3b8;
+    text-decoration: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.nav-link svg {
+    flex-shrink: 0;
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+}
+
+.nav-link.active {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 150, 105, 0.1));
+    color: #10b981;
+}
+
+.nav-link.active svg {
+    stroke: #10b981;
+}
+
+/* Footer */
+.partner-nav-footer {
+    padding: 16px;
+    border-top: 1px solid #334155;
+}
+
+.partner-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    margin-bottom: 12px;
+}
+
+.partner-avatar {
+    width: 42px;
+    height: 42px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+}
+
+.partner-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.partner-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #f1f5f9;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.partner-vehicle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 2px;
+}
+
+.partner-vehicle svg {
+    flex-shrink: 0;
+}
+
+/* Theme Toggle Button */
+.partner-theme-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 38px;
+    height: 38px;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+    border-radius: 10px;
+    color: #10b981;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.partner-theme-toggle:hover {
+    background: rgba(16, 185, 129, 0.2);
+    border-color: #10b981;
+    transform: rotate(20deg);
+}
+
+.logout-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 10px;
+    color: #ef4444;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.logout-btn:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #ef4444;
+}
+
+/* Main Content */
+.partner-content {
+    flex: 1;
+    padding: 24px;
+    overflow-y: auto;
+    background: #0f172a;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .partner-layout {
+        flex-direction: column;
+    }
+
+    .partner-nav {
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid #334155;
+    }
+
+    .partner-nav-links {
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 12px;
+        gap: 8px;
+    }
+
+    .nav-link {
+        flex-shrink: 0;
+        padding: 10px 14px;
+    }
+
+    .nav-link span:not(.nav-icon) {
+        display: none;
+    }
+
+    .partner-nav-footer {
+        display: none;
+    }
+
+    .partner-status-section {
+        padding: 12px;
+    }
+}
+
+/* ========== LIGHT THEME SUPPORT ========== */
+[data-theme="light"] .partner-layout {
+    background: #f8fafc;
+}
+
+[data-theme="light"] .partner-nav {
+    background: #ffffff;
+    border-right: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .partner-nav-header {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .brand-text {
+    color: #1e293b;
+}
+
+[data-theme="light"] .partner-status-section {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .nav-link {
+    color: #64748b;
+}
+
+[data-theme="light"] .nav-link:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #1e293b;
+}
+
+[data-theme="light"] .nav-link.active {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(5, 150, 105, 0.1));
+    color: #059669;
+}
+
+[data-theme="light"] .partner-nav-footer {
+    border-top: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .partner-info {
+    background: rgba(0, 0, 0, 0.03);
+}
+
+[data-theme="light"] .partner-name {
+    color: #1e293b;
+}
+
+[data-theme="light"] .partner-vehicle {
+    color: #64748b;
+}
+
+[data-theme="light"] .partner-content {
+    background: #f8fafc;
+}
+
+[data-theme="light"] .partner-theme-toggle {
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #059669;
+}
+
+[data-theme="light"] .partner-theme-toggle:hover {
+    background: rgba(16, 185, 129, 0.2);
+}
+
+/* Light theme - Status Toggle */
+[data-theme="light"] .status-toggle-container {
+    background: rgba(241, 245, 249, 0.8);
+    border-color: #e2e8f0;
+}
+
+[data-theme="light"] .status-text {
+    color: #1e293b;
+}
+
+[data-theme="light"] .modern-toggle {
+    background: #cbd5e1;
+}
+
+[data-theme="light"] .modern-toggle:hover {
+    background: #94a3b8;
+}

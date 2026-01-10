@@ -132,7 +132,7 @@ export const CartProvider = ({ children }) => {
     return cart.reduce((total, item) => total + ((item.price || 0) * (item.quantity || 0)), 0);
   };
 
-  const placeOrder = async (shippingAddress, paymentMethod = 'cod') => {
+  const placeOrder = async (shippingAddress, paymentMethod = 'cod', giftCode = null) => {
     try {
       const token = localStorage.getItem('userToken');
       if (!token) {
@@ -144,11 +144,18 @@ export const CartProvider = ({ children }) => {
         quantity: item.quantity
       }));
 
-      const response = await axios.post('/order', {
+      const orderData = {
         items,
         shippingAddress,
         paymentMethod
-      }, {
+      };
+
+      // Add giftCode if provided
+      if (giftCode) {
+        orderData.giftCode = giftCode;
+      }
+
+      const response = await axios.post('/order', orderData, {
         headers: { Authorization: `Bearer ${token}` }
       });
 

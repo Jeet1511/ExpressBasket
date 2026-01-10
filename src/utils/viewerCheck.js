@@ -6,6 +6,19 @@ export const isViewOnly = (admin) => {
   return admin.role === 'normal_viewer' || admin.role === 'special_viewer';
 };
 
+export const isSpecialViewer = (admin) => {
+  return admin?.role === 'special_viewer';
+};
+
+export const isNormalViewer = (admin) => {
+  return admin?.role === 'normal_viewer';
+};
+
+// Special viewers can see super_admin features (but not use them)
+export const canAccessSuperAdminFeatures = (admin) => {
+  return admin?.role === 'super_admin' || admin?.role === 'special_viewer';
+};
+
 export const getAdminFromStorage = () => {
   try {
     const adminData = localStorage.getItem('admin');
@@ -17,9 +30,9 @@ export const getAdminFromStorage = () => {
 };
 
 // Use this in your components:
-// import { isViewOnly, getAdminFromStorage } from '../../utils/viewerCheck';
+// import { isViewOnly, isSpecialViewer, getAdminFromStorage } from '../../utils/viewerCheck';
 // const admin = getAdminFromStorage();
 // const viewOnly = isViewOnly(admin);
 // Then wrap buttons: {!viewOnly && <button>Edit</button>}
 
-export default { isViewOnly, getAdminFromStorage };
+export default { isViewOnly, isSpecialViewer, isNormalViewer, canAccessSuperAdminFeatures, getAdminFromStorage };

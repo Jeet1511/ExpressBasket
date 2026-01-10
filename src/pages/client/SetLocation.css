@@ -1,0 +1,131 @@
+.set-location-page {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 40px 20px;
+}
+
+.set-location-container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+.set-location-container h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 32px;
+}
+
+.subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 40px;
+    font-size: 16px;
+}
+
+.saved-location-card,
+.no-location-card {
+    background: #f8f9fa;
+    border-radius: 16px;
+    padding: 30px;
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.icon-wrapper {
+    margin-bottom: 20px;
+}
+
+.saved-location-card h3,
+.no-location-card h3 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+.location-details {
+    background: white;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 20px 0;
+    text-align: left;
+}
+
+.location-details p {
+    margin: 8px 0;
+    color: #555;
+}
+
+.location-details strong {
+    color: #333;
+}
+
+.set-location-btn,
+.change-location-btn {
+    padding: 16px 32px;
+    font-size: 16px;
+    font-weight: 700;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 20px;
+}
+
+.set-location-btn {
+    background: linear-gradient(135deg, #4CAF50, #8BC34A);
+    color: white;
+    box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+}
+
+.set-location-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.5);
+}
+
+.change-location-btn {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+}
+
+.change-location-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+}
+
+.instructions {
+    background: #f0f4ff;
+    border-left: 4px solid #667eea;
+    border-radius: 12px;
+    padding: 25px;
+}
+
+.instructions h3 {
+    color: #333;
+    margin-bottom: 15px;
+    font-size: 20px;
+}
+
+.instructions ol {
+    margin-left: 20px;
+    color: #555;
+}
+
+.instructions li {
+    margin: 10px 0;
+    line-height: 1.6;
+}
+
+.instructions ul {
+    margin-left: 20px;
+    margin-top: 8px;
+}
+
+.instructions ul li {
+    margin: 5px 0;
+}

@@ -1,0 +1,454 @@
+/* ========== PARTNER PROFILE ========== */
+.partner-profile {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 20px;
+}
+
+/* Loading State */
+.partner-profile .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    gap: 16px;
+    color: #64748b;
+}
+
+.partner-profile .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #334155;
+    border-top-color: #10b981;
+    border-radius: 50%;
+    animation: partnerSpin 0.8s linear infinite;
+}
+
+@keyframes partnerSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Header - Clean and Professional */
+.partner-profile .profile-header {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    margin-bottom: 28px !important;
+    padding: 0 0 20px 0 !important;
+    border-bottom: 1px solid #334155 !important;
+    background: none !important;
+    animation: none !important;
+    border-radius: 0 !important;
+}
+
+.partner-profile .header-content h1 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin: 0 0 6px;
+}
+
+.partner-profile .header-content h1 svg {
+    color: #10b981;
+}
+
+.partner-profile .header-content p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+.partner-profile .header-content {
+    display: flex;
+    flex-direction: column;
+}
+
+/* Buttons */
+.partner-profile .edit-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.partner-profile .edit-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+}
+
+.partner-profile .edit-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.partner-profile .cancel-btn {
+    padding: 10px 18px;
+    background: transparent;
+    border: 1px solid #475569;
+    border-radius: 10px;
+    color: #94a3b8;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.partner-profile .cancel-btn:hover {
+    background: #1e293b;
+    color: #e2e8f0;
+}
+
+.partner-profile .save-btn {
+    padding: 10px 18px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border: none;
+    border-radius: 10px;
+    color: white;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.partner-profile .save-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+}
+
+.partner-profile .save-btn:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+/* Profile Content - Vertical Stack Layout - Override client CSS */
+.partner-profile .profile-content {
+    display: flex !important;
+    flex-direction: column !important;
+    grid-template-columns: unset !important;
+    gap: 24px !important;
+}
+
+/* Main Info Card - Profile Header Card */
+.partner-profile .profile-card.main-info {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%) !important;
+    padding: 28px !important;
+    border-radius: 16px !important;
+    border: 1px solid #334155 !important;
+    position: relative !important;
+    top: unset !important;
+    backdrop-filter: none !important;
+    overflow: visible !important;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2) !important;
+}
+
+.partner-profile .avatar-section {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.partner-profile .avatar-large {
+    width: 72px;
+    height: 72px;
+    background: linear-gradient(135deg, #10b981, #059669);
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 28px;
+    font-weight: 700;
+    flex-shrink: 0;
+}
+
+.partner-profile .avatar-info {
+    flex: 1;
+}
+
+.partner-profile .avatar-info h2 {
+    margin: 0 0 4px;
+    font-size: 20px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+.partner-profile .avatar-info .email {
+    display: block;
+    color: #64748b;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.partner-profile .status-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.partner-profile .status-badge.approved {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+.partner-profile .status-badge.pending {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+}
+
+/* Profile Grid - 2x2 Grid Layout */
+.partner-profile .profile-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 20px !important;
+}
+
+/* Profile Card - Standard Cards - Override client styles */
+.partner-profile .profile-card {
+    background: #1e293b !important;
+    border-radius: 14px !important;
+    padding: 22px !important;
+    border: 1px solid #334155 !important;
+    transition: all 0.2s ease;
+    position: relative !important;
+    top: unset !important;
+    backdrop-filter: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+}
+
+.partner-profile .profile-card:hover {
+    border-color: rgba(16, 185, 129, 0.3) !important;
+}
+
+.partner-profile .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 18px;
+    padding-bottom: 14px;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.6);
+}
+
+.partner-profile .card-header svg {
+    color: #10b981;
+    flex-shrink: 0;
+}
+
+.partner-profile .card-header h3 {
+    margin: 0;
+    font-size: 15px;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.partner-profile .card-content {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* Info Rows - Clean Label/Value Pairs */
+.partner-profile .info-row {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 8px 0 !important;
+    gap: 20px !important;
+}
+
+.partner-profile .info-row .label {
+    color: #64748b !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    flex-shrink: 0 !important;
+}
+
+.partner-profile .info-row .value {
+    color: #e2e8f0 !important;
+    font-size: 14px !important;
+    font-weight: 500 !important;
+    text-align: right !important;
+}
+
+.partner-profile .info-row .value.capitalize {
+    text-transform: capitalize;
+}
+
+/* Edit Input */
+.partner-profile .edit-input {
+    padding: 8px 12px;
+    background: #0f172a;
+    border: 1px solid #475569;
+    border-radius: 8px;
+    color: #f1f5f9;
+    font-size: 13px;
+    min-width: 160px;
+    transition: border-color 0.2s ease;
+}
+
+.partner-profile .edit-input:focus {
+    outline: none;
+    border-color: #10b981;
+}
+
+.partner-profile select.edit-input {
+    cursor: pointer;
+}
+
+/* Stats Row - Performance Card */
+.partner-profile .stats-row {
+    display: flex;
+    gap: 20px;
+}
+
+.partner-profile .stat-item {
+    flex: 1;
+    text-align: center;
+    padding: 12px 8px;
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 10px;
+    border: 1px solid rgba(51, 65, 85, 0.4);
+}
+
+.partner-profile .stat-item .stat-value {
+    display: block;
+    font-size: 22px;
+    font-weight: 700;
+    color: #10b981;
+    margin-bottom: 4px;
+}
+
+.partner-profile .stat-item .stat-label {
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Status Pill */
+.partner-profile .status-pill {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.partner-profile .status-pill.active {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+.partner-profile .status-pill.pending {
+    background: rgba(249, 115, 22, 0.15);
+    color: #f97316;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .partner-profile {
+        padding: 0 16px;
+    }
+
+    .partner-profile .profile-header {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 16px !important;
+    }
+
+    .partner-profile .profile-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .partner-profile .avatar-section {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .partner-profile .avatar-info {
+        text-align: center;
+    }
+
+    .partner-profile .stats-row {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+
+/* ========== LIGHT THEME SUPPORT ========== */
+[data-theme="light"] .partner-profile .profile-header {
+    border-bottom-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .partner-profile .header-content h1 {
+    color: #1e293b;
+}
+
+[data-theme="light"] .partner-profile .header-content p {
+    color: #64748b;
+}
+
+[data-theme="light"] .partner-profile .profile-card {
+    background: #ffffff !important;
+    border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .partner-profile .profile-card.main-info {
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    border-color: #e2e8f0 !important;
+}
+
+[data-theme="light"] .partner-profile .card-header {
+    border-bottom-color: #e2e8f0;
+}
+
+[data-theme="light"] .partner-profile .card-header h3 {
+    color: #1e293b;
+}
+
+[data-theme="light"] .partner-profile .avatar-info h2 {
+    color: #1e293b;
+}
+
+[data-theme="light"] .partner-profile .info-row .value {
+    color: #1e293b;
+}
+
+[data-theme="light"] .partner-profile .edit-input {
+    background: #f1f5f9;
+    border-color: #cbd5e1;
+    color: #1e293b;
+}
+
+[data-theme="light"] .partner-profile .stat-item {
+    background: rgba(241, 245, 249, 0.8);
+    border-color: #e2e8f0;
+}
+
+[data-theme="light"] .partner-profile .cancel-btn {
+    border-color: #cbd5e1;
+    color: #64748b;
+}
+
+[data-theme="light"] .partner-profile .cancel-btn:hover {
+    background: #f1f5f9;
+    color: #1e293b;
+}

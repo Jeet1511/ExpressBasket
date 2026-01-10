@@ -39,7 +39,7 @@ const Header = () => {
                 </svg>
                 <span className="rocket-trail"></span>
               </span>
-              <span className="logo-text">Express Delivery</span>
+              <span className="logo-text">Express Basket</span>
             </Link>
           </div>
 

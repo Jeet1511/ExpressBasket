@@ -6,8 +6,11 @@ const Category = require('../models/Category.js');
 const User = require('../models/User.js');
 const Order = require('../models/Order.js');
 const Contribution = require('../models/Contribution.js');
+const SupportChat = require('../models/SupportChat.js');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
+
+console.log('🔥🔥🔥 ADMIN ROUTES FILE LOADED - NEW VERSION 🔥🔥🔥');
 const multer = require('multer');
 const path = require('path');
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
@@ -96,6 +99,57 @@ const blockViewers = (req, res, next) => {
 
 // Combined middleware: verify admin + block viewers for write operations
 const verifyAdminWithWriteProtection = [verifyAdmin, blockViewers];
+
+// Check if admin is a viewer role
+const isViewerRole = (role) => {
+    return role === 'normal_viewer' || role === 'special_viewer';
+};
+
+// Mask sensitive data (email, phone) for viewers
+// Keeps names visible, hides contact info
+const maskEmail = (email) => {
+    if (!email) return '***@***.com';
+    const [local, domain] = email.split('@');
+    if (!domain) return '***@***.com';
+    const maskedLocal = local.charAt(0) + '***';
+    const domainParts = domain.split('.');
+    const maskedDomain = '***.' + (domainParts[domainParts.length - 1] || 'com');
+    return maskedLocal + '@' + maskedDomain;
+};
+
+const maskPhone = (phone) => {
+    if (!phone) return '**********';
+    const str = String(phone);
+    if (str.length <= 4) return '****';
+    return '******' + str.slice(-4);
+};
+
+// Apply masking to user/admin data based on requester's role
+const maskSensitiveData = (data, requestingAdminRole) => {
+    if (!isViewerRole(requestingAdminRole)) return data;
+
+    // Handle array of users/admins
+    if (Array.isArray(data)) {
+        return data.map(item => maskSensitiveData(item, requestingAdminRole));
+    }
+
+    // Handle single object
+    if (data && typeof data === 'object') {
+        const masked = { ...data };
+        if (data._doc) {
+            // Mongoose document
+            const obj = { ...data._doc };
+            if (obj.email) obj.email = maskEmail(obj.email);
+            if (obj.phone) obj.phone = maskPhone(obj.phone);
+            return obj;
+        }
+        if (masked.email) masked.email = maskEmail(masked.email);
+        if (masked.phone) masked.phone = maskPhone(masked.phone);
+        return masked;
+    }
+
+    return data;
+};
 
 // Setup first admin
 router.post('/setup', async (req, res) => {
@@ -334,7 +388,8 @@ router.post('/login', async (req, res) => {
                 email: admin.email,
                 role: admin.role,
                 permissions: admin.permissions,
-                tags: admin.tags
+                tags: admin.tags,
+                profilePicture: admin.profilePicture
             }
         });
 
@@ -801,11 +856,162 @@ router.get('/stats', verifyAdmin, async (req, res) => {
 router.get('/orders', verifyAdmin, async (req, res) => {
     try {
         const orders = await Order.find()
-            .populate('userId', 'name email')
-            .sort({ orderDate: -1 });
+            .populate('userId', 'name email loyaltyBadge')
+            .sort({ updatedAt: -1, orderDate: -1 }); // Sort by most recently updated first
         res.json(orders);
     } catch (error) {
         res.status(500).json({ message: error.message });
+    }
+});
+
+// Update order status (specific route - must come before /orders/:id)
+router.put('/orders/:id/status', verifyAdminWithWriteProtection, async (req, res) => {
+    console.log('🚨🚨🚨 ROUTE HANDLER EXECUTING 🚨🚨🚨');
+    try {
+        const { status } = req.body;
+
+        console.log('🎯 ORDER STATUS UPDATE ROUTE CALLED:', {
+            orderId: req.params.id,
+            newStatus: status,
+            timestamp: new Date().toISOString()
+        });
+
+        // Get the order to check current status and delivery timing
+        const order = await Order.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        console.log('📋 Current order state:', {
+            orderId: order._id.toString().slice(-6),
+            currentStatus: order.status,
+            newStatus: status,
+            hasDeliveryProgress: !!order.deliveryProgress
+        });
+
+        // Handle delivery progress tracking
+        if (status === 'out_for_delivery') {
+            // Populate user to get membership tier from loyaltyBadge
+            await order.populate('userId', 'loyaltyBadge');
+
+            console.log('🔍 Membership Detection Debug:', {
+                userId: order.userId?._id,
+                hasLoyaltyBadge: !!order.userId?.loyaltyBadge,
+                loyaltyBadge: order.userId?.loyaltyBadge,
+                badgeType: order.userId?.loyaltyBadge?.type
+            });
+
+            // Get membership tier from loyaltyBadge
+            const membershipTier = order.userId?.loyaltyBadge?.type || 'none';
+
+            // Generate random estimated delivery time based on membership tier
+            let minTime, maxTime;
+            switch (membershipTier.toLowerCase()) {
+                case 'platinum':
+                    minTime = 10;
+                    maxTime = 15;
+                    break;
+                case 'gold':
+                    minTime = 15;
+                    maxTime = 20;
+                    break;
+                case 'silver':
+                    minTime = 20;
+                    maxTime = 25;
+                    break;
+                default: // 'none' or any other
+                    minTime = 25;
+                    maxTime = 30;
+                    break;
+            }
+
+            // Generate random time between min and max (inclusive)
+            const estimatedMinutes = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
+            const startTime = new Date();
+
+            console.log(`🚚 Initializing delivery progress:`, {
+                orderId: order._id.toString().slice(-6),
+                membershipTier: membershipTier.toUpperCase(),
+                timeRange: `${minTime}-${maxTime} minutes`,
+                assignedTime: `${estimatedMinutes} minutes`,
+                startTime: startTime.toISOString()
+            });
+
+            // CRITICAL: Set deliveryProgress fields explicitly
+            order.deliveryProgress = {
+                startTime: startTime,
+                estimatedDeliveryMinutes: estimatedMinutes,
+                currentProgress: 0,
+                lastUpdated: startTime
+            };
+
+            // ALSO set at order level for backward compatibility
+            order.deliveryStartTime = startTime;
+            order.estimatedDeliveryMinutes = estimatedMinutes;
+
+            console.log(`📦 Update data being saved:`, JSON.stringify(order.deliveryProgress, null, 2));
+        } else if (status === 'delivered') {
+            // Mark delivery as complete
+            order.deliveredDate = new Date();
+            if (order.deliveryProgress) {
+                order.deliveryProgress = {
+                    ...order.deliveryProgress.toObject(),
+                    currentProgress: 100,
+                    completedAt: new Date(),
+                    lastUpdated: new Date()
+                };
+            }
+        }
+
+        // Update status
+        order.status = status;
+
+        // Add to status history
+        if (!order.statusHistory) {
+            order.statusHistory = [];
+        }
+        order.statusHistory.push({
+            status: status,
+            timestamp: new Date(),
+            message: `Status changed to ${status}`,
+            updatedBy: req.admin?.email || 'admin'
+        });
+
+        // Save the order
+        const updatedOrder = await order.save();
+
+        // Populate user details for response
+        await updatedOrder.populate('userId', 'name email');
+
+        // VERIFICATION: Log what was actually saved
+        if (status === 'out_for_delivery') {
+            console.log(`✅ Saved deliveryProgress:`, JSON.stringify(updatedOrder.deliveryProgress, null, 2));
+        }
+
+        // Log contribution
+        await Contribution.log(req.admin.id, 'order_updated', `Updated order #${updatedOrder.orderNumber || updatedOrder._id} to ${status}`, { orderId: updatedOrder._id, status });
+
+        // Broadcast to the specific user
+        const { broadcastOrderUpdate } = require('../socketHandler.js');
+        broadcastOrderUpdate(updatedOrder.userId._id, 'status_changed', updatedOrder);
+
+        res.json({
+            message: 'Order updated successfully',
+            order: updatedOrder
+        });
+    } catch (error) {
+        console.error('❌ Error updating order status:', error);
+        console.error('Error stack:', error.stack);
+        console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            code: error.code
+        });
+        res.status(500).json({
+            message: error.message,
+            error: error.toString(),
+            stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        });
     }
 });
 
@@ -815,30 +1021,139 @@ router.put('/orders/:id', verifyAdminWithWriteProtection, async (req, res) => {
         const { status } = req.body;
         const updateData = { status };
 
-        if (status === 'delivered') {
-            updateData.deliveredDate = new Date();
-        }
-
-        const order = await Order.findByIdAndUpdate(req.params.id, updateData, { new: true })
-            .populate('userId', 'name email');
-
+        // Get the order to check current status and delivery timing
+        const order = await Order.findById(req.params.id);
         if (!order) {
             return res.status(404).json({ message: 'Order not found' });
         }
 
+        // Handle delivery progress tracking
+        if (status === 'out_for_delivery') {
+            // Populate user to get membership tier from loyaltyBadge
+            await order.populate('userId', 'loyaltyBadge');
+
+            // Get membership tier from loyaltyBadge
+            const membershipTier = order.userId?.loyaltyBadge?.type || 'none';
+
+            // Generate random estimated delivery time based on membership tier
+            let minTime, maxTime;
+            switch (membershipTier.toLowerCase()) {
+                case 'platinum':
+                    minTime = 10;
+                    maxTime = 15;
+                    break;
+                case 'gold':
+                    minTime = 15;
+                    maxTime = 20;
+                    break;
+                case 'silver':
+                    minTime = 20;
+                    maxTime = 25;
+                    break;
+                default: // 'none' or any other
+                    minTime = 25;
+                    maxTime = 30;
+                    break;
+            }
+
+            // Generate random time between min and max (inclusive)
+            const estimatedMinutes = Math.floor(Math.random() * (maxTime - minTime + 1)) + minTime;
+            const startTime = new Date();
+
+            console.log(`🚚 Initializing delivery progress:`, {
+                orderId: order._id.toString().slice(-6),
+                membershipTier,
+                estimatedMinutes: `${estimatedMinutes} min (${minTime}-${maxTime} range)`,
+                startTime: startTime.toISOString()
+            });
+
+            // CRITICAL: Set deliveryProgress fields explicitly
+            updateData.deliveryProgress = {
+                startTime: startTime,
+                estimatedDeliveryMinutes: estimatedMinutes,
+                currentProgress: 0,
+                lastUpdated: startTime
+            };
+
+            // ALSO set at order level for backward compatibility
+            updateData.deliveryStartTime = startTime;
+            updateData.estimatedDeliveryMinutes = estimatedMinutes;
+
+            console.log(`📦 Update data being saved:`, JSON.stringify(updateData.deliveryProgress, null, 2));
+        } else if (status === 'delivered') {
+            // Mark delivery as complete
+            updateData.deliveredDate = new Date();
+            if (order.deliveryProgress) {
+                updateData.deliveryProgress = {
+                    ...order.deliveryProgress.toObject(),
+                    currentProgress: 100,
+                    completedAt: new Date(),
+                    lastUpdated: new Date()
+                };
+            }
+        }
+
+        // Update the order fields directly
+        order.status = status;
+
+        // Apply deliveryProgress if it was set
+        if (updateData.deliveryProgress) {
+            order.deliveryProgress = updateData.deliveryProgress;
+        }
+
+        // Apply delivery timing fields if they were set
+        if (updateData.deliveryStartTime) {
+            order.deliveryStartTime = updateData.deliveryStartTime;
+        }
+        if (updateData.estimatedDeliveryMinutes) {
+            order.estimatedDeliveryMinutes = updateData.estimatedDeliveryMinutes;
+        }
+
+        // Apply deliveredDate if it was set
+        if (updateData.deliveredDate) {
+            order.deliveredDate = updateData.deliveredDate;
+        }
+
+        // Add to status history
+        if (!order.statusHistory) {
+            order.statusHistory = [];
+        }
+        order.statusHistory.push({
+            status: status,
+            timestamp: new Date(),
+            message: `Status changed to ${status}`,
+            updatedBy: req.admin?.email || 'admin'
+        });
+
+        // Save the order
+        const updatedOrder = await order.save();
+
+        // Populate user details for response
+        await updatedOrder.populate('userId', 'name email');
+
+        // VERIFICATION: Log what was actually saved
+        if (status === 'out_for_delivery') {
+            console.log(`✅ Saved deliveryProgress:`, JSON.stringify(updatedOrder.deliveryProgress, null, 2));
+        }
+
         // Log contribution
-        await Contribution.log(req.admin.id, 'order_updated', `Updated order #${order.orderNumber || order._id} to ${status}`, { orderId: order._id, status });
+        await Contribution.log(req.admin.id, 'order_updated', `Updated order #${updatedOrder.orderNumber || updatedOrder._id} to ${status}`, { orderId: updatedOrder._id, status });
 
         // Broadcast to the specific user
         const { broadcastOrderUpdate } = require('../socketHandler.js');
-        broadcastOrderUpdate(order.userId._id, 'status_changed', order);
+        broadcastOrderUpdate(updatedOrder.userId._id, 'status_changed', updatedOrder);
 
         res.json({
             message: 'Order updated successfully',
-            order
+            order: updatedOrder
         });
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('❌ Error updating order (second route):', error);
+        console.error('Error stack:', error.stack);
+        res.status(500).json({
+            message: error.message,
+            error: error.toString()
+        });
     }
 });
 
@@ -852,6 +1167,83 @@ router.delete('/orders/:id', verifyAdminWithWriteProtection, async (req, res) =>
         await Contribution.log(req.admin.id, 'order_deleted', `Deleted order #${order.orderNumber || order._id}`, { orderId: order._id });
 
         res.json({ message: 'Order deleted successfully' });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Get delivery progress for an order
+router.get('/orders/:id/progress', verifyAdmin, async (req, res) => {
+    try {
+        const { getProgressInfo } = require('../utils/progressUtils.js');
+
+        const order = await Order.findById(req.params.id);
+        if (!order) {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+
+        // Check if order has delivery progress tracking
+        if (!order.deliveryProgress || !order.deliveryProgress.startTime) {
+            return res.json({
+                hasProgress: false,
+                message: 'Delivery progress tracking not started for this order'
+            });
+        }
+
+        // Calculate current progress
+        const progressInfo = getProgressInfo(
+            order.deliveryProgress.startTime,
+            order.deliveryProgress.estimatedDeliveryMinutes
+        );
+
+        // AUTO-DELIVER: If progress >= 100% and status is still out_for_delivery, mark as delivered
+        if (progressInfo.progress >= 100 && order.status === 'out_for_delivery') {
+            console.log(`🎉 Auto-delivering order ${order._id.toString().slice(-6)} - Progress: ${progressInfo.progress}%`);
+
+            order.status = 'delivered';
+            order.deliveredDate = new Date();
+            order.deliveryProgress.currentProgress = 100;
+            order.deliveryProgress.completedAt = new Date();
+            order.deliveryProgress.lastUpdated = new Date();
+
+            // Add to status history
+            if (!order.statusHistory) {
+                order.statusHistory = [];
+            }
+            order.statusHistory.push({
+                status: 'delivered',
+                timestamp: new Date(),
+                message: 'Auto-delivered - Timer completed',
+                updatedBy: 'system'
+            });
+
+            await order.save();
+
+            // Broadcast to the user
+            const { broadcastOrderUpdate } = require('../socketHandler.js');
+            if (order.userId) {
+                const userId = typeof order.userId === 'string' ? order.userId : order.userId._id;
+                broadcastOrderUpdate(userId, 'status_changed', order);
+            }
+
+            console.log(`✅ Order ${order._id.toString().slice(-6)} auto-delivered successfully`);
+        } else {
+            // Update the order's current progress in database
+            await Order.findByIdAndUpdate(req.params.id, {
+                'deliveryProgress.currentProgress': progressInfo.progress,
+                'deliveryProgress.lastUpdated': new Date()
+            });
+        }
+
+        res.json({
+            hasProgress: true,
+            orderId: order._id,
+            status: order.status,
+            ...progressInfo,
+            startTime: order.deliveryProgress.startTime,
+            estimatedMinutes: order.deliveryProgress.estimatedDeliveryMinutes,
+            completedAt: order.deliveryProgress.completedAt
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -1278,19 +1670,30 @@ router.put('/wallets/:userId', verifyWalletPermission, async (req, res) => {
 // Get my contributions
 router.get('/contributions/me', verifyAdmin, async (req, res) => {
     try {
-        const { days = 7 } = req.query;
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - parseInt(days));
+        const { days = 7, fromDate, toDate } = req.query;
+
+        // Use custom date range if provided, otherwise use days
+        let startDate, endDate;
+        if (fromDate && toDate) {
+            startDate = new Date(fromDate);
+            endDate = new Date(toDate);
+            endDate.setHours(23, 59, 59, 999); // Include entire end day
+        } else {
+            startDate = new Date();
+            startDate.setDate(startDate.getDate() - parseInt(days));
+            endDate = new Date();
+        }
 
         const contributions = await Contribution.find({
             admin: req.admin.id,
-            createdAt: { $gte: startDate }
+            createdAt: { $gte: startDate, $lte: endDate }
         }).sort({ createdAt: -1 });
 
-        // Group by day for chart
+        // Group by day for chart (calculate days between dates)
+        const daysDiff = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
         const dailyStats = {};
-        for (let i = 0; i < parseInt(days); i++) {
-            const date = new Date();
+        for (let i = 0; i < Math.min(daysDiff, 30); i++) { // Max 30 days for chart
+            const date = new Date(endDate);
             date.setDate(date.getDate() - i);
             const dateKey = date.toISOString().split('T')[0];
             dailyStats[dateKey] = 0;
@@ -1311,7 +1714,8 @@ router.get('/contributions/me', verifyAdmin, async (req, res) => {
         res.json({
             contributions,
             chartData,
-            total: contributions.length
+            total: contributions.length,
+            dateRange: { from: startDate, to: endDate }
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -1321,11 +1725,21 @@ router.get('/contributions/me', verifyAdmin, async (req, res) => {
 // Get all contributions (super admin only)
 router.get('/contributions/all', verifySuperAdmin, async (req, res) => {
     try {
-        const { days = 7, adminId } = req.query;
-        const startDate = new Date();
-        startDate.setDate(startDate.getDate() - parseInt(days));
+        const { days = 7, adminId, fromDate, toDate } = req.query;
 
-        const query = { createdAt: { $gte: startDate } };
+        // Use custom date range if provided, otherwise use days
+        let startDate, endDate;
+        if (fromDate && toDate) {
+            startDate = new Date(fromDate);
+            endDate = new Date(toDate);
+            endDate.setHours(23, 59, 59, 999);
+        } else {
+            startDate = new Date();
+            startDate.setDate(startDate.getDate() - parseInt(days));
+            endDate = new Date();
+        }
+
+        const query = { createdAt: { $gte: startDate, $lte: endDate } };
         if (adminId) {
             query.admin = adminId;
         }
@@ -1385,6 +1799,404 @@ router.get('/contributions/admins', verifySuperAdmin, async (req, res) => {
     try {
         const admins = await Admin.find({}, 'username email role');
         res.json(admins);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// ============ ADMIN PROFILE PICTURE ============
+
+// Cloudinary storage for profile pictures
+const profilePictureStorage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'admin-profiles',
+        allowed_formats: ['jpg', 'png', 'jpeg', 'gif'],
+        transformation: [{ width: 300, height: 300, crop: 'fill', gravity: 'face' }],
+        public_id: (req, file) => `admin_${req.admin.id}_${Date.now()}`
+    }
+});
+
+const uploadProfilePic = multer({
+    storage: profilePictureStorage,
+    limits: { fileSize: 5 * 1024 * 1024 }, // 5MB limit
+    fileFilter: (req, file, cb) => {
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        if (allowedTypes.includes(file.mimetype)) {
+            cb(null, true);
+        } else {
+            cb(new Error('Only JPG, JPEG, PNG, and GIF files are allowed'), false);
+        }
+    }
+});
+
+// Upload/Update profile picture
+router.post('/profile/picture', verifyAdmin, uploadProfilePic.single('profilePicture'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        const admin = await Admin.findByIdAndUpdate(
+            req.admin.id,
+            { profilePicture: req.file.path },
+            { new: true }
+        ).select('-password');
+
+        // Log contribution
+        await Contribution.log(req.admin.id, 'admin_updated', `Updated profile picture`);
+
+        res.json({
+            message: 'Profile picture updated successfully',
+            profilePicture: req.file.path,
+            admin
+        });
+    } catch (error) {
+        console.error('Profile picture upload error:', error);
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Delete profile picture
+router.delete('/profile/picture', verifyAdmin, async (req, res) => {
+    try {
+        const admin = await Admin.findByIdAndUpdate(
+            req.admin.id,
+            { profilePicture: null },
+            { new: true }
+        ).select('-password');
+
+        res.json({
+            message: 'Profile picture removed',
+            admin
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Get current admin profile
+router.get('/profile/me', verifyAdmin, async (req, res) => {
+    try {
+        const admin = await Admin.findById(req.admin.id).select('-password');
+        res.json(admin);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// ============ ADMIN DIRECTORY (View-only for non-super-admins) ============
+
+// Get all admins for directory view
+router.get('/directory', verifyAdmin, async (req, res) => {
+    try {
+        const admins = await Admin.find({ isActive: true })
+            .select('username email role profilePicture likes likeBoost tags createdAt');
+
+        // Add likeCount and hasLiked for current user
+        const adminsWithLikes = admins.map(admin => ({
+            _id: admin._id,
+            username: admin.username,
+            email: admin.email,
+            role: admin.role,
+            profilePicture: admin.profilePicture,
+            tags: admin.tags,
+            createdAt: admin.createdAt,
+            likeCount: (admin.likes?.length || 0) + (admin.likeBoost || 0),
+            hasLiked: admin.likes?.some(id => id.toString() === req.admin.id)
+        }));
+
+        // Sort: super_admin first, then by username
+        const roleOrder = { 'super_admin': 0, 'admin': 1, 'vendor': 2, 'special_viewer': 3, 'normal_viewer': 4 };
+        adminsWithLikes.sort((a, b) => {
+            const roleA = roleOrder[a.role] ?? 99;
+            const roleB = roleOrder[b.role] ?? 99;
+            if (roleA !== roleB) return roleA - roleB;
+            return a.username.localeCompare(b.username);
+        });
+
+        res.json(adminsWithLikes);
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Get single admin profile for viewing
+router.get('/directory/:id', verifyAdmin, async (req, res) => {
+    try {
+        const admin = await Admin.findById(req.params.id)
+            .select('username email role profilePicture likes likeBoost tags createdAt permissions');
+
+        if (!admin) {
+            return res.status(404).json({ message: 'Admin not found' });
+        }
+
+        // Get contributions for this admin (recent 10 for display)
+        const contributions = await Contribution.find({ admin: req.params.id })
+            .sort({ createdAt: -1 })
+            .limit(10);
+
+        // Get TOTAL contribution count
+        const contributionCount = await Contribution.countDocuments({ admin: req.params.id });
+
+        res.json({
+            _id: admin._id,
+            username: admin.username,
+            email: admin.email,
+            role: admin.role,
+            profilePicture: admin.profilePicture,
+            tags: admin.tags,
+            permissions: admin.permissions,
+            createdAt: admin.createdAt,
+            likeCount: (admin.likes?.length || 0) + (admin.likeBoost || 0),
+            hasLiked: admin.likes?.some(id => id.toString() === req.admin.id),
+            contributionCount,  // Total count
+            contributions       // Only recent 10
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Toggle like on admin profile
+router.post('/profile/:id/like', verifyAdmin, async (req, res) => {
+    try {
+        const targetAdmin = await Admin.findById(req.params.id);
+        if (!targetAdmin) {
+            return res.status(404).json({ message: 'Admin not found' });
+        }
+
+        // Can't like yourself
+        if (targetAdmin._id.toString() === req.admin.id) {
+            return res.status(400).json({ message: "You can't like your own profile" });
+        }
+
+        const hasLiked = targetAdmin.likes?.some(id => id.toString() === req.admin.id);
+
+        if (hasLiked) {
+            // Unlike
+            targetAdmin.likes = targetAdmin.likes.filter(id => id.toString() !== req.admin.id);
+        } else {
+            // Like
+            if (!targetAdmin.likes) targetAdmin.likes = [];
+            targetAdmin.likes.push(req.admin.id);
+        }
+
+        await targetAdmin.save();
+
+        res.json({
+            liked: !hasLiked,
+            likeCount: (targetAdmin.likes?.length || 0) + (targetAdmin.likeBoost || 0)
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// ============ ADMIN SUPPORT CHAT SYSTEM ============
+
+// Get all pending support requests
+router.get('/support/requests', verifyAdmin, async (req, res) => {
+    try {
+        const pendingChats = await SupportChat.find({ status: 'pending' })
+            .populate('user', 'name email phone')
+            .sort({ createdAt: -1 });
+
+        res.json({
+            count: pendingChats.length,
+            requests: pendingChats.map(chat => ({
+                id: chat._id,
+                user: chat.user,
+                firstMessage: chat.messages[0]?.message || '',
+                createdAt: chat.createdAt
+            }))
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Accept a support request
+router.post('/support/accept/:chatId', verifyAdmin, async (req, res) => {
+    try {
+        const chat = await SupportChat.findOne({
+            _id: req.params.chatId,
+            status: 'pending'
+        }).populate('user', 'name email');
+
+        if (!chat) {
+            return res.status(404).json({ message: 'Pending chat not found' });
+        }
+
+        chat.status = 'active';
+        chat.admin = req.admin.id;
+
+        // Add system message
+        chat.messages.push({
+            sender: req.admin.id,
+            senderModel: 'Admin',
+            message: `Support agent has joined the chat.`,
+            timestamp: new Date()
+        });
+
+        await chat.save();
+
+        // Get admin name for notification
+        const admin = await Admin.findById(req.admin.id).select('username');
+
+        // Send real-time notification to user via WebSocket
+        const { broadcastSupportAccepted } = require('../socketHandler.js');
+        broadcastSupportAccepted(chat.user._id, {
+            chatId: chat._id,
+            adminName: admin?.username || 'Support Agent',
+            status: 'active'
+        });
+
+        res.json({
+            success: true,
+            message: 'Chat accepted successfully',
+            chatId: chat._id
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Get admin's active support chats
+router.get('/support/active', verifyAdmin, async (req, res) => {
+    try {
+        const activeChats = await SupportChat.find({
+            admin: req.admin.id,
+            status: 'active'
+        })
+            .populate('user', 'name email')
+            .sort({ updatedAt: -1 });
+
+        res.json({
+            count: activeChats.length,
+            chats: activeChats.map(chat => ({
+                id: chat._id,
+                user: chat.user,
+                messagesCount: chat.messages.length,
+                lastMessage: chat.messages[chat.messages.length - 1],
+                updatedAt: chat.updatedAt
+            }))
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Get chat messages (admin)
+router.get('/support/chat/:chatId/messages', verifyAdmin, async (req, res) => {
+    try {
+        const chat = await SupportChat.findOne({
+            _id: req.params.chatId,
+            $or: [
+                { admin: req.admin.id },
+                { status: 'pending' }
+            ]
+        }).populate('user', 'name email');
+
+        if (!chat) {
+            return res.status(404).json({ message: 'Chat not found' });
+        }
+
+        res.json({
+            chatId: chat._id,
+            status: chat.status,
+            user: chat.user,
+            messages: chat.messages.map(msg => ({
+                id: msg._id,
+                sender: msg.senderModel,
+                message: msg.message,
+                timestamp: msg.timestamp
+            }))
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Send message in chat (admin)
+router.post('/support/chat/:chatId/message', verifyAdmin, async (req, res) => {
+    try {
+        const { message } = req.body;
+
+        if (!message || !message.trim()) {
+            return res.status(400).json({ message: 'Message cannot be empty' });
+        }
+
+        const chat = await SupportChat.findOne({
+            _id: req.params.chatId,
+            admin: req.admin.id,
+            status: 'active'
+        });
+
+        if (!chat) {
+            return res.status(404).json({ message: 'Active chat not found' });
+        }
+
+        const newMessage = {
+            sender: req.admin.id,
+            senderModel: 'Admin',
+            message: message.trim(),
+            timestamp: new Date()
+        };
+
+        chat.messages.push(newMessage);
+        await chat.save();
+
+        // Send real-time notification to user via WebSocket
+        const { broadcastSupportMessage } = require('../socketHandler.js');
+        broadcastSupportMessage(chat.user, req.admin.id, {
+            chatId: chat._id,
+            sender: 'Admin',
+            message: newMessage.message,
+            timestamp: newMessage.timestamp
+        });
+
+        res.json({
+            success: true,
+            message: 'Message sent',
+            newMessage: chat.messages[chat.messages.length - 1]
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// Close support chat (admin)
+router.post('/support/chat/:chatId/close', verifyAdmin, async (req, res) => {
+    try {
+        const chat = await SupportChat.findOne({
+            _id: req.params.chatId,
+            admin: req.admin.id,
+            status: 'active'
+        });
+
+        if (!chat) {
+            return res.status(404).json({ message: 'Active chat not found' });
+        }
+
+        chat.status = 'closed';
+        chat.closedAt = new Date();
+        chat.closedBy = 'admin';
+
+        // Add closing message
+        chat.messages.push({
+            sender: req.admin.id,
+            senderModel: 'Admin',
+            message: 'Support chat has been closed. Thank you for contacting us!',
+            timestamp: new Date()
+        });
+
+        await chat.save();
+
+        res.json({
+            success: true,
+            message: 'Support chat closed successfully'
+        });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

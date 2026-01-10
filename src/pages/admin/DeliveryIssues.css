@@ -1,0 +1,427 @@
+/* Delivery Issues Page */
+.delivery-issues-page {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+/* Loading State */
+.delivery-issues-page .loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 80px 20px;
+    gap: 16px;
+    color: #64748b;
+}
+
+.delivery-issues-page .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid #334155;
+    border-top-color: #f59e0b;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Header */
+.delivery-issues-page .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.delivery-issues-page .header-content {
+    display: flex;
+    flex-direction: column;
+}
+
+.delivery-issues-page .header-content h1 {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 26px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin: 0 0 12px;
+}
+
+.delivery-issues-page .header-content h1 svg {
+    color: #f59e0b;
+}
+
+.delivery-issues-page .header-content p {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+.delivery-issues-page .header-stats .stat-pill {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 10px;
+    color: #f59e0b;
+    font-weight: 600;
+}
+
+/* Filter Tabs */
+.delivery-issues-page .filter-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+    background: #1e293b;
+    padding: 6px;
+    border-radius: 12px;
+    border: 1px solid #334155;
+}
+
+.delivery-issues-page .filter-tab {
+    padding: 10px 16px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: #94a3b8;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.delivery-issues-page .filter-tab:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #e2e8f0;
+}
+
+.delivery-issues-page .filter-tab.active {
+    background: #f59e0b;
+    color: white;
+}
+
+/* Empty State */
+.delivery-issues-page .empty-state {
+    text-align: center;
+    padding: 80px 20px;
+    background: #1e293b;
+    border-radius: 16px;
+    border: 1px solid #334155;
+}
+
+.delivery-issues-page .empty-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 20px;
+    background: rgba(16, 185, 129, 0.1);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #10b981;
+}
+
+.delivery-issues-page .empty-state h3 {
+    margin: 0 0 8px;
+    font-size: 20px;
+    color: #f1f5f9;
+}
+
+.delivery-issues-page .empty-state p {
+    margin: 0;
+    color: #64748b;
+    font-size: 14px;
+}
+
+/* Request Cards */
+.delivery-issues-page .requests-list {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.delivery-issues-page .request-card {
+    background: #1e293b;
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid #334155;
+    transition: all 0.3s ease;
+}
+
+.delivery-issues-page .request-card:hover {
+    border-color: #475569;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.delivery-issues-page .request-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #334155;
+}
+
+.delivery-issues-page .request-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.delivery-issues-page .order-id {
+    font-size: 16px;
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.delivery-issues-page .status-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+}
+
+.delivery-issues-page .request-date {
+    color: #64748b;
+    font-size: 13px;
+}
+
+/* Request Details */
+.delivery-issues-page .request-details {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    margin-bottom: 20px;
+    padding: 20px;
+    background: rgba(15, 23, 42, 0.5);
+    border-radius: 12px;
+}
+
+.delivery-issues-page .issue-detail-row {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.delivery-issues-page .issue-detail-row .label {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+.delivery-issues-page .issue-detail-row .value {
+    color: #f1f5f9;
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.delivery-issues-page .issue-detail-row .value.amount {
+    color: #10b981;
+    font-weight: 700;
+    font-size: 18px;
+}
+
+/* Reason Box */
+.reason-box {
+    background: rgba(245, 158, 11, 0.08);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.reason-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #f59e0b;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.reason-text {
+    margin: 0;
+    color: #e2e8f0;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Admin Notes */
+.admin-notes {
+    background: rgba(100, 116, 139, 0.1);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+}
+
+.notes-label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+
+.notes-text {
+    margin: 0;
+    color: #94a3b8;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+/* Actions */
+.request-actions {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+}
+
+.action-btn.approve {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.action-btn.approve:hover {
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.3);
+}
+
+.action-btn.reject {
+    background: #334155;
+    color: #e2e8f0;
+}
+
+.action-btn.reject:hover {
+    background: #475569;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .request-details {
+        grid-template-columns: 1fr;
+    }
+
+    .request-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .request-actions {
+        flex-direction: column;
+    }
+
+    .action-btn {
+        width: 100%;
+    }
+}
+
+/* Light Theme */
+[data-theme="light"] .header-content h1 {
+    color: #1e293b;
+}
+
+[data-theme="light"] .header-content p {
+    color: #64748b;
+}
+
+[data-theme="light"] .delivery-issues-page .filter-tabs {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .delivery-issues-page .filter-tab {
+    color: #64748b;
+}
+
+[data-theme="light"] .delivery-issues-page .filter-tab:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: #1e293b;
+}
+
+[data-theme="light"] .delivery-issues-page .request-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .delivery-issues-page .request-header {
+    border-bottom: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .delivery-issues-page .order-id {
+    color: #1e293b;
+}
+
+[data-theme="light"] .delivery-issues-page .request-details {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .delivery-issues-page .issue-detail-row .label {
+    color: #64748b;
+}
+
+[data-theme="light"] .delivery-issues-page .issue-detail-row .value {
+    color: #1e293b;
+}
+
+[data-theme="light"] .delivery-issues-page .reason-box {
+    background: rgba(245, 158, 11, 0.06);
+}
+
+[data-theme="light"] .delivery-issues-page .reason-text {
+    color: #1e293b;
+}
+
+[data-theme="light"] .delivery-issues-page .empty-state {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+}
+
+[data-theme="light"] .delivery-issues-page .empty-state h3 {
+    color: #1e293b;
+}
+
+[data-theme="light"] .delivery-issues-page .action-btn.reject {
+    background: #f1f5f9;
+    color: #475569;
+}
+
+[data-theme="light"] .delivery-issues-page .action-btn.reject:hover {
+    background: #e2e8f0;
+}

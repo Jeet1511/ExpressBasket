@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import axios from '../../utils/axios';
 import Swal from 'sweetalert2';
+import ViewOnlyBanner from '../../components/admin/ViewOnlyBanner';
 
 // ==================== STYLED COMPONENTS ====================
 
@@ -556,6 +557,7 @@ const ManageCategories = () => {
 
   return (
     <PageContainer>
+      {viewOnly && <ViewOnlyBanner role={admin?.role} />}
       {/* Header */}
       <PageHeader>
         <PageTitle>

@@ -25,7 +25,6 @@ const rewardSchema = new mongoose.Schema({
     value: { type: Number, required: true }, // Discount value in rupees
     type: { type: String, enum: ['discount', 'free_delivery', 'premium'], required: true },
     redeemedAt: { type: Date, default: Date.now },
-    usedAt: { type: Date },
     expiresAt: { type: Date }
 });
 
@@ -133,6 +132,34 @@ gamificationSchema.methods.redeemPoints = function (amount, rewardData) {
 
     this.redeemedRewards.push(rewardData);
     this.calculateLevel();
+
+    // Mark arrays as modified so Mongoose saves them
+    this.markModified('pointHistory');
+    this.markModified('redeemedRewards');
+    // Don't auto-save to prevent race conditions - caller should save
+};
+
+// Mark reward as used
+gamificationSchema.methods.markRewardAsUsed = function (rewardCode, orderId) {
+    const reward = this.redeemedRewards.find(r => r.code === rewardCode);
+
+    if (!reward) {
+        throw new Error('Reward code not found');
+    }
+
+    if (reward.usedAt) {
+        throw new Error('Reward has already been used');
+    }
+
+    if (reward.expiresAt && new Date(reward.expiresAt) < new Date()) {
+        throw new Error('Reward has expired');
+    }
+
+    reward.usedAt = new Date();
+    reward.orderId = orderId;
+
+    // CRITICAL: Mark the array as modified so Mongoose saves it
+    this.markModified('redeemedRewards');
     // Don't auto-save to prevent race conditions - caller should save
 };
 

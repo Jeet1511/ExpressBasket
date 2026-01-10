@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import styled from 'styled-components';
 import axios from '../../utils/axios';
 import Swal from 'sweetalert2';
+import ViewOnlyBanner from '../../components/admin/ViewOnlyBanner';
 
 const ManageUsersContainer = styled.div``;
 
@@ -350,6 +351,7 @@ const ManageUsers = () => {
 
   return (
     <ManageUsersContainer>
+      {viewOnly && <ViewOnlyBanner role={admin?.role} />}
       <Section>
         <SectionTitle>All Users</SectionTitle>
 

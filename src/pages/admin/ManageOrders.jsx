@@ -4,6 +4,8 @@ import axios from '../../utils/axios';
 import Swal from 'sweetalert2';
 import RouteConfigModal from '../../components/admin/RouteConfigModal.jsx';
 import useTrackingStatus from '../../hooks/useTrackingStatus.js';
+import ViewOnlyBanner from '../../components/admin/ViewOnlyBanner';
+import { io } from 'socket.io-client';
 
 const ManageOrdersContainer = styled.div``;
 
@@ -111,6 +113,69 @@ const ManageOrders = () => {
     fetchPartners();
   }, []);
 
+  // Real-time order updates via Socket.io
+  useEffect(() => {
+    const socket = io(window.location.origin.replace(':5174', ':5000'), {
+      transports: ['websocket', 'polling']
+    });
+
+    // Join admin room
+    socket.emit('authenticate', localStorage.getItem('adminToken'));
+    socket.on('authenticated', () => {
+      socket.emit('join-admin-room');
+    });
+
+    // Listen for new orders
+    socket.on('new_order', (data) => {
+      console.log('📦 New order received:', data.order);
+      // Add new order to the top of the list
+      setOrders(prevOrders => [data.order, ...prevOrders]);
+
+      // Show notification
+      Swal.fire({
+        toast: true,
+        position: 'top-end',
+        icon: 'success',
+        title: 'New Order Received!',
+        text: `Order #${data.order._id?.slice(-6)} - ₹${data.order.totalAmount}`,
+        showConfirmButton: false,
+        timer: 3000,
+        timerProgressBar: true
+      });
+    });
+
+    // Listen for order status changes (e.g., delivered)
+    socket.on('order_status_changed', (data) => {
+      console.log('📝 Order status changed:', data);
+      // Update order status in the list
+      setOrders(prevOrders =>
+        prevOrders.map(order =>
+          order._id === data.orderId
+            ? { ...order, status: data.status }
+            : order
+        )
+      );
+
+      // Show notification for delivered orders
+      if (data.status === 'delivered') {
+        Swal.fire({
+          toast: true,
+          position: 'top-end',
+          icon: 'info',
+          title: 'Order Delivered!',
+          text: `Order #${data.orderId?.slice(-6)} has been delivered`,
+          showConfirmButton: false,
+          timer: 3000,
+          timerProgressBar: true
+        });
+      }
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
   const fetchOrders = async () => {
     try {
       const token = localStorage.getItem('adminToken');
@@ -133,12 +198,13 @@ const ManageOrders = () => {
   const fetchPartners = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await axios.get('/admin/delivery-partners', {
+      // Fetch only available (online, approved, active) partners
+      const response = await axios.get('/admin/available-partners', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setPartners(response.data);
     } catch (error) {
-      console.error('Error fetching partners:', error);
+      console.error('Error fetching available partners:', error);
     }
   };
 
@@ -170,24 +236,34 @@ const ManageOrders = () => {
   };
 
   const handleAssignPartner = async (orderId, partnerId) => {
+    if (!partnerId) return;
+
     try {
       const token = localStorage.getItem('adminToken');
-      await axios.post(`/admin/orders/${orderId}/assign-partner`, { partnerId }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // Use the delivery assign endpoint
+      const response = await axios.post('/admin/delivery/assign',
+        { orderId, partnerId },
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
 
       Swal.fire({
         icon: 'success',
-        title: 'Success',
-        text: 'Delivery partner assigned successfully'
+        title: 'Partner Assigned',
+        text: 'Delivery partner assigned. Waiting for partner to accept.',
+        html: `<p>Delivery partner assigned successfully!</p>
+               <p style="margin-top: 10px; font-size: 14px; color: #666;">
+                 Waiting for partner to accept the delivery.
+               </p>`,
+        timer: 3000
       });
 
       fetchOrders();
+      fetchPartners(); // Refresh partners list
     } catch (error) {
       Swal.fire({
         icon: 'error',
-        title: 'Error',
-        text: error.response?.data?.message || 'Failed to assign partner'
+        title: 'Assignment Failed',
+        text: error.response?.data?.message || 'Failed to assign partner. Make sure order is packed first.'
       });
     }
   };
@@ -275,15 +351,20 @@ const ManageOrders = () => {
   };
 
   const getStatusOptions = (currentStatus) => {
-    const allStatuses = ['pending', 'confirmed', 'packed', 'out_for_delivery', 'delivered', 'cancelled'];
-    return allStatuses.filter(status => {
-      if (currentStatus === 'delivered') return status === 'delivered';
-      if (currentStatus === 'cancelled') return status === 'cancelled';
-      if (currentStatus === 'out_for_delivery') return ['out_for_delivery', 'delivered', 'cancelled'].includes(status);
-      if (currentStatus === 'packed') return ['packed', 'out_for_delivery', 'delivered', 'cancelled'].includes(status);
-      if (currentStatus === 'confirmed') return ['confirmed', 'packed', 'out_for_delivery', 'delivered', 'cancelled'].includes(status);
-      return true;
-    });
+    // Base statuses that admins can set manually
+    const baseStatuses = ['pending', 'confirmed', 'packed', 'cancelled'];
+
+    // Delivery statuses only visible after order is packed
+    const deliveryStatuses = ['out_for_delivery', 'delivered'];
+
+    if (currentStatus === 'delivered') return ['delivered'];
+    if (currentStatus === 'cancelled') return ['cancelled'];
+    if (currentStatus === 'out_for_delivery') return ['out_for_delivery', 'delivered', 'cancelled'];
+    if (currentStatus === 'packed') return [...baseStatuses, ...deliveryStatuses];
+    if (currentStatus === 'confirmed') return ['confirmed', 'packed', 'cancelled'];
+    if (currentStatus === 'pending') return ['pending', 'confirmed', 'packed', 'cancelled'];
+
+    return baseStatuses;
   };
 
   if (loading) {
@@ -292,6 +373,7 @@ const ManageOrders = () => {
 
   return (
     <ManageOrdersContainer>
+      {viewOnly && <ViewOnlyBanner role={admin?.role} />}
       <Section>
         <SectionTitle>All Orders</SectionTitle>
         <OrdersTable>
@@ -318,6 +400,8 @@ const ManageOrders = () => {
                   <StatusSelect
                     value={order.status}
                     onChange={(e) => handleStatusChange(order._id, e.target.value)}
+                    disabled={viewOnly}
+                    style={viewOnly ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                   >
                     {getStatusOptions(order.status).map(status => (
                       <option key={status} value={status}>
@@ -331,18 +415,28 @@ const ManageOrders = () => {
                     <span style={{ fontSize: '12px', color: 'var(--btn-primary)' }}>
                       {order.deliveryPartner.name}
                     </span>
-                  ) : (
+                  ) : order.status === 'packed' ? (
                     <StatusSelect
                       onChange={(e) => handleAssignPartner(order._id, e.target.value)}
                       defaultValue=""
+                      disabled={viewOnly}
+                      style={viewOnly ? { opacity: 0.6, cursor: 'not-allowed' } : {}}
                     >
-                      <option value="">Assign Partner</option>
-                      {partners.filter(p => p.isAvailable).map(partner => (
+                      <option value="">Select Partner ({partners.length} online)</option>
+                      {partners.map(partner => (
                         <option key={partner._id} value={partner._id}>
-                          {partner.name}
+                          {partner.name} - {partner.vehicle?.type || 'bike'}
                         </option>
                       ))}
                     </StatusSelect>
+                  ) : (
+                    <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
+                      {order.status === 'pending' || order.status === 'confirmed'
+                        ? 'Pack order first'
+                        : order.status === 'out_for_delivery'
+                          ? 'In delivery'
+                          : '-'}
+                    </span>
                   )}
                 </td>
                 <td>{new Date(order.orderDate).toLocaleDateString()}</td>

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from '../../utils/axios';
 import Swal from 'sweetalert2';
 import './ManageAdmins.css';
+import ViewOnlyBanner from '../../components/admin/ViewOnlyBanner';
 
 const ManageAdmins = () => {
   const [admins, setAdmins] = useState([]);
@@ -216,6 +217,7 @@ const ManageAdmins = () => {
 
   return (
     <div className="manage-admins-enhanced">
+      {viewOnly && <ViewOnlyBanner role={currentAdmin?.role} />}
       {/* Header */}
       <div className="ma-header">
         <div className="ma-header-left">
@@ -450,7 +452,14 @@ const ManageAdmins = () => {
           filteredAdmins.map(admin => (
             <div key={admin._id} className={`ma-admin-card ${admin.role}`}>
               <div className="ma-card-header">
-                <div className="ma-avatar">{admin.username.charAt(0).toUpperCase()}</div>
+                <div
+                  className="ma-avatar"
+                  style={admin.profilePicture ? {
+                    background: `url(${admin.profilePicture}) center/cover no-repeat`
+                  } : {}}
+                >
+                  {!admin.profilePicture && admin.username.charAt(0).toUpperCase()}
+                </div>
                 <div className="ma-admin-info">
                   <h3>{admin.username}</h3>
                   <p>{admin.email}</p>

@@ -32,8 +32,12 @@ const orderSchema = new mongoose.Schema({
     },
     status: {
         type: String,
-        enum: ['pending', 'confirmed', 'packed', 'out_for_delivery', 'delivered', 'cancelled'],
+        enum: ['pending', 'confirmed', 'packed', 'assigned', 'out_for_delivery', 'delivered', 'cancelled', 'holding'],
         default: 'pending'
+    },
+    holdingReason: {
+        type: String,
+        default: null
     },
     statusHistory: [{
         status: {
@@ -154,6 +158,28 @@ const orderSchema = new mongoose.Schema({
             default: 0
         }
     },
+    // Hub-based delivery system
+    assignedHub: {
+        id: String,
+        name: String,
+        location: {
+            lat: Number,
+            lng: Number
+        },
+        distance: Number, // Distance from customer in km
+        hubDistance: Number // Calculated distance for validation
+    },
+    estimatedDeliveryMinutes: Number, // Generated once based on membership
+    deliveryStartTime: Date, // When delivery partner is assigned
+    expectedArrivalTime: Date, // deliveryStartTime + estimatedDeliveryMinutes
+    // User's pinned delivery location (exact coordinates from map)
+    deliveryLocation: {
+        coordinates: {
+            lat: Number,
+            lng: Number
+        },
+        address: String
+    },
     route: {
         origin: {
             lat: Number,
@@ -165,7 +191,31 @@ const orderSchema = new mongoose.Schema({
         },
         distance: String,
         duration: String
-    }
+    },
+    // Delivery Progress Tracking
+    deliveryProgress: {
+        startTime: {
+            type: Date
+        },
+        estimatedDeliveryMinutes: {
+            type: Number
+        },
+        currentProgress: {
+            type: Number,
+            min: 0,
+            max: 100,
+            default: 0
+        },
+        lastUpdated: {
+            type: Date
+        },
+        completedAt: {
+            type: Date
+        }
+    },
+    // Cancellation fields
+    cancelledAt: Date,
+    cancellationReason: String
 });
 
 module.exports = mongoose.model('Order', orderSchema);

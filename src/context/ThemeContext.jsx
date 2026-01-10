@@ -12,9 +12,9 @@ export const useTheme = () => {
 
 export const ThemeProvider = ({ children }) => {
   const [theme, setTheme] = useState(() => {
-    // Check localStorage for saved theme, default to light
+    // Check localStorage for saved theme, default to dark
     const savedTheme = localStorage.getItem('theme');
-    return savedTheme || 'light';
+    return savedTheme || 'dark';
   });
 
   useEffect(() => {

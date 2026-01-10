@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import styled from 'styled-components';
 import axios from '../../utils/axios';
 import Swal from 'sweetalert2';
+import ViewOnlyBanner from '../../components/admin/ViewOnlyBanner';
 
 // Check if admin is viewer (read-only)
 const isViewOnly = (admin) => {
@@ -198,6 +199,7 @@ const ManageProducts = () => {
 
   return (
     <ManageProductsContainer>
+      {viewOnly && <ViewOnlyBanner role={admin?.role} />}
       <Header>
         <Title>Manage Products</Title>
         {!viewOnly && (

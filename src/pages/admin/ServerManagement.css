@@ -57,7 +57,7 @@
     gap: 30px;
 }
 
-/* Main Status Card */
+/* Main Status Card - Centered Vertical Layout */
 .server-status-card {
     background: var(--card-bg);
     border-radius: 20px;
@@ -66,6 +66,9 @@
     box-shadow: 0 10px 40px var(--shadow);
     border: 3px solid transparent;
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .server-status-card.online {
@@ -80,6 +83,10 @@
 
 .status-icon-large {
     margin-bottom: 25px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
 }
 
 .server-status-card.online .status-icon-large svg {
@@ -122,10 +129,11 @@
     }
 }
 
-.status-info h2 {
+.status-title {
     color: var(--text-color);
     font-size: 24px;
     margin-bottom: 15px;
+    font-weight: 600;
 }
 
 .status-badge-large {
@@ -135,7 +143,7 @@
     padding: 12px 30px;
     border-radius: 30px;
     font-weight: 700;
-    font-size: 18px;
+    font-size: 16px;
     text-transform: uppercase;
     letter-spacing: 1px;
     margin-bottom: 15px;
@@ -190,6 +198,7 @@
     max-width: 500px;
     margin: 0 auto 25px;
     line-height: 1.6;
+    text-align: center;
 }
 
 /* Toggle Button */
@@ -264,6 +273,10 @@
     box-shadow: 0 4px 15px var(--shadow);
     border: 1px solid var(--border-light);
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
 }
 
 .info-card:hover {
@@ -340,4 +353,253 @@
     .server-info-cards {
         grid-template-columns: 1fr;
     }
+}
+
+/* ================= Custom SweetAlert2 Popup Styles ================= */
+.swal-custom-popup {
+    background: var(--card-bg, #1a1a2e) !important;
+    border-radius: 20px !important;
+    padding: 30px 25px !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.swal-icon-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.swal-icon-container svg {
+    animation: iconPulse 2s ease-in-out infinite;
+}
+
+.swal-icon-container.online-icon svg,
+.swal-icon-container.success-online svg {
+    color: #28a745;
+    filter: drop-shadow(0 0 20px rgba(40, 167, 69, 0.5));
+}
+
+.swal-icon-container.offline-icon svg,
+.swal-icon-container.success-offline svg {
+    color: #f59e0b;
+    filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.5));
+}
+
+.swal-icon-container.error-icon svg {
+    color: #ef4444;
+    filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.5));
+    animation: iconShake 0.5s ease-in-out;
+}
+
+@keyframes iconPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.05);
+        opacity: 0.9;
+    }
+}
+
+@keyframes iconShake {
+
+    0%,
+    100% {
+        transform: translateX(0);
+    }
+
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+        transform: translateX(-5px);
+    }
+
+    20%,
+    40%,
+    60%,
+    80% {
+        transform: translateX(5px);
+    }
+}
+
+.swal-animated-icon {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: drawIcon 1s ease-out forwards, iconPulse 2s ease-in-out infinite 1s;
+}
+
+@keyframes drawIcon {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+.swal-checkmark {
+    stroke-dasharray: 100;
+    stroke-dashoffset: 100;
+    animation: drawCheckmark 0.8s ease-out forwards, checkmarkGlow 2s ease-in-out infinite 0.8s;
+}
+
+@keyframes drawCheckmark {
+    to {
+        stroke-dashoffset: 0;
+    }
+}
+
+@keyframes checkmarkGlow {
+
+    0%,
+    100% {
+        filter: drop-shadow(0 0 15px currentColor);
+    }
+
+    50% {
+        filter: drop-shadow(0 0 30px currentColor);
+    }
+}
+
+.swal-custom-title {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text-color, #ffffff);
+    margin-bottom: 15px;
+}
+
+.swal-custom-title.error {
+    color: #ef4444;
+}
+
+.swal-custom-title .status-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    animation: dotPulseAnim 1.5s ease-in-out infinite;
+}
+
+.swal-custom-title .status-dot.green {
+    background: #28a745;
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.6);
+}
+
+.swal-custom-title .status-dot.red {
+    background: #ef4444;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.6);
+}
+
+@keyframes dotPulseAnim {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.3);
+        opacity: 0.7;
+    }
+}
+
+.swal-custom-text {
+    font-size: 16px;
+    color: var(--text-secondary, #a0aec0);
+    margin-bottom: 8px;
+    line-height: 1.5;
+}
+
+.swal-custom-text strong {
+    color: var(--text-color, #ffffff);
+}
+
+.swal-custom-subtext {
+    font-size: 14px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.swal-custom-subtext.green {
+    color: #28a745;
+}
+
+.swal-custom-subtext.red {
+    color: #ef4444;
+}
+
+.swal-confirm-btn {
+    padding: 12px 30px !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3) !important;
+}
+
+.swal-confirm-btn:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4) !important;
+}
+
+.swal-cancel-btn {
+    padding: 12px 30px !important;
+    border-radius: 10px !important;
+    font-weight: 600 !important;
+    font-size: 15px !important;
+    transition: all 0.3s ease !important;
+}
+
+.swal-cancel-btn:hover {
+    transform: translateY(-2px) !important;
+}
+
+/* Hide default SweetAlert2 icon */
+.swal2-icon {
+    display: none !important;
+}
+
+/* Better backdrop animation */
+.swal-backdrop-show {
+    animation: backdropFadeIn 0.3s ease-out forwards;
+}
+
+.swal-backdrop-hide {
+    animation: backdropFadeOut 0.3s ease-out forwards;
+}
+
+@keyframes backdropFadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes backdropFadeOut {
+    from {
+        opacity: 1;
+    }
+
+    to {
+        opacity: 0;
+    }
+}
+
+/* Timer progress bar styling */
+.swal2-timer-progress-bar {
+    background: linear-gradient(90deg, #667eea, #764ba2) !important;
+    height: 5px !important;
+    border-radius: 0 0 20px 20px !important;
 }

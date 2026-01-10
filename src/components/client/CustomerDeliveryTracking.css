@@ -1,0 +1,481 @@
+/* Customer Delivery Tracking Styles */
+
+.delivery-tracking-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: flex;
+    flex-direction: column;
+    z-index: 2000;
+    overflow-y: auto;
+}
+
+.tracking-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    padding: 20px 25px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.tracking-header h2 {
+    color: white;
+    margin: 0;
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.close-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: none;
+    color: white;
+    font-size: 24px;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: rotate(90deg);
+}
+
+/* Holding Status Banner */
+.holding-status-banner {
+    background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+    border: 2px solid #f59e0b;
+    border-radius: 16px;
+    padding: 30px;
+    margin: 20px;
+    text-align: center;
+    animation: slideDown 0.5s ease-out;
+}
+
+.banner-icon {
+    font-size: 64px;
+    margin-bottom: 15px;
+    animation: pulse 2s infinite;
+}
+
+.holding-status-banner h3 {
+    color: #92400e;
+    font-size: 24px;
+    margin: 10px 0;
+}
+
+.banner-message {
+    color: #78350f;
+    font-size: 18px;
+    font-weight: 600;
+    margin: 10px 0;
+}
+
+.banner-reason {
+    color: #92400e;
+    font-size: 14px;
+    margin: 15px 0;
+    padding: 10px;
+    background: rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+}
+
+.banner-info {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid #f59e0b;
+}
+
+.banner-info p {
+    color: #78350f;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* Order Details Card */
+.order-details-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 25px;
+    margin: 20px;
+    backdrop-filter: blur(10px);
+}
+
+.order-details-card h4 {
+    color: #f1f5f9;
+    font-size: 18px;
+    margin: 0 0 20px 0;
+    padding-bottom: 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 0;
+    color: #cbd5e1;
+    font-size: 14px;
+}
+
+.detail-row strong {
+    color: #f1f5f9;
+    font-weight: 600;
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.status-holding {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-pending {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.status-confirmed {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+.status-packed {
+    background: #e0e7ff;
+    color: #3730a3;
+}
+
+.status-out_for_delivery {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.status-delivered {
+    background: #d1fae5;
+    color: #065f46;
+}
+
+/* Status Timeline */
+.status-timeline {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 30px 20px;
+    margin: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+    position: relative;
+}
+
+.status-timeline::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    right: 10%;
+    height: 2px;
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-50%);
+    z-index: 0;
+}
+
+.timeline-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    z-index: 1;
+    opacity: 0.4;
+    transition: all 0.3s ease;
+}
+
+.timeline-step.completed {
+    opacity: 1;
+}
+
+.step-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    transition: all 0.3s ease;
+}
+
+.timeline-step.completed .step-icon {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.step-label {
+    color: #cbd5e1;
+    font-size: 11px;
+    text-align: center;
+    max-width: 80px;
+}
+
+.timeline-step.completed .step-label {
+    color: #f1f5f9;
+    font-weight: 600;
+}
+
+/* Membership Badge */
+.membership-perk-badge {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 25px;
+    margin: 20px 20px 0 20px;
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    animation: slideDown 0.5s ease-out;
+}
+
+.badge-tier {
+    font-size: 14px;
+    letter-spacing: 0.5px;
+}
+
+.badge-eta {
+    font-size: 16px;
+    font-family: 'Courier New', monospace;
+}
+
+/* Countdown Timer */
+.countdown-timer {
+    background: rgba(255, 255, 255, 0.05);
+    border: 3px solid #10b981;
+    border-radius: 16px;
+    padding: 20px;
+    margin: 20px;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    transition: border-color 0.3s ease;
+}
+
+.timer-label {
+    color: #cbd5e1;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+}
+
+.timer-display {
+    font-size: 48px;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    color: #10b981;
+    line-height: 1;
+    margin: 10px 0;
+    transition: color 0.3s ease;
+}
+
+.timer-sublabel {
+    color: #94a3b8;
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+/* Progress Bar */
+.progress-bar-container {
+    margin: 20px;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 16px;
+}
+
+.progress-labels-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    color: #cbd5e1;
+    font-size: 13px;
+}
+
+.progress-percent {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f1f5f9;
+}
+
+.progress-bar-track {
+    height: 12px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+    transition: width 1s linear;
+    position: relative;
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+}
+
+.progress-bar-fill::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 40px;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3));
+    animation: shimmer 2s infinite;
+}
+
+/* Progress Indicator Wrapper */
+.progress-indicator-wrapper {
+    display: flex;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 12px;
+    margin: 0 20px 20px 20px;
+}
+
+/* Map Container with Reveal Animation */
+.map-container {
+    flex: 1;
+    margin: 0 20px 20px 20px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.delivery-map {
+    width: 100%;
+    min-height: 350px;
+    height: 100%;
+    border-radius: 16px;
+}
+
+/* Make map container take more space */
+.map-revealed .map-container {
+    flex: 1;
+    min-height: 300px;
+}
+
+/* Tracking Footer */
+.tracking-footer {
+    text-align: center;
+    padding: 20px;
+    background: rgba(255, 255, 255, 0.03);
+    margin: 0 20px 20px 20px;
+    border-radius: 12px;
+}
+
+.footer-message {
+    color: #f1f5f9;
+    font-size: 16px;
+    margin: 0 0 8px 0;
+}
+
+.footer-update {
+    color: #94a3b8;
+    font-size: 12px;
+    margin: 0;
+}
+
+/* Animations */
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        transform: translateX(-100%);
+    }
+
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .tracking-header h2 {
+        font-size: 18px;
+    }
+
+    .timer-display {
+        font-size: 36px;
+    }
+
+    .status-timeline {
+        padding: 20px 10px;
+    }
+
+    .step-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+
+    .step-label {
+        font-size: 10px;
+        max-width: 60px;
+    }
+
+    .delivery-map {
+        height: 300px;
+    }
+}

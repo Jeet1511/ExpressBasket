@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styled, { keyframes, css } from 'styled-components';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import axios from '../utils/axios';
 import { useUser } from '../context/UserContext.jsx';
 import { useCart } from '../context/CartContext.jsx';
@@ -91,7 +91,7 @@ const ChatWindow = styled.div`
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  animation: ${props => props.isClosing ? fadeOut : fadeIn} 0.3s ease forwards;
+  animation: ${props => props.$isClosing ? fadeOut : fadeIn} 0.3s ease forwards;
   
   @media (max-width: 480px) {
     width: 95vw;
@@ -192,10 +192,10 @@ const Message = styled.div`
   display: flex;
   gap: 10px;
   animation: ${slideIn} 0.3s ease forwards;
-  animation-delay: ${props => props.delay || '0s'};
+  animation-delay: ${props => props.$delay || '0s'};
   opacity: 0;
   
-  ${props => props.isUser && css`
+  ${props => props.$isUser && css`
     flex-direction: row-reverse;
   `}
 `;
@@ -204,7 +204,7 @@ const MessageAvatar = styled.div`
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: ${props => props.isUser ? 'linear-gradient(135deg, #f093fb, #f5576c)' : 'linear-gradient(135deg, #667eea, #764ba2)'};
+  background: ${props => props.$isUser ? 'linear-gradient(135deg, #f093fb, #f5576c)' : 'linear-gradient(135deg, #667eea, #764ba2)'};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -220,9 +220,9 @@ const MessageAvatar = styled.div`
 const MessageBubble = styled.div`
   max-width: 75%;
   padding: 12px 16px;
-  border-radius: ${props => props.isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};
-  background: ${props => props.isUser ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'var(--card-bg, white)'};
-  color: ${props => props.isUser ? 'white' : 'var(--text-color, #333)'};
+  border-radius: ${props => props.$isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px'};
+  background: ${props => props.$isUser ? 'linear-gradient(135deg, #667eea, #764ba2)' : 'var(--card-bg, white)'};
+  color: ${props => props.$isUser ? 'white' : 'var(--text-color, #333)'};
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
   font-size: 14px;
   line-height: 1.6;
@@ -293,6 +293,16 @@ const ProductCard = styled.div`
   display: flex;
   gap: 12px;
   align-items: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  
+  &:hover {
+    background: var(--card-bg, white);
+    border-color: #1a8754;
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(26, 135, 84, 0.15);
+  }
   
   img {
     width: 50px;
@@ -312,7 +322,7 @@ const ProductCard = styled.div`
     
     .price {
       font-weight: 600;
-      color: #667eea;
+      color: #1a8754;
       font-size: 14px;
     }
     
@@ -332,6 +342,16 @@ const ProductCard = styled.div`
       font-weight: 600;
       margin-left: 8px;
     }
+  }
+  
+  .view-icon {
+    color: #1a8754;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  
+  &:hover .view-icon {
+    opacity: 1;
   }
 `;
 
@@ -448,6 +468,7 @@ const ChatBot = () => {
   const { user } = useUser();
   const { cart } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -538,7 +559,7 @@ Cart Items: ${cart.length}`;
 
   const showAboutWebsite = () => {
     addUserMessage("Tell me about this website");
-    addBotMessage(`Welcome to Express Delivery!
+    addBotMessage(`Welcome to Express Basket!
 
 We're your one-stop grocery store with:
 
@@ -563,7 +584,7 @@ Explore categories, find deals, and enjoy hassle-free shopping!`);
         .slice(0, 5);
 
       if (newest.length > 0) {
-        addBotMessage("Here are the newest arrivals:", newest);
+        addBotMessage("Here are the newest arrivals! Click any product to view:", newest);
       } else {
         addBotMessage("No new products found. Check back soon!");
       }
@@ -582,7 +603,7 @@ Explore categories, find deals, and enjoy hassle-free shopping!`);
         .slice(0, 5);
 
       if (deals.length > 0) {
-        addBotMessage("Hot deals with price drops:", deals);
+        addBotMessage("Hot deals with price drops! Click any to view:", deals);
       } else {
         addBotMessage("No special deals right now, but keep checking!");
       }
@@ -607,7 +628,7 @@ I know everything about this website and can guide you around!`);
   return (
     <ChatContainer>
       {isOpen && (
-        <ChatWindow isClosing={isClosing}>
+        <ChatWindow $isClosing={isClosing}>
           <ChatHeader>
             <BotAvatar>
               <BotIcon />
@@ -626,16 +647,32 @@ I know everything about this website and can guide you around!`);
 
           <ChatMessages>
             {messages.map((msg, index) => (
-              <Message key={index} isUser={msg.isUser} delay={`${index * 0.1}s`}>
-                <MessageAvatar isUser={msg.isUser}>
+              <Message key={index} $isUser={msg.isUser} $delay={`${index * 0.1}s`}>
+                <MessageAvatar $isUser={msg.isUser}>
                   {msg.isUser ? <UserIcon /> : <BotIcon />}
                 </MessageAvatar>
                 <div>
-                  <MessageBubble isUser={msg.isUser}>
+                  <MessageBubble $isUser={msg.isUser}>
                     {msg.text}
                   </MessageBubble>
                   {msg.products && msg.products.map((product, i) => (
-                    <ProductCard key={i}>
+                    <ProductCard
+                      key={i}
+                      onClick={() => {
+                        // Navigate to store with product ID as highlight parameter
+                        // The category could be an object with _id or just an ID string
+                        const categoryId = product.category?._id || product.category;
+                        const productId = product._id;
+                        if (categoryId && typeof categoryId === 'string') {
+                          navigate(`/store?category=${encodeURIComponent(categoryId)}&highlight=${productId}`);
+                        } else {
+                          // Fallback to search by product name with highlight
+                          navigate(`/store?search=${encodeURIComponent(product.name)}&highlight=${productId}`);
+                        }
+                        handleClose();
+                      }}
+                      title={`View ${product.name}`}
+                    >
                       <img
                         src={product.image?.startsWith('http') ? product.image : '/placeholder-image.png'}
                         alt={product.name}
@@ -654,6 +691,11 @@ I know everything about this website and can guide you around!`);
                             </>
                           )}
                         </div>
+                      </div>
+                      <div className="view-icon">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <polyline points="9 18 15 12 9 6"></polyline>
+                        </svg>
                       </div>
                     </ProductCard>
                   ))}
