@@ -148,6 +148,15 @@ span {
   color: inherit;
 }
 
+/* Exception: Hero stats must always be white - ONLY on home page */
+.home-page .hero-banner span,
+.home-page .hero-stats span,
+.home-page .hero-stat span,
+.home-page .stat-num,
+.home-page .stat-label {
+  color: #ffffff !important;
+}
+
 label {
   color: var(--text-color);
 }
@@ -777,4 +786,26 @@ input:-webkit-autofill:active {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* ========== ABSOLUTE OVERRIDE: Hero Stats Must Be White ========== */
+/* This rule only applies to .home-page to avoid affecting admin panel */
+html body .home-page .hero-banner .hero-stats .hero-stat .stat-num,
+html body .home-page .hero-banner .hero-stats .hero-stat .stat-label,
+html body .home-page .hero-banner .stat-num,
+html body .home-page .hero-banner .stat-label,
+html body .home-page .hero-stats .stat-num,
+html body .home-page .hero-stats .stat-label,
+html body .home-page .stat-num,
+html body .home-page .stat-label,
+[data-theme="light"] .home-page .hero-banner .stat-num,
+[data-theme="light"] .home-page .hero-banner .stat-label,
+[data-theme="light"] .home-page .hero-stats .stat-num,
+[data-theme="light"] .home-page .hero-stats .stat-label,
+[data-theme="light"] .home-page .stat-num,
+[data-theme="light"] .home-page .stat-label,
+[data-theme="dark"] .home-page .stat-num,
+[data-theme="dark"] .home-page .stat-label {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
 }

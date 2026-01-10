@@ -152,14 +152,14 @@
 
 /* Animated Avatar with Green Background like reference */
 .profile-avatar {
-  width: 80px;
-  height: 80px;
+  width: 99px;
+  height: 99px;
   background: linear-gradient(135deg, #10b981, #059669);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 32px;
+  font-size: 48px;
   font-weight: 800;
   color: white;
   position: relative;
@@ -327,6 +327,38 @@
   background: rgba(255, 255, 255, 0.25);
   transform: translateY(-2px);
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+/* Profile Logout Button - Solid Red (Between Platinum badge and Edit btn) */
+.profile-header .profile-logout-btn {
+  margin-top: 10px;
+  padding: 9px 22px !important;
+  width: auto !important;
+  max-width: fit-content !important;
+  background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+  color: white !important;
+  border: none !important;
+  border-radius: 10px !important;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 12px !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: all 0.3s ease;
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.4);
+}
+
+.profile-header .profile-logout-btn:hover {
+  background: linear-gradient(135deg, #dc2626, #b91c1c) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 5px 15px rgba(239, 68, 68, 0.5);
+}
+
+.profile-header .profile-logout-btn svg {
+  width: 15px !important;
+  height: 15px !important;
 }
 
 /* Profile Details - Phone and Address Cards Below Header */

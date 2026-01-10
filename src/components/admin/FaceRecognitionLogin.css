@@ -1,17 +1,19 @@
+/* ============== FUTURISTIC FACE RECOGNITION MODAL ============== */
+
 .face-recognition-modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    background: rgba(0, 0, 0, 0.8);
-    backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(12px);
     z-index: 10000;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 20px;
-    animation: fadeIn 0.3s ease;
+    animation: fadeIn 0.4s ease;
 }
 
 @keyframes fadeIn {
@@ -25,65 +27,75 @@
 }
 
 .face-recognition-modal {
-    background: var(--card-bg);
-    border-radius: 20px;
-    max-width: 700px;
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.95), rgba(22, 33, 62, 0.95));
+    border-radius: 24px;
+    max-width: 500px;
     width: 100%;
     max-height: 90vh;
     overflow-y: auto;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-    animation: slideUp 0.3s ease;
+    box-shadow:
+        0 25px 80px rgba(0, 0, 0, 0.6),
+        0 0 40px rgba(40, 167, 69, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    animation: modalSlideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+    border: 1px solid rgba(40, 167, 69, 0.3);
 }
 
-@keyframes slideUp {
+/* Static border glow - no animation */
+.face-recognition-modal::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: 25px;
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.5), rgba(32, 201, 151, 0.3));
+    z-index: -1;
+    opacity: 0.6;
+}
+
+@keyframes modalSlideUp {
     from {
         opacity: 0;
-        transform: translateY(30px);
+        transform: translateY(50px) scale(0.95);
     }
 
     to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
     }
 }
 
+/* ============== HEADER ============== */
 .modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 24px 28px;
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: 1px solid rgba(40, 167, 69, 0.2);
+    background: rgba(0, 0, 0, 0.2);
+    position: relative;
 }
 
 .modal-title {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
 .title-icon {
-    color: var(--btn-primary);
-    animation: scanPulse 2s ease-in-out infinite;
-}
-
-@keyframes scanPulse {
-
-    0%,
-    100% {
-        opacity: 1;
-        transform: scale(1);
-    }
-
-    50% {
-        opacity: 0.7;
-        transform: scale(1.1);
-    }
+    color: #28a745;
+    filter: drop-shadow(0 0 8px rgba(40, 167, 69, 0.4));
 }
 
 .modal-header h2 {
     margin: 0;
-    font-size: 24px;
-    color: var(--heading-color);
+    font-size: 22px;
+    font-weight: 700;
+    background: linear-gradient(135deg, #28a745, #20c997);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    letter-spacing: 0.5px;
 }
 
 /* Fast Mode Badge */
@@ -91,13 +103,16 @@
     display: inline-flex;
     align-items: center;
     gap: 4px;
-    padding: 3px 8px;
+    padding: 4px 10px;
     background: linear-gradient(135deg, #4ade80, #22c55e);
     color: white;
-    font-size: 11px;
-    font-weight: 600;
+    font-size: 10px;
+    font-weight: 700;
     border-radius: 20px;
-    margin-left: 8px;
+    margin-left: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    box-shadow: 0 0 15px rgba(74, 222, 128, 0.4);
 }
 
 .fast-badge svg {
@@ -112,31 +127,14 @@
     }
 
     50% {
-        opacity: 0.5;
+        opacity: 0.4;
     }
 }
 
-/* Processing time display */
-.processing-time {
-    font-size: 14px !important;
-    color: #4ade80 !important;
-    font-weight: 500 !important;
-}
-
-.processing-hint {
-    font-size: 12px !important;
-    opacity: 0.7;
-    font-weight: 400 !important;
-}
-
-.login-message {
-    font-size: 14px !important;
-    opacity: 0.8;
-}
-
+/* Close Button */
 .close-btn {
-    background: var(--nav-link-hover);
-    border: none;
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.3);
     width: 40px;
     height: 40px;
     border-radius: 50%;
@@ -145,75 +143,97 @@
     justify-content: center;
     cursor: pointer;
     transition: all 0.3s ease;
-    color: var(--text-color);
+    color: #ef4444;
 }
 
 .close-btn:hover {
-    background: var(--border-color);
-    transform: rotate(90deg);
+    background: rgba(239, 68, 68, 0.3);
+    border-color: #ef4444;
+    transform: rotate(90deg) scale(1.1);
+    box-shadow: 0 0 20px rgba(239, 68, 68, 0.4);
 }
 
+/* ============== MODAL BODY ============== */
 .modal-body {
     padding: 28px;
-    color: #1e293b;
+    color: #ffffff;
+    background: transparent;
+    position: relative;
 }
 
 .modal-body p {
-    color: #334155;
+    color: rgba(255, 255, 255, 0.7);
 }
 
+/* ============== RECOGNITION STATUS ============== */
 .recognition-status {
     margin-top: 20px;
     padding: 24px;
-    border-radius: 12px;
+    border-radius: 16px;
     text-align: center;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
 }
 
 .recognition-status.recognizing {
-    background: rgba(102, 126, 234, 0.1);
-    border: 2px solid rgba(102, 126, 234, 0.3);
-    color: #667eea;
+    background: rgba(102, 126, 234, 0.15);
+    border: 2px solid rgba(102, 126, 234, 0.4);
+    box-shadow:
+        0 0 30px rgba(102, 126, 234, 0.2),
+        inset 0 0 30px rgba(102, 126, 234, 0.1);
+}
+
+.recognition-status.recognizing p {
+    color: #a5b4fc;
 }
 
 .recognition-status.success {
-    background: rgba(74, 222, 128, 0.1);
-    border: 2px solid rgba(74, 222, 128, 0.3);
-    color: #4ade80;
+    background: rgba(74, 222, 128, 0.15);
+    border: 2px solid rgba(74, 222, 128, 0.4);
+    box-shadow:
+        0 0 30px rgba(74, 222, 128, 0.2),
+        inset 0 0 30px rgba(74, 222, 128, 0.1);
+}
+
+.recognition-status.success p {
+    color: #86efac;
 }
 
 .recognition-status.error {
-    background: rgba(239, 68, 68, 0.1);
-    border: 2px solid rgba(239, 68, 68, 0.3);
-    color: #ef4444;
+    background: rgba(239, 68, 68, 0.15);
+    border: 2px solid rgba(239, 68, 68, 0.4);
+    box-shadow:
+        0 0 30px rgba(239, 68, 68, 0.2),
+        inset 0 0 30px rgba(239, 68, 68, 0.1);
+}
+
+.recognition-status.error p {
+    color: #fca5a5;
 }
 
 .status-icon-animated {
-    animation: iconAppear 0.5s ease-out;
+    animation: iconAppear 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    filter: drop-shadow(0 0 15px currentColor);
 }
 
 @keyframes iconAppear {
     0% {
         opacity: 0;
-        transform: scale(0.5);
-    }
-
-    50% {
-        transform: scale(1.1);
+        transform: scale(0) rotate(-180deg);
     }
 
     100% {
         opacity: 1;
-        transform: scale(1);
+        transform: scale(1) rotate(0deg);
     }
 }
 
 .warning-icon-animated {
-    color: #f59e0b;
+    color: #fbbf24;
     animation: warningPulse 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 15px rgba(251, 191, 36, 0.6));
 }
 
 @keyframes warningPulse {
@@ -226,7 +246,7 @@
 
     50% {
         opacity: 0.7;
-        transform: scale(1.05);
+        transform: scale(1.1);
     }
 }
 
@@ -234,64 +254,91 @@
     margin: 0;
     font-size: 16px;
     font-weight: 600;
+    position: relative;
+    z-index: 1;
 }
 
 .attempt-count {
-    font-size: 13px !important;
-    opacity: 0.8;
+    font-size: 12px !important;
+    opacity: 0.7;
     font-weight: 400 !important;
 }
 
+/* Spinner */
 .spinner-large {
-    width: 48px;
-    height: 48px;
-    border: 4px solid rgba(102, 126, 234, 0.2);
+    width: 56px;
+    height: 56px;
+    border: 3px solid rgba(102, 126, 234, 0.2);
     border-top-color: #667eea;
     border-radius: 50%;
-    animation: spin 0.8s linear infinite;
+    animation: spinGlow 0.8s linear infinite;
+    box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
 }
 
-@keyframes spin {
+@keyframes spinGlow {
     to {
         transform: rotate(360deg);
     }
 }
 
+/* Processing Time */
+.processing-time {
+    font-size: 14px !important;
+    color: #4ade80 !important;
+    font-weight: 600 !important;
+}
+
+.processing-hint {
+    font-size: 12px !important;
+    opacity: 0.6;
+    font-weight: 400 !important;
+}
+
+.login-message {
+    font-size: 14px !important;
+    opacity: 0.8;
+}
+
+/* Max Attempts */
 .max-attempts-reached {
     text-align: center;
-    padding: 40px 20px;
+    padding: 50px 24px;
 }
 
 .max-attempts-reached svg {
-    color: #f59e0b;
-    margin-bottom: 20px;
+    color: #fbbf24;
+    margin-bottom: 24px;
+    filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.5));
 }
 
 .max-attempts-reached h3 {
-    margin: 0 0 12px;
-    font-size: 20px;
-    color: var(--heading-color);
+    margin: 0 0 14px;
+    font-size: 22px;
+    color: #ffffff;
+    font-weight: 700;
 }
 
 .max-attempts-reached p {
-    margin: 0 0 24px;
-    color: var(--text-secondary);
+    margin: 0 0 28px;
+    color: rgba(255, 255, 255, 0.6);
     font-size: 14px;
 }
 
+/* ============== MODAL FOOTER ============== */
 .modal-footer {
     padding: 20px 28px;
-    border-top: 1px solid var(--border-color);
+    border-top: 1px solid rgba(40, 167, 69, 0.2);
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 16px;
+    background: rgba(0, 0, 0, 0.2);
 }
 
 .security-note {
     margin: 0;
-    font-size: 13px;
-    color: var(--text-secondary);
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -299,49 +346,84 @@
 
 .security-note svg {
     flex-shrink: 0;
-    opacity: 0.7;
+    color: #28a745;
+    opacity: 0.8;
 }
 
+/* ============== BUTTONS ============== */
 .btn-primary,
 .btn-secondary {
-    padding: 12px 24px;
-    border-radius: 10px;
+    padding: 14px 28px;
+    border-radius: 12px;
     font-weight: 600;
     font-size: 14px;
     cursor: pointer;
     transition: all 0.3s ease;
     border: none;
+    position: relative;
+    overflow: hidden;
 }
 
 .btn-primary {
-    background: linear-gradient(135deg, var(--btn-primary), #20c997);
+    background: linear-gradient(135deg, #28a745, #20c997);
     color: white;
-    box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    box-shadow: 0 4px 20px rgba(40, 167, 69, 0.4);
+}
+
+.btn-primary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-primary:hover::before {
+    left: 100%;
 }
 
 .btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 30px rgba(40, 167, 69, 0.5);
 }
 
 .btn-secondary {
     background: linear-gradient(135deg, #f59e0b, #f97316) !important;
     color: white !important;
     border: none !important;
-    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3) !important;
+    box-shadow: 0 4px 20px rgba(245, 158, 11, 0.3) !important;
+}
+
+.btn-secondary::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn-secondary:hover::before {
+    left: 100%;
 }
 
 .btn-secondary:hover {
     background: linear-gradient(135deg, #f97316, #ea580c) !important;
-    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.4) !important;
-    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(245, 158, 11, 0.4) !important;
+    transform: translateY(-3px);
 }
 
-/* Responsive */
+/* ============== RESPONSIVE ============== */
 @media (max-width: 768px) {
     .face-recognition-modal {
         max-width: 100%;
-        border-radius: 16px;
+        border-radius: 20px;
+        margin: 10px;
     }
 
     .modal-header,
@@ -351,7 +433,7 @@
     }
 
     .modal-header h2 {
-        font-size: 20px;
+        font-size: 18px;
     }
 
     .modal-footer {
@@ -368,4 +450,164 @@
     .btn-secondary {
         width: 100%;
     }
+}
+
+/* =================================================================
+   ULTRA-HIGH SPECIFICITY FORCED DARK THEME
+   These rules override ALL light theme interference
+   ================================================================= */
+
+/* MASTER OVERRIDE - Force dark CSS variables within modal */
+[data-theme="light"] .face-recognition-modal-overlay,
+[data-theme="light"] .face-recognition-modal-overlay * {
+    --text-primary: rgba(255, 255, 255, 0.9) !important;
+    --text-secondary: rgba(255, 255, 255, 0.7) !important;
+    --text-muted: rgba(255, 255, 255, 0.5) !important;
+    --bg-primary: rgba(26, 26, 46, 0.95) !important;
+    --card-bg: rgba(26, 26, 46, 0.95) !important;
+    --border-color: rgba(40, 167, 69, 0.3) !important;
+}
+
+/* Overlay */
+[data-theme="light"] .face-recognition-modal-overlay {
+    background: rgba(0, 0, 0, 0.9) !important;
+}
+
+/* Main Modal Container */
+[data-theme="light"] .face-recognition-modal {
+    background: linear-gradient(135deg, rgba(26, 26, 46, 0.98), rgba(22, 33, 62, 0.98)) !important;
+    background-color: rgba(26, 26, 46, 0.98) !important;
+    border-color: rgba(40, 167, 69, 0.3) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Header */
+[data-theme="light"] .face-recognition-modal .modal-header {
+    background: rgba(0, 0, 0, 0.3) !important;
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    border-color: rgba(40, 167, 69, 0.2) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+[data-theme="light"] .face-recognition-modal .modal-header h2,
+[data-theme="light"] .face-recognition-modal .modal-title h2 {
+    color: #28a745 !important;
+    -webkit-text-fill-color: transparent !important;
+    background: linear-gradient(135deg, #28a745, #20c997) !important;
+    -webkit-background-clip: text !important;
+    background-clip: text !important;
+}
+
+[data-theme="light"] .face-recognition-modal .modal-title {
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Body - FORCE ALL ELEMENTS DARK */
+[data-theme="light"] .face-recognition-modal .modal-body {
+    background: transparent !important;
+    background-color: transparent !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+[data-theme="light"] .face-recognition-modal .modal-body *,
+[data-theme="light"] .face-recognition-modal .modal-body p,
+[data-theme="light"] .face-recognition-modal .modal-body span,
+[data-theme="light"] .face-recognition-modal .modal-body div,
+[data-theme="light"] .face-recognition-modal .modal-body label,
+[data-theme="light"] .face-recognition-modal .modal-body li {
+    color: rgba(255, 255, 255, 0.85) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.85) !important;
+    background: transparent !important;
+    background-color: transparent !important;
+}
+
+/* Face Capture Container inside modal */
+[data-theme="light"] .face-recognition-modal .face-capture-container {
+    background: transparent !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Status Indicator */
+[data-theme="light"] .face-recognition-modal .status-indicator {
+    background: rgba(26, 26, 46, 0.95) !important;
+    background-color: rgba(26, 26, 46, 0.95) !important;
+    border-color: rgba(40, 167, 69, 0.3) !important;
+    color: rgba(255, 255, 255, 0.9) !important;
+}
+
+[data-theme="light"] .face-recognition-modal .status-text {
+    color: rgba(255, 255, 255, 0.9) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Guide Items - Must be dark */
+[data-theme="light"] .face-recognition-modal .face-guide,
+[data-theme="light"] .face-recognition-modal .guide-item {
+    background: rgba(26, 26, 46, 0.95) !important;
+    background-color: rgba(26, 26, 46, 0.95) !important;
+    border-color: rgba(40, 167, 69, 0.2) !important;
+    color: rgba(255, 255, 255, 0.85) !important;
+}
+
+[data-theme="light"] .face-recognition-modal .guide-item span {
+    color: rgba(255, 255, 255, 0.85) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.85) !important;
+}
+
+[data-theme="light"] .face-recognition-modal .guide-icon {
+    color: #28a745 !important;
+}
+
+/* Recognition Status */
+[data-theme="light"] .face-recognition-modal .recognition-status {
+    background: rgba(102, 126, 234, 0.15) !important;
+    background-color: rgba(102, 126, 234, 0.15) !important;
+}
+
+[data-theme="light"] .face-recognition-modal .recognition-status p {
+    color: #a5b4fc !important;
+    -webkit-text-fill-color: #a5b4fc !important;
+}
+
+/* Footer */
+[data-theme="light"] .face-recognition-modal .modal-footer {
+    background: rgba(0, 0, 0, 0.3) !important;
+    background-color: rgba(0, 0, 0, 0.3) !important;
+    border-color: rgba(40, 167, 69, 0.2) !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="light"] .face-recognition-modal .security-note,
+[data-theme="light"] .face-recognition-modal .modal-footer p {
+    color: rgba(255, 255, 255, 0.6) !important;
+    -webkit-text-fill-color: rgba(255, 255, 255, 0.6) !important;
+}
+
+/* Close button */
+[data-theme="light"] .face-recognition-modal .close-btn {
+    background: rgba(239, 68, 68, 0.2) !important;
+    border-color: rgba(239, 68, 68, 0.3) !important;
+    color: #ef4444 !important;
+}
+
+/* Badges */
+[data-theme="light"] .face-recognition-modal .quality-badge {
+    background: rgba(74, 222, 128, 0.2) !important;
+    color: #4ade80 !important;
+}
+
+[data-theme="light"] .face-recognition-modal .eye-badge {
+    color: #4ade80 !important;
+}
+
+[data-theme="light"] .face-recognition-modal .fps-badge {
+    background: rgba(99, 102, 241, 0.2) !important;
+    color: #818cf8 !important;
+}
+
+/* Camera wrapper */
+[data-theme="light"] .face-recognition-modal .camera-wrapper {
+    background: linear-gradient(135deg, #0a0a0f, #1a1a2e) !important;
+    border-color: rgba(40, 167, 69, 0.4) !important;
 }

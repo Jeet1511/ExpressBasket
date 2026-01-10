@@ -443,7 +443,7 @@ const FaceCapture = ({ onFaceDetected, onError, onMultiAngleComplete, mode = 'lo
 
     return (
         <div className="face-capture-container">
-            <div className="camera-wrapper">
+            <div className={`camera-wrapper ${status === 'Verifying identity...' || status === 'Recognizing your face...' ? 'scanning' : ''}`}>
                 <Webcam
                     ref={webcamRef}
                     audio={false}

@@ -824,14 +824,6 @@ const Profile = () => {
       <div className="container">
         <div className="profile-header-actions">
           <h1 className="profile-title">My Profile</h1>
-          <button className="logout-btn-animated" onClick={logout}>
-            <svg className="logout-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
-              <polyline points="16 17 21 12 16 7"></polyline>
-              <line x1="21" y1="12" x2="9" y2="12"></line>
-            </svg>
-            <span>Logout</span>
-          </button>
         </div>
 
         {message && <div className={`message ${messageType}`}>{message}</div>}
@@ -875,6 +867,16 @@ const Profile = () => {
                     {stats.loyaltyBadge.type} Member
                   </span>
                 )}
+
+                {/* Logout Button */}
+                <button className="profile-logout-btn" onClick={logout}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                  </svg>
+                  Logout
+                </button>
               </div>
               <button className="edit-btn" onClick={() => {
                 setEditMode(!editMode);

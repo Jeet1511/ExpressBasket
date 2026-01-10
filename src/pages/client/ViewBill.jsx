@@ -34,9 +34,26 @@ const ViewBill = () => {
     if (loading) {
         return (
             <div className="view-bill-container">
-                <div className="loading-spinner">
-                    <div className="spinner"></div>
-                    <p>Loading invoice...</p>
+                <div className="bill-loading">
+                    <div className="invoice-loader">
+                        <div className="loader-ring"></div>
+                        <div className="loader-ring"></div>
+                        <svg className="loader-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                    </div>
+                    <div className="loader-text">
+                        <span>Loading Invoice</span>
+                        <div className="loader-dots">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
                 </div>
             </div>
         );
@@ -77,7 +94,7 @@ const ViewBill = () => {
     };
 
     return (
-        <div className="view-bill-container">
+        <div className="view-bill-container" data-theme="light">
             <div className="bill-page" ref={billRef}>
                 {/* Header Actions */}
                 <div className="bill-actions no-print">
@@ -105,7 +122,7 @@ const ViewBill = () => {
                     <div className="bill-header">
                         <div className="company-info">
                             <h1>
-                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#667eea" strokeWidth="2">
+                                <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#28a745" strokeWidth="2">
                                     <circle cx="9" cy="21" r="1"></circle>
                                     <circle cx="20" cy="21" r="1"></circle>
                                     <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
@@ -115,9 +132,19 @@ const ViewBill = () => {
                             <p>Your Trusted Online Grocery Store</p>
                             <p>expressbasket.help@gmail.com</p>
                         </div>
+
+                        {/* QR Code in Header */}
+                        <div className="header-qr-section">
+                            <img
+                                src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(window.location.href)}`}
+                                alt="Invoice QR Code"
+                                className="header-qr-image"
+                            />
+                            <span className="header-qr-order">#{order._id?.slice(-6).toUpperCase()}</span>
+                        </div>
+
                         <div className="invoice-info">
                             <h2>INVOICE</h2>
-                            <p className="order-id">Order #{order._id?.slice(-6).toUpperCase()}</p>
                             <p className="order-date">{new Date(order.orderDate).toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
                             <span className={`status-badge ${getStatusClass(order.status)}`}>
                                 {order.status}

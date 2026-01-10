@@ -15,27 +15,15 @@ const AdminLogin = ({ setIsAdmin }) => {
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
     const [showFaceLogin, setShowFaceLogin] = useState(false);
-    const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
+    // Mouse position is now updated directly via CSS variables in useEffect (no state needed)
     const [focusedField, setFocusedField] = useState(null);
     const [redirecting, setRedirecting] = useState(false);
+    const [isScanning, setIsScanning] = useState(false);
     const containerRef = useRef(null);
     const navigate = useNavigate();
     const { theme, toggleTheme } = useTheme();
 
-    // Track mouse movement for reactive effects
-    useEffect(() => {
-        const handleMouseMove = (e) => {
-            if (containerRef.current) {
-                const rect = containerRef.current.getBoundingClientRect();
-                const x = ((e.clientX - rect.left) / rect.width) * 100;
-                const y = ((e.clientY - rect.top) / rect.height) * 100;
-                setMousePosition({ x, y });
-            }
-        };
 
-        window.addEventListener('mousemove', handleMouseMove);
-        return () => window.removeEventListener('mousemove', handleMouseMove);
-    }, []);
 
     const handleChange = (e) => {
         setFormData({
@@ -47,8 +35,29 @@ const AdminLogin = ({ setIsAdmin }) => {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Validate inputs first
+        if (!formData.email || !formData.password) {
+            setIsScanning(true);
+            setLoading(true);
+            setError('');
+
+            // Wait 1 second while showing animation, then show error
+            setTimeout(() => {
+                setIsScanning(false);
+                setLoading(false);
+                setError('Please enter both email and password');
+            }, 1000);
+            return;
+        }
+
+        // Start scanning animation
+        setIsScanning(true);
         setLoading(true);
         setError('');
+
+        // Wait 1 second to show the scanning animation
+        await new Promise(resolve => setTimeout(resolve, 1000));
 
         try {
             const response = await axios.post('/admin/login', formData);
@@ -56,11 +65,12 @@ const AdminLogin = ({ setIsAdmin }) => {
             localStorage.setItem('admin', JSON.stringify(response.data.admin));
             setIsAdmin(true);
             setRedirecting(true);
-            // Immediately navigate without showing loading state
+            // Navigate after 1 second of animation
             navigate('/admin/dashboard', { replace: true });
         } catch (err) {
             console.error('Admin login error:', err);
             const message = err?.response?.data?.message || err.message || 'Login failed';
+            setIsScanning(false);
             setError(message);
             setLoading(false);
         }
@@ -84,18 +94,73 @@ const AdminLogin = ({ setIsAdmin }) => {
         <div
             className="admin-login-container"
             ref={containerRef}
-            style={{
-                '--mouse-x': `${mousePosition.x}%`,
-                '--mouse-y': `${mousePosition.y}%`
-            }}
         >
             {/* Animated Background */}
             <div className="animated-bg">
+                {/* Cyber Grid */}
+                <div className="cyber-grid"></div>
+
+                {/* Matrix Rain Effect */}
+                <div className="matrix-rain">
+                    {[...Array(25)].map((_, i) => (
+                        <div key={i} className="matrix-column" style={{
+                            left: `${(i / 25) * 100}%`,
+                            animationDelay: `${Math.random() * 5}s`,
+                            animationDuration: `${8 + Math.random() * 8}s`
+                        }}>
+                            {[...Array(15)].map((_, j) => (
+                                <span key={j} style={{ animationDelay: `${j * 0.1}s` }}>
+                                    {String.fromCharCode(0x30A0 + Math.random() * 96)}
+                                </span>
+                            ))}
+                        </div>
+                    ))}
+                </div>
+
+                {/* Gradient Orbs */}
                 <div className="gradient-orb orb-1"></div>
                 <div className="gradient-orb orb-2"></div>
                 <div className="gradient-orb orb-3"></div>
+
+                {/* Circuit Lines */}
+                <svg className="circuit-lines" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+                    <defs>
+                        <linearGradient id="circuitGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                            <stop offset="0%" stopColor="transparent" />
+                            <stop offset="50%" stopColor="#28a745" />
+                            <stop offset="100%" stopColor="transparent" />
+                        </linearGradient>
+                    </defs>
+                    <path className="circuit-path path-1" d="M0,200 L300,200 L350,150 L600,150 L650,200 L900,200" />
+                    <path className="circuit-path path-2" d="M1920,300 L1600,300 L1550,350 L1300,350 L1250,300 L1000,300" />
+                    <path className="circuit-path path-3" d="M0,600 L200,600 L250,650 L500,650 L550,600 L800,600" />
+                    <path className="circuit-path path-4" d="M1920,800 L1700,800 L1650,750 L1400,750 L1350,800 L1100,800" />
+                </svg>
+
+                {/* Hexagon Pattern */}
+                <div className="hex-pattern">
+                    {[...Array(12)].map((_, i) => (
+                        <div key={i} className="hex" style={{
+                            left: `${Math.random() * 100}%`,
+                            top: `${Math.random() * 100}%`,
+                            animationDelay: `${Math.random() * 4}s`
+                        }}></div>
+                    ))}
+                </div>
+
+                {/* Data Streams */}
+                <div className="data-streams">
+                    {[...Array(6)].map((_, i) => (
+                        <div key={i} className="data-stream" style={{
+                            left: `${10 + i * 12}%`,
+                            animationDelay: `${i * 0.5}s`
+                        }}></div>
+                    ))}
+                </div>
+
+                {/* Floating Shapes */}
                 <div className="floating-shapes">
-                    {[...Array(20)].map((_, i) => (
+                    {[...Array(16)].map((_, i) => (
                         <div key={i} className={`shape shape-${i % 4}`} style={{
                             left: `${Math.random() * 100}%`,
                             animationDelay: `${Math.random() * 5}s`,
@@ -103,8 +168,10 @@ const AdminLogin = ({ setIsAdmin }) => {
                         }}></div>
                     ))}
                 </div>
+
+                {/* Particles */}
                 <div className="particle-field">
-                    {[...Array(50)].map((_, i) => (
+                    {[...Array(40)].map((_, i) => (
                         <div key={i} className="particle" style={{
                             left: `${Math.random() * 100}%`,
                             top: `${Math.random() * 100}%`,
@@ -113,24 +180,17 @@ const AdminLogin = ({ setIsAdmin }) => {
                         }}></div>
                     ))}
                 </div>
+
+                {/* Glitch Overlay */}
+                <div className="glitch-overlay"></div>
             </div>
 
-            {/* Mouse Following Glow */}
-            <div className="mouse-glow"></div>
+
 
             {/* Glass Card */}
-            <div className="admin-login-card">
-                {/* Animated Border */}
-                <div className="card-border-glow"></div>
-
-                {/* Theme Toggle */}
-                <button className="theme-toggle-btn" onClick={toggleTheme} aria-label="Toggle theme">
-                    <div className="toggle-track">
-                        <Sun size={14} className="sun-icon" />
-                        <Moon size={14} className="moon-icon" />
-                        <div className="toggle-thumb"></div>
-                    </div>
-                </button>
+            <div className={`admin-login-card ${isScanning ? 'scanning' : ''}`}>
+                {/* Animated Border - Only show when scanning */}
+                {isScanning && <div className="card-border-glow"></div>}
 
                 {/* Logo Section */}
                 <div className="logo-section">

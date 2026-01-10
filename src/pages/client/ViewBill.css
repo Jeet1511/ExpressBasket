@@ -1,39 +1,299 @@
-/* ViewBill Page Styles */
+/* ================= ViewBill Page Styles ================= */
+/* Professional Invoice Design with Green Theme */
+/* ALWAYS LIGHT THEME - Override dark mode */
+
 .view-bill-container {
     min-height: 100vh;
-    background: linear-gradient(135deg, #f5f7fa 0%, #e4e9f2 100%);
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #d1fae5 100%) !important;
     padding: 30px 20px;
+    color: #1a1a2e !important;
 }
 
-.loading-spinner {
+/* Force ALL CSS variables to light theme values inside bill container */
+.view-bill-container,
+.view-bill-container * {
+    --text-color: #1a1a2e !important;
+    --text-secondary: #4a5568 !important;
+    --text-muted: #6c757d !important;
+    --card-bg: #ffffff !important;
+    --bg-color: #ffffff !important;
+    --border-color: #e2e8f0 !important;
+    --input-bg: #ffffff !important;
+    --nav-link-hover: #f8fafc !important;
+}
+
+/* ================= FORCE LIGHT THEME ON DARK MODE ================= */
+[data-theme="dark"] .view-bill-container,
+[data-theme="dark"] .view-bill-container * {
+    --text-color: #1a1a2e !important;
+    --text-secondary: #4a5568 !important;
+    --card-bg: #ffffff !important;
+    --border-color: #e2e8f0 !important;
+    color: inherit;
+}
+
+/* Blanket rule for ALL text in dark mode */
+[data-theme="dark"] .view-bill-container h1,
+[data-theme="dark"] .view-bill-container h2,
+[data-theme="dark"] .view-bill-container h3,
+[data-theme="dark"] .view-bill-container h4,
+[data-theme="dark"] .view-bill-container p,
+[data-theme="dark"] .view-bill-container span,
+[data-theme="dark"] .view-bill-container td,
+[data-theme="dark"] .view-bill-container th,
+[data-theme="dark"] .view-bill-container label,
+[data-theme="dark"] .view-bill-container div {
+    color: #1a1a2e;
+}
+
+[data-theme="dark"] .view-bill-container .items-table th {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .view-bill-container {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 50%, #d1fae5 100%) !important;
+    color: #1a1a2e !important;
+}
+
+[data-theme="dark"] .bill-content {
+    background: #ffffff !important;
+    color: #1a1a2e !important;
+}
+
+[data-theme="dark"] .bill-header .company-info h1,
+[data-theme="dark"] .invoice-info h2 {
+    color: #28a745 !important;
+}
+
+[data-theme="dark"] .bill-header .company-info p,
+[data-theme="dark"] .invoice-info .order-date {
+    color: #4a5568 !important;
+}
+
+[data-theme="dark"] .customer-info {
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7) !important;
+    color: #1a1a2e !important;
+}
+
+[data-theme="dark"] .customer-info h3 {
+    color: #28a745 !important;
+}
+
+[data-theme="dark"] .customer-info p,
+[data-theme="dark"] .customer-info .customer-name {
+    color: #1a1a2e !important;
+}
+
+[data-theme="dark"] .items-table td {
+    color: #1e293b !important;
+    background: white !important;
+}
+
+[data-theme="dark"] .items-table tbody tr:nth-child(even) td {
+    background: #f8fafc !important;
+}
+
+[data-theme="dark"] .totals-section {
+    background: #f8fafc !important;
+    color: #1a1a2e !important;
+}
+
+[data-theme="dark"] .total-row {
+    color: #4a5568 !important;
+}
+
+[data-theme="dark"] .total-row span {
+    color: #4a5568 !important;
+}
+
+[data-theme="dark"] .total-row.grand-total {
+    color: #1a1a2e !important;
+}
+
+[data-theme="dark"] .total-row.grand-total span {
+    color: #1a1a2e !important;
+}
+
+[data-theme="dark"] .total-row.grand-total span:last-child {
+    color: #28a745 !important;
+}
+
+[data-theme="dark"] .payment-info {
+    color: #155724 !important;
+    background: linear-gradient(135deg, #d4edda, #c3e6cb) !important;
+}
+
+[data-theme="dark"] .payment-info span {
+    color: #155724 !important;
+}
+
+[data-theme="dark"] .bill-footer p {
+    color: #6c757d !important;
+}
+
+[data-theme="dark"] .bill-footer p:first-child {
+    color: #4a5568 !important;
+}
+
+[data-theme="dark"] .error-state h2 {
+    color: #1a1a2e !important;
+}
+
+[data-theme="dark"] .error-state p {
+    color: #6c757d !important;
+}
+
+[data-theme="dark"] .bill-loading .loader-text {
+    color: #1a1a2e !important;
+}
+
+[data-theme="dark"] .bill-loading .loader-text span {
+    color: #1a1a2e !important;
+}
+
+/* Header QR Order ID */
+[data-theme="dark"] .header-qr-order {
+    color: #28a745 !important;
+}
+
+/* Action Buttons */
+[data-theme="dark"] .print-btn,
+[data-theme="dark"] .shop-more-btn {
+    color: #ffffff !important;
+}
+
+/* CTA Section */
+[data-theme="dark"] .cta-section h3,
+[data-theme="dark"] .cta-section p {
+    color: #ffffff !important;
+}
+
+[data-theme="dark"] .cta-btn {
+    color: #28a745 !important;
+    background: #ffffff !important;
+}
+
+/* ================= LOADING ANIMATION ================= */
+.bill-loading {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 60vh;
+    gap: 30px;
 }
 
-.loading-spinner .spinner {
-    width: 50px;
-    height: 50px;
-    border: 4px solid #e0e0e0;
-    border-top-color: #667eea;
+.invoice-loader {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.invoice-loader .loader-ring {
+    position: absolute;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
+    border: 3px solid transparent;
 }
 
-@keyframes spin {
+.invoice-loader .loader-ring:nth-child(1) {
+    width: 100%;
+    height: 100%;
+    border-top-color: #28a745;
+    border-right-color: rgba(40, 167, 69, 0.3);
+    animation: loaderSpin 2s ease-in-out infinite;
+}
+
+.invoice-loader .loader-ring:nth-child(2) {
+    width: 75%;
+    height: 75%;
+    border-bottom-color: #20c997;
+    border-left-color: rgba(32, 201, 151, 0.3);
+    animation: loaderSpin 1.5s ease-in-out infinite reverse;
+}
+
+.invoice-loader .loader-icon {
+    color: #28a745;
+    animation: iconPulse 1.5s ease-in-out infinite;
+    filter: drop-shadow(0 0 10px rgba(40, 167, 69, 0.4));
+}
+
+@keyframes loaderSpin {
+    from {
+        transform: rotate(0deg);
+    }
+
     to {
         transform: rotate(360deg);
     }
 }
 
-.loading-spinner p {
-    margin-top: 20px;
-    color: #666;
-    font-size: 16px;
+@keyframes iconPulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
 }
 
+.bill-loading .loader-text {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 18px;
+    font-weight: 600;
+    color: #1a1a2e;
+}
+
+.bill-loading .loader-dots {
+    display: flex;
+    gap: 4px;
+}
+
+.bill-loading .loader-dots span {
+    width: 8px;
+    height: 8px;
+    background: #28a745;
+    border-radius: 50%;
+    animation: dotBounce 1.4s ease-in-out infinite;
+}
+
+.bill-loading .loader-dots span:nth-child(1) {
+    animation-delay: 0s;
+}
+
+.bill-loading .loader-dots span:nth-child(2) {
+    animation-delay: 0.2s;
+}
+
+.bill-loading .loader-dots span:nth-child(3) {
+    animation-delay: 0.4s;
+}
+
+@keyframes dotBounce {
+
+    0%,
+    80%,
+    100% {
+        transform: scale(0.6);
+        opacity: 0.5;
+    }
+
+    40% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+/* ================= ERROR STATE ================= */
 .error-state {
     display: flex;
     flex-direction: column;
@@ -42,24 +302,33 @@
     min-height: 60vh;
     text-align: center;
     padding: 40px;
+    background: white;
+    border-radius: 20px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    max-width: 500px;
+    margin: 50px auto;
 }
 
 .error-state h2 {
     margin: 20px 0 10px;
-    color: #333;
+    color: #1a1a2e;
     font-size: 24px;
+    font-weight: 700;
 }
 
 .error-state p {
-    color: #666;
+    color: #6c757d;
     margin-bottom: 30px;
+    font-size: 15px;
 }
 
+/* ================= BILL PAGE ================= */
 .bill-page {
-    max-width: 850px;
+    max-width: 900px;
     margin: 0 auto;
 }
 
+/* ================= ACTION BUTTONS ================= */
 .bill-actions {
     display: flex;
     gap: 15px;
@@ -80,42 +349,72 @@
     cursor: pointer;
     text-decoration: none;
     transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
 }
 
 .print-btn {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #28a745, #20c997);
     color: white;
 }
 
 .print-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.35);
+    box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
 }
 
 .shop-more-btn {
-    background: linear-gradient(135deg, #43a047, #2e7d32);
+    background: linear-gradient(135deg, #1a1a2e, #2d2d44);
     color: white;
 }
 
 .shop-more-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 8px 25px rgba(67, 160, 71, 0.35);
+    box-shadow: 0 8px 25px rgba(26, 26, 46, 0.4);
 }
 
+/* ================= BILL CONTENT CARD ================= */
 .bill-content {
     background: white;
-    border-radius: 20px;
-    padding: 40px;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+    border-radius: 24px;
+    padding: 45px;
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.12);
+    border: 1px solid rgba(40, 167, 69, 0.1);
 }
 
+/* ================= BILL HEADER ================= */
 .bill-header {
     display: flex;
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 35px;
     padding-bottom: 25px;
-    border-bottom: 3px solid #667eea;
+    border-bottom: 3px solid #28a745;
+    gap: 20px;
+}
+
+/* Header QR Code Section */
+.header-qr-section {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
+
+.header-qr-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 8px;
+    border: 2px solid #28a745;
+    padding: 4px;
+    background: white;
+}
+
+.header-qr-order {
+    font-size: 12px;
+    font-weight: 700;
+    color: #28a745 !important;
+    text-align: center;
 }
 
 .bill-header .company-info h1 {
@@ -123,14 +422,20 @@
     align-items: center;
     gap: 12px;
     font-size: 28px;
-    color: #667eea;
+    color: #28a745;
     margin-bottom: 8px;
+    font-weight: 700;
+}
+
+.bill-header .company-info h1 svg {
+    stroke: #28a745;
 }
 
 .bill-header .company-info p {
-    color: #666;
+    color: #4a5568;
     font-size: 14px;
-    margin: 3px 0;
+    margin: 4px 0;
+    font-weight: 500;
 }
 
 .invoice-info {
@@ -138,104 +443,124 @@
 }
 
 .invoice-info h2 {
-    font-size: 28px;
-    color: #333;
+    font-size: 32px;
+    color: #1a1a2e;
     margin-bottom: 12px;
-    letter-spacing: 2px;
+    letter-spacing: 3px;
+    font-weight: 800;
 }
 
 .invoice-info .order-id {
-    font-weight: 600;
-    color: #333;
+    font-weight: 700;
+    color: #28a745;
+    font-size: 16px;
     margin-bottom: 5px;
 }
 
 .invoice-info .order-date {
-    color: #666;
+    color: #4a5568;
     font-size: 14px;
     margin-bottom: 12px;
+    font-weight: 500;
 }
 
+/* ================= STATUS BADGES ================= */
 .status-badge {
     display: inline-block;
-    padding: 6px 16px;
+    padding: 8px 20px;
     border-radius: 25px;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
 .status-delivered {
-    background: #d4edda;
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
     color: #155724;
+    border: 1px solid #28a745;
 }
 
 .status-cancelled {
-    background: #f8d7da;
+    background: linear-gradient(135deg, #f8d7da, #f5c6cb);
     color: #721c24;
+    border: 1px solid #dc3545;
 }
 
 .status-pending {
-    background: #fff3cd;
+    background: linear-gradient(135deg, #fff3cd, #ffeeba);
     color: #856404;
+    border: 1px solid #ffc107;
 }
 
+/* ================= CUSTOMER INFO ================= */
 .bill-content .customer-info {
-    background: linear-gradient(135deg, #f8f9fa, #e9ecef);
-    padding: 20px;
-    border-radius: 12px;
+    background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+    padding: 25px;
+    border-radius: 16px;
     margin-bottom: 30px;
+    border: 1px solid rgba(40, 167, 69, 0.2);
 }
 
 .bill-content .customer-info h3 {
     font-size: 13px;
-    color: #667eea;
+    color: #28a745;
     text-transform: uppercase;
-    letter-spacing: 1px;
-    margin-bottom: 12px;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
+    font-weight: 700;
 }
 
 .bill-content .customer-info .customer-name {
-    font-weight: 600;
-    font-size: 16px;
-    color: #333;
-    margin-bottom: 5px;
+    font-weight: 700;
+    font-size: 18px;
+    color: #1a1a2e;
+    margin-bottom: 8px;
 }
 
 .bill-content .customer-info p {
-    color: #666;
+    color: #4a5568;
     font-size: 14px;
-    margin: 3px 0;
+    margin: 4px 0;
+    font-weight: 500;
 }
 
 .bill-content .customer-info .address {
-    margin-top: 8px;
-    color: #555;
+    margin-top: 10px;
+    color: #4a5568;
+    line-height: 1.5;
 }
 
+/* ================= ITEMS TABLE ================= */
 .items-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     margin-bottom: 30px;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e2e8f0;
 }
 
 .items-table th {
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    color: white;
-    padding: 14px 16px;
+    background: #28a745;
+    color: #ffffff !important;
+    padding: 16px 18px;
     text-align: left;
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    letter-spacing: 1px;
+    border: none;
 }
 
 .items-table th:first-child {
-    border-radius: 10px 0 0 0;
+    border-radius: 12px 0 0 0;
 }
 
 .items-table th:last-child {
-    border-radius: 0 10px 0 0;
+    border-radius: 0 12px 0 0;
     text-align: right;
 }
 
@@ -245,10 +570,12 @@
 }
 
 .items-table td {
-    padding: 14px 16px;
-    border-bottom: 1px solid #eee;
-    font-size: 14px;
-    color: #333;
+    padding: 16px 18px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 15px;
+    color: #1e293b !important;
+    font-weight: 500;
+    background: white;
 }
 
 .items-table td:nth-child(3),
@@ -261,30 +588,88 @@
 }
 
 .items-table .item-total {
-    font-weight: 600;
-    color: #667eea;
+    font-weight: 700;
+    color: #28a745 !important;
+}
+
+.items-table tbody tr:nth-child(even) td {
+    background: #f8fafc;
+}
+
+.items-table tbody tr:hover td {
+    background: #f0fdf4;
+}
+
+.items-table tbody tr:last-child td:first-child {
+    border-radius: 0 0 0 12px;
+}
+
+.items-table tbody tr:last-child td:last-child {
+    border-radius: 0 0 12px 0;
+}
+
+.items-table th:first-child {
+    border-radius: 12px 0 0 0;
+}
+
+.items-table th:last-child {
+    border-radius: 0 12px 0 0;
+    text-align: right;
+}
+
+.items-table th:nth-child(3),
+.items-table th:nth-child(4) {
+    text-align: center;
+}
+
+.items-table td {
+    padding: 16px 18px;
+    border-bottom: 1px solid #e2e8f0;
+    font-size: 15px;
+    color: #1a1a2e;
+    font-weight: 500;
+}
+
+.items-table td:nth-child(3),
+.items-table td:nth-child(4) {
+    text-align: center;
+}
+
+.items-table td:last-child {
+    text-align: right;
+}
+
+.items-table .item-total {
+    font-weight: 700;
+    color: #28a745;
 }
 
 .items-table tbody tr:nth-child(even) {
-    background: #f8f9fa;
+    background: #f8fafc;
 }
 
 .items-table tbody tr:hover {
-    background: #f0f4ff;
+    background: #f0fdf4;
 }
 
+/* ================= TOTALS SECTION ================= */
 .totals-section {
     margin-left: auto;
-    width: 320px;
-    margin-bottom: 25px;
+    width: 350px;
+    margin-bottom: 30px;
+    background: #f8fafc;
+    padding: 20px 25px;
+    border-radius: 16px;
+    border: 1px solid #e2e8f0;
 }
 
 .total-row {
     display: flex;
     justify-content: space-between;
-    padding: 10px 0;
+    padding: 12px 0;
     font-size: 15px;
-    color: #555;
+    color: #4a5568;
+    font-weight: 500;
 }
 
 .total-row.discount {
@@ -293,78 +678,140 @@
 
 .total-row.grand-total {
     font-size: 20px;
-    font-weight: 700;
-    color: #667eea;
-    border-top: 3px solid #667eea;
-    padding-top: 15px;
-    margin-top: 8px;
+    font-weight: 800;
+    color: #1a1a2e;
+    border-top: 3px solid #28a745;
+    padding-top: 18px;
+    margin-top: 10px;
 }
 
+.total-row.grand-total span:last-child {
+    color: #28a745;
+}
+
+/* ================= PAYMENT INFO ================= */
 .payment-info {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 18px;
-    background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
-    border-radius: 12px;
+    gap: 15px;
+    padding: 20px 25px;
+    background: linear-gradient(135deg, #d4edda, #c3e6cb);
+    border-radius: 16px;
     color: #155724;
-    font-size: 15px;
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 30px;
+    border: 1px solid #28a745;
+}
+
+.payment-info svg {
+    flex-shrink: 0;
+}
+
+/* ================= QR CODE SECTION ================= */
+.qr-code-section {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 25px;
+    padding: 25px;
+    background: #f8fafc;
+    border-radius: 16px;
+    border: 2px dashed #28a745;
     margin-bottom: 30px;
 }
 
+.qr-code-container {
+    flex-shrink: 0;
+}
+
+.qr-code-image {
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    border: 3px solid #28a745;
+    padding: 5px;
+    background: white;
+}
+
+.qr-code-info {
+    text-align: left;
+}
+
+.qr-code-info .qr-title {
+    font-size: 16px;
+    font-weight: 700;
+    color: #1a1a2e !important;
+    margin: 0 0 5px 0;
+}
+
+.qr-code-info .qr-subtitle {
+    font-size: 14px;
+    font-weight: 600;
+    color: #28a745 !important;
+    margin: 0;
+}
+
+/* ================= BILL FOOTER ================= */
 .bill-footer {
     text-align: center;
     padding-top: 25px;
-    border-top: 1px solid #eee;
-    color: #888;
+    border-top: 2px dashed #e2e8f0;
+    color: #6c757d;
     font-size: 13px;
 }
 
 .bill-footer p:first-child {
-    font-weight: 500;
+    font-weight: 600;
+    color: #4a5568;
     margin-bottom: 5px;
 }
 
+/* ================= CTA SECTION ================= */
 .cta-section {
     margin-top: 35px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    padding: 40px;
-    border-radius: 20px;
+    background: #28a745;
+    padding: 45px;
+    border-radius: 24px;
     text-align: center;
-    color: white;
+    box-shadow: 0 15px 40px rgba(40, 167, 69, 0.3);
 }
 
 .cta-section h3 {
-    font-size: 24px;
-    margin-bottom: 10px;
+    font-size: 26px;
+    margin-bottom: 12px;
+    font-weight: 700;
+    color: #ffffff !important;
 }
 
 .cta-section p {
-    opacity: 0.9;
     margin-bottom: 25px;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.95) !important;
 }
 
 .cta-btn {
     display: inline-flex;
     align-items: center;
     gap: 12px;
-    padding: 16px 40px;
+    padding: 16px 45px;
     background: white;
-    color: #667eea;
+    color: #28a745;
     border: none;
     border-radius: 50px;
     font-size: 17px;
     font-weight: 700;
     text-decoration: none;
     transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
 }
 
 .cta-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
 }
 
-/* Print Styles */
+/* ================= PRINT STYLES ================= */
 @media print {
     .no-print {
         display: none !important;
@@ -379,16 +826,17 @@
         box-shadow: none;
         border-radius: 0;
         padding: 20px;
+        border: none;
     }
 
     .items-table th {
-        background: #667eea !important;
+        background: #28a745 !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
     }
 }
 
-/* Responsive Design */
+/* ================= RESPONSIVE DESIGN ================= */
 @media (max-width: 768px) {
     .bill-header {
         flex-direction: column;
@@ -419,8 +867,12 @@
 
     .items-table th,
     .items-table td {
-        padding: 10px 8px;
-        font-size: 12px;
+        padding: 12px 10px;
+        font-size: 13px;
+    }
+
+    .cta-section {
+        padding: 30px 20px;
     }
 }
 
@@ -438,14 +890,15 @@
     }
 
     .invoice-info h2 {
-        font-size: 22px;
-    }
-
-    .cta-section {
-        padding: 25px 20px;
+        font-size: 24px;
     }
 
     .cta-section h3 {
         font-size: 20px;
+    }
+
+    .cta-btn {
+        padding: 14px 30px;
+        font-size: 15px;
     }
 }

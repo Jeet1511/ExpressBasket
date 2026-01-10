@@ -1,4 +1,5 @@
 /* ================= Admin Login - Premium Design ================= */
+/* ALWAYS DARK THEMED - Ignores global theme */
 
 .admin-login-container {
   min-height: 100vh;
@@ -8,7 +9,234 @@
   padding: 20px;
   position: relative;
   overflow: hidden;
-  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%);
+  /* Force dark background always */
+  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%) !important;
+}
+
+/* =================================================================
+   ULTRA-HIGH SPECIFICITY FORCED DARK THEME
+   These rules override ALL light theme interference
+   ================================================================= */
+
+/* MASTER OVERRIDE - Force ALL text to light color */
+[data-theme="light"] .admin-login-container,
+[data-theme="light"] .admin-login-container * {
+  --text-primary: rgba(255, 255, 255, 0.9) !important;
+  --text-secondary: rgba(255, 255, 255, 0.7) !important;
+  --text-muted: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Force dark background on container */
+[data-theme="light"] .admin-login-container {
+  background: linear-gradient(135deg, #0a0a0f 0%, #1a1a2e 50%, #16213e 100%) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Force dark card styling */
+[data-theme="light"] .admin-login-card {
+  background: rgba(255, 255, 255, 0.03) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 32px 64px rgba(0, 0, 0, 0.4) !important;
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Force dark input styling - HIGHEST SPECIFICITY */
+[data-theme="light"] .admin-login-container input[type="email"],
+[data-theme="light"] .admin-login-container input[type="password"],
+[data-theme="light"] .admin-login-container input[type="text"],
+[data-theme="light"] .admin-login-container .input-group input,
+[data-theme="light"] .admin-login-card input {
+  background: rgba(255, 255, 255, 0.08) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+/* Fix autofill styling */
+[data-theme="light"] .admin-login-container input:-webkit-autofill,
+[data-theme="light"] .admin-login-container input:-webkit-autofill:hover,
+[data-theme="light"] .admin-login-container input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px rgba(26, 26, 46, 0.95) inset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background-color: rgba(26, 26, 46, 0.95) !important;
+}
+
+[data-theme="light"] .admin-login-container input::placeholder {
+  color: rgba(255, 255, 255, 0.4) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.4) !important;
+}
+
+[data-theme="light"] .admin-login-container .input-icon,
+[data-theme="light"] .admin-login-container .input-icon svg {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+
+/* Force ALL labels to light text */
+[data-theme="light"] .admin-login-container label,
+[data-theme="light"] .admin-login-container .input-label,
+[data-theme="light"] .admin-login-card label {
+  color: rgba(255, 255, 255, 0.7) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.7) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* Force logo text */
+[data-theme="light"] .admin-login-container .logo-text h1 {
+  color: #ffffff !important;
+  -webkit-text-fill-color: transparent !important;
+}
+
+[data-theme="light"] .admin-login-container .logo-tagline {
+  color: rgba(255, 255, 255, 0.7) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+/* ================= DIVIDER - MUST BE VISIBLE ================= */
+[data-theme="light"] .admin-login-container .divider {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  align-items: center !important;
+}
+
+[data-theme="light"] .admin-login-container .divider::before,
+[data-theme="light"] .admin-login-container .divider::after {
+  background: rgba(255, 255, 255, 0.2) !important;
+  background-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+[data-theme="light"] .admin-login-container .divider span {
+  color: rgba(255, 255, 255, 0.6) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.6) !important;
+  background: transparent !important;
+  background-color: transparent !important;
+}
+
+/* ================= FACE RECOGNITION BUTTON - MUST BE VISIBLE ================= */
+[data-theme="light"] .admin-login-container .face-login-button {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .admin-login-container .face-login-button .btn-content,
+[data-theme="light"] .admin-login-container .face-login-button span {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+
+[data-theme="light"] .admin-login-container .face-login-button svg {
+  color: #ffffff !important;
+}
+
+[data-theme="light"] .admin-login-container .face-login-button:hover {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(40, 167, 69, 0.5) !important;
+}
+
+/* ================= BACK LINK - MUST BE VISIBLE ================= */
+[data-theme="light"] .admin-login-container .back-link,
+[data-theme="light"] .admin-login-container .back-link * {
+  display: flex !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  color: rgba(255, 255, 255, 0.7) !important;
+  -webkit-text-fill-color: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="light"] .admin-login-container .back-link svg {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+
+[data-theme="light"] .admin-login-container .back-link:hover,
+[data-theme="light"] .admin-login-container .back-link:hover * {
+  color: #28a745 !important;
+  -webkit-text-fill-color: #28a745 !important;
+}
+
+/* ================= ANIMATIONS ================= */
+[data-theme="light"] .admin-login-container .matrix-column {
+  color: #28a745 !important;
+  text-shadow: 0 0 10px #28a745, 0 0 20px #28a745 !important;
+}
+
+[data-theme="light"] .admin-login-container .gradient-orb {
+  opacity: 0.6 !important;
+}
+
+/* ================= PERFORMANCE OPTIMIZATION ================= */
+/* GPU acceleration for all animated elements */
+.animated-bg,
+.animated-bg *,
+.cyber-grid,
+.matrix-rain,
+.matrix-column,
+.circuit-lines,
+.circuit-path,
+.hex-pattern,
+.hex,
+.data-streams,
+.data-stream,
+.glitch-overlay,
+.gradient-orb,
+.particles-container,
+.particle,
+.scan-effect {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+/* Will-change hints for frequently animated elements */
+.cyber-grid {
+  will-change: transform;
+  contain: layout style paint;
+}
+
+.matrix-column {
+  will-change: transform;
+  contain: layout paint;
+}
+
+.circuit-path {
+  will-change: stroke-dashoffset, opacity;
+}
+
+.hex {
+  will-change: transform, opacity;
+  contain: layout style;
+}
+
+.data-stream {
+  will-change: transform, opacity;
+  contain: layout paint;
+}
+
+.gradient-orb {
+  will-change: transform;
+  contain: layout style paint;
+  /* Smooth CSS transitions for mouse-reactive movement */
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Default mouse position to center if not yet tracked */
+.admin-login-container {
+  --mouse-x: 50%;
+  --mouse-y: 50%;
+}
+
+/* Reduce animation work on low-power devices */
+@media (prefers-reduced-motion: reduce) {
+  .animated-bg * {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 /* ================= Animated Background ================= */
@@ -17,6 +245,284 @@
   inset: 0;
   overflow: hidden;
   z-index: 0;
+  contain: strict;
+  isolation: isolate;
+}
+
+/* ================= Cyber Grid ================= */
+.cyber-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(40, 167, 69, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(40, 167, 69, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  animation: gridMove 20s linear infinite;
+  perspective: 500px;
+}
+
+.cyber-grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(40, 167, 69, 0.05) 50%,
+      transparent 100%);
+  animation: gridPulse 4s ease-in-out infinite;
+}
+
+@keyframes gridMove {
+  0% {
+    transform: perspective(500px) rotateX(60deg) translateY(0);
+  }
+
+  100% {
+    transform: perspective(500px) rotateX(60deg) translateY(50px);
+  }
+}
+
+@keyframes gridPulse {
+
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+
+  50% {
+    opacity: 0.8;
+  }
+}
+
+/* ================= Matrix Rain Effect ================= */
+.matrix-rain {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0.15;
+}
+
+.matrix-column {
+  position: absolute;
+  top: -100%;
+  display: flex;
+  flex-direction: column;
+  font-family: 'Courier New', monospace;
+  font-size: 14px;
+  color: #28a745;
+  text-shadow: 0 0 10px #28a745, 0 0 20px #28a745;
+  animation: matrixFall 10s linear infinite;
+  writing-mode: vertical-rl;
+}
+
+.matrix-column span {
+  opacity: 0;
+  animation: matrixGlow 2s ease-in-out infinite;
+}
+
+@keyframes matrixFall {
+  0% {
+    transform: translateY(0);
+  }
+
+  100% {
+    transform: translateY(200%);
+  }
+}
+
+@keyframes matrixGlow {
+
+  0%,
+  100% {
+    opacity: 0.1;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ================= Circuit Lines ================= */
+.circuit-lines {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.5;
+}
+
+.circuit-path {
+  fill: none;
+  stroke: #28a745;
+  stroke-width: 2;
+  stroke-dasharray: 500;
+  stroke-dashoffset: 500;
+  filter: drop-shadow(0 0 6px #28a745);
+  animation: circuitDraw 4s ease-in-out infinite;
+}
+
+.path-1 {
+  animation-delay: 0s;
+}
+
+.path-2 {
+  animation-delay: 1s;
+}
+
+.path-3 {
+  animation-delay: 2s;
+}
+
+.path-4 {
+  animation-delay: 3s;
+}
+
+@keyframes circuitDraw {
+
+  0%,
+  100% {
+    stroke-dashoffset: 500;
+    opacity: 0.3;
+  }
+
+  50% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+}
+
+/* ================= Hexagon Pattern ================= */
+.hex-pattern {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.hex {
+  position: absolute;
+  width: 60px;
+  height: 70px;
+  background: transparent;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  border: 1px solid rgba(40, 167, 69, 0.2);
+  animation: hexPulse 4s ease-in-out infinite;
+}
+
+.hex::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: transparent;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  border: 1px solid rgba(40, 167, 69, 0.3);
+}
+
+@keyframes hexPulse {
+
+  0%,
+  100% {
+    opacity: 0.2;
+    transform: scale(1) rotate(0deg);
+  }
+
+  50% {
+    opacity: 0.8;
+    transform: scale(1.1) rotate(30deg);
+  }
+}
+
+/* ================= Data Streams ================= */
+.data-streams {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+}
+
+.data-stream {
+  position: absolute;
+  top: -100%;
+  width: 2px;
+  height: 100px;
+  background: linear-gradient(to bottom,
+      transparent,
+      #28a745 50%,
+      transparent);
+  animation: dataFlow 3s linear infinite;
+  filter: blur(1px);
+}
+
+.data-stream::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -4px;
+  right: -4px;
+  bottom: 0;
+  background: linear-gradient(to bottom,
+      transparent,
+      rgba(40, 167, 69, 0.3) 50%,
+      transparent);
+  filter: blur(4px);
+}
+
+@keyframes dataFlow {
+  0% {
+    transform: translateY(0);
+    opacity: 0;
+  }
+
+  10% {
+    opacity: 1;
+  }
+
+  90% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateY(calc(100vh + 200px));
+    opacity: 0;
+  }
+}
+
+/* ================= Glitch Overlay ================= */
+.glitch-overlay {
+  position: absolute;
+  inset: 0;
+  background: transparent;
+  pointer-events: none;
+  animation: glitchEffect 10s steps(1) infinite;
+}
+
+@keyframes glitchEffect {
+
+  0%,
+  95%,
+  100% {
+    opacity: 0;
+  }
+
+  96% {
+    opacity: 0.03;
+    background: linear-gradient(90deg,
+        transparent 0%,
+        rgba(40, 167, 69, 0.2) 15%,
+        transparent 15%,
+        transparent 50%,
+        rgba(32, 201, 151, 0.2) 50%,
+        transparent 65%);
+    transform: translateX(-2px);
+  }
+
+  97% {
+    opacity: 0.05;
+    transform: translateX(2px);
+  }
+
+  98% {
+    opacity: 0.02;
+    transform: translateX(-1px);
+  }
 }
 
 /* Gradient Orbs */
@@ -168,19 +674,42 @@
   }
 }
 
-/* Mouse Following Glow */
+/* ================= ELEGANT FLOWING MOUSE GLOW ================= */
 .mouse-glow {
   position: absolute;
-  width: 400px;
-  height: 400px;
-  background: radial-gradient(circle, rgba(40, 167, 69, 0.15) 0%, transparent 60%);
-  border-radius: 50%;
+  width: 350px;
+  height: 350px;
   pointer-events: none;
   left: var(--mouse-x, 50%);
   top: var(--mouse-y, 50%);
   transform: translate(-50%, -50%);
-  transition: left 0.3s ease-out, top 0.3s ease-out;
+  /* Smooth trailing effect - slower transition creates flowing feel */
+  transition: left 0.5s cubic-bezier(0.23, 1, 0.32, 1),
+    top 0.5s cubic-bezier(0.23, 1, 0.32, 1);
   z-index: 1;
+  background: radial-gradient(circle at center,
+      rgba(40, 167, 69, 0.2) 0%,
+      rgba(32, 201, 151, 0.1) 25%,
+      rgba(40, 167, 69, 0.05) 50%,
+      transparent 70%);
+  border-radius: 50%;
+  filter: blur(30px);
+  mix-blend-mode: screen;
+}
+
+/* Second layer - follows behind for trail effect */
+.mouse-glow-trail {
+  width: 250px;
+  height: 250px;
+  /* Slower transition = trails behind the main glow */
+  transition: left 0.8s cubic-bezier(0.23, 1, 0.32, 1),
+    top 0.8s cubic-bezier(0.23, 1, 0.32, 1);
+  background: radial-gradient(circle at center,
+      rgba(32, 201, 151, 0.15) 0%,
+      rgba(40, 167, 69, 0.08) 40%,
+      transparent 70%);
+  filter: blur(40px);
+  opacity: 0.7;
 }
 
 /* ================= Glass Card ================= */
@@ -288,6 +817,56 @@
   }
 }
 
+/* Scanning state - Enhanced glow when actively scanning */
+.admin-login-card.scanning {
+  box-shadow:
+    0 32px 64px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+    0 -20px 40px rgba(40, 167, 69, 0.1) inset,
+    0 0 30px rgba(40, 167, 69, 0.3),
+    0 0 60px rgba(40, 167, 69, 0.15);
+  animation: cardPulse 1s ease-in-out infinite;
+}
+
+@keyframes cardPulse {
+
+  0%,
+  100% {
+    box-shadow:
+      0 32px 64px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+      0 -20px 40px rgba(40, 167, 69, 0.1) inset,
+      0 0 30px rgba(40, 167, 69, 0.3),
+      0 0 60px rgba(40, 167, 69, 0.15);
+  }
+
+  50% {
+    box-shadow:
+      0 32px 64px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.05) inset,
+      0 -20px 40px rgba(40, 167, 69, 0.15) inset,
+      0 0 50px rgba(40, 167, 69, 0.5),
+      0 0 80px rgba(40, 167, 69, 0.25);
+  }
+}
+
+/* Faster scan animation when actively scanning */
+.admin-login-card.scanning .card-border-glow::before {
+  animation: scanLineFast 1s ease-in-out infinite;
+}
+
+@keyframes scanLineFast {
+
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(50%);
+  }
+}
+
 /* ================= Theme Toggle ================= */
 .theme-toggle-btn {
   position: absolute;
@@ -297,33 +876,50 @@
   border: none;
   cursor: pointer;
   padding: 0;
-  z-index: 20;
+  z-index: 100;
 }
 
 .toggle-track {
   width: 56px;
   height: 28px;
-  background: rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.1);
   border-radius: 14px;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 6px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.15);
   transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .toggle-track:hover {
-  background: rgba(255, 255, 255, 0.12);
-  border-color: rgba(40, 167, 69, 0.3);
+  background: rgba(0, 0, 0, 0.15);
+  border-color: rgba(40, 167, 69, 0.4);
+  transform: scale(1.05);
 }
 
 .sun-icon,
 .moon-icon {
-  color: rgba(255, 255, 255, 0.5);
+  color: #64748b;
   transition: all 0.3s ease;
   z-index: 1;
+}
+
+/* Dark theme toggle styling */
+[data-theme="dark"] .toggle-track {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .toggle-track:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+[data-theme="dark"] .sun-icon,
+[data-theme="dark"] .moon-icon {
+  color: rgba(255, 255, 255, 0.6);
 }
 
 .toggle-thumb {
@@ -861,6 +1457,225 @@
 
 [data-theme="light"] .shape-3 {
   border-color: rgba(40, 167, 69, 0.3);
+}
+
+/* ================= LIGHT THEME OVERRIDES DISABLED ================= */
+/* Admin login page is ALWAYS dark themed - The following styles are disabled */
+/* Light theme background overridden - admin login stays dark always */
+/*
+[data-theme="light"] .admin-login-container {
+  -- DISABLED: Admin login is always dark themed --
+}
+*/
+
+@keyframes lightGradientShift {
+
+  0%,
+  100% {
+    background-position: 0% 50%;
+  }
+
+  25% {
+    background-position: 50% 0%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  75% {
+    background-position: 50% 100%;
+  }
+}
+
+/* Light theme cyber grid - darker lines */
+[data-theme="light"] .cyber-grid {
+  background-image:
+    linear-gradient(rgba(40, 167, 69, 0.15) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(40, 167, 69, 0.15) 1px, transparent 1px);
+}
+
+[data-theme="light"] .cyber-grid::before {
+  background: linear-gradient(to bottom,
+      transparent 0%,
+      rgba(40, 167, 69, 0.1) 50%,
+      transparent 100%);
+}
+
+/* Light theme matrix rain - darker green */
+[data-theme="light"] .matrix-rain {
+  opacity: 0.4;
+}
+
+[data-theme="light"] .matrix-column {
+  color: #059669;
+  text-shadow: 0 0 8px rgba(5, 150, 105, 0.5), 0 0 16px rgba(5, 150, 105, 0.3);
+}
+
+/* Light theme circuit lines - visible blue */
+[data-theme="light"] .circuit-lines {
+  opacity: 0.5;
+}
+
+[data-theme="light"] .circuit-lines svg {
+  stroke: #3b82f6;
+  filter: drop-shadow(0 0 4px rgba(59, 130, 246, 0.4));
+}
+
+/* Light theme hex pattern - visible */
+[data-theme="light"] .hex {
+  border-color: rgba(40, 167, 69, 0.25);
+}
+
+[data-theme="light"] .hex.active {
+  border-color: rgba(40, 167, 69, 0.5);
+  background: rgba(40, 167, 69, 0.08);
+}
+
+/* Light theme data streams - darker */
+[data-theme="light"] .data-stream {
+  background: linear-gradient(to bottom,
+      transparent,
+      rgba(16, 185, 129, 0.6) 20%,
+      rgba(16, 185, 129, 0.8) 50%,
+      rgba(16, 185, 129, 0.6) 80%,
+      transparent);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+}
+
+[data-theme="light"] .data-stream::before {
+  background: linear-gradient(to bottom,
+      transparent,
+      rgba(16, 185, 129, 0.4) 50%,
+      transparent);
+}
+
+/* Light theme orbs - pastel colors */
+[data-theme="light"] .gradient-orb {
+  opacity: 0.4;
+}
+
+[data-theme="light"] .orb-1 {
+  background: radial-gradient(circle, rgba(52, 211, 153, 0.5) 0%, transparent 70%);
+}
+
+[data-theme="light"] .orb-2 {
+  background: radial-gradient(circle, rgba(96, 165, 250, 0.4) 0%, transparent 70%);
+}
+
+[data-theme="light"] .orb-3 {
+  background: radial-gradient(circle, rgba(167, 139, 250, 0.4) 0%, transparent 70%);
+}
+
+/* Light theme floating shapes - visible */
+[data-theme="light"] .floating-shapes .shape {
+  opacity: 0.4;
+}
+
+[data-theme="light"] .shape-1 {
+  background: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);
+}
+
+[data-theme="light"] .shape-2 {
+  border-bottom-color: rgba(99, 102, 241, 0.5);
+  filter: drop-shadow(0 0 10px rgba(99, 102, 241, 0.3));
+}
+
+[data-theme="light"] .shape-3 {
+  border-color: rgba(16, 185, 129, 0.5);
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.3);
+}
+
+/* Light theme card - solid white with shadow */
+[data-theme="light"] .admin-login-card {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(40, 167, 69, 0.15);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(40, 167, 69, 0.1),
+    0 0 40px rgba(40, 167, 69, 0.08);
+}
+
+[data-theme="light"] .admin-login-card:hover {
+  box-shadow:
+    0 25px 70px rgba(0, 0, 0, 0.12),
+    0 0 0 1px rgba(40, 167, 69, 0.15),
+    0 0 50px rgba(40, 167, 69, 0.12);
+}
+
+/* Light theme scanline */
+[data-theme="light"] .card-border-glow::before {
+  background: linear-gradient(to bottom,
+      transparent 0%,
+      transparent 45%,
+      rgba(40, 167, 69, 0.15) 48%,
+      rgba(40, 167, 69, 0.4) 50%,
+      rgba(40, 167, 69, 0.15) 52%,
+      transparent 55%,
+      transparent 100%);
+}
+
+/* Light theme glow border */
+[data-theme="light"] .card-border-glow::after {
+  background: linear-gradient(135deg,
+      rgba(40, 167, 69, 0.4) 0%,
+      transparent 15%,
+      transparent 35%,
+      rgba(40, 167, 69, 0.3) 50%,
+      transparent 65%,
+      transparent 85%,
+      rgba(40, 167, 69, 0.4) 100%);
+}
+
+/* Light theme mouse follow glow */
+[data-theme="light"] .mouse-follow-glow {
+  background: radial-gradient(circle 150px, rgba(40, 167, 69, 0.15), transparent);
+}
+
+/* Light theme inputs */
+[data-theme="light"] .input-group input {
+  background: rgba(248, 250, 252, 0.9);
+  border-color: rgba(40, 167, 69, 0.2);
+  color: #1e293b;
+}
+
+[data-theme="light"] .input-group input:focus {
+  border-color: #28a745;
+  box-shadow: 0 0 0 3px rgba(40, 167, 69, 0.15);
+}
+
+[data-theme="light"] .input-icon {
+  color: #64748b;
+}
+
+[data-theme="light"] .input-group:focus-within .input-icon {
+  color: #28a745;
+}
+
+/* Light theme text colors */
+[data-theme="light"] .logo-text h1 {
+  color: #059669;
+}
+
+[data-theme="light"] .logo-tagline {
+  color: #64748b;
+}
+
+[data-theme="light"] .input-label {
+  color: #475569;
+}
+
+[data-theme="light"] .divider-text {
+  color: #94a3b8;
+}
+
+[data-theme="light"] .back-link {
+  color: #64748b;
+}
+
+[data-theme="light"] .back-link:hover {
+  color: #28a745;
 }
 
 /* ================= Responsive ================= */

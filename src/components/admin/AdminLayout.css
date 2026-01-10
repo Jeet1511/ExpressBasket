@@ -1230,6 +1230,45 @@
   text-transform: capitalize;
 }
 
+/* Profile Logout Section */
+.profile-logout-section {
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-color);
+}
+
+.profile-logout-btn {
+  width: 100%;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+}
+
+.profile-logout-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+}
+
+.profile-logout-btn svg {
+  transition: transform 0.3s ease;
+}
+
+.profile-logout-btn:hover svg {
+  transform: translateX(3px);
+}
+
 /* Contributions Section */
 .contributions-section,
 .mail-section {

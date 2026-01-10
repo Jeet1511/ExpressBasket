@@ -288,11 +288,11 @@
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 }
 
-/* Hide old theme toggle */
-.theme-toggle-container,
-.theme-toggle-switch,
-.theme-toggle-btn,
-.theme-icon {
+/* Hide old theme toggle - only in header */
+.header .theme-toggle-container,
+.header .theme-toggle-switch,
+.header .theme-toggle-btn,
+.header .theme-icon {
   display: none !important;
 }
 
