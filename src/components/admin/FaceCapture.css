@@ -1,15 +1,15 @@
 /* ============== FUTURISTIC FACE CAPTURE ============== */
 
 .face-capture-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
     gap: 16px;
-    width: 100%;
+    width: 100% !important;
     max-width: 100%;
-    margin: 0 auto;
-    text-align: center;
+    margin: 0 auto !important;
+    text-align: center !important;
 }
 
 /* ============== CAMERA WRAPPER - CLEAN DARK STYLE ============== */
@@ -25,7 +25,9 @@
         0 15px 50px rgba(0, 0, 0, 0.5),
         0 0 20px rgba(40, 167, 69, 0.1);
     border: 2px solid rgba(40, 167, 69, 0.4);
-    margin: 0 auto;
+    margin: 0 auto !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
 }
 
 /* Static corner frame - no animation */

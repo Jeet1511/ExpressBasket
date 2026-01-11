@@ -231,13 +231,8 @@
   --mouse-y: 50%;
 }
 
-/* Reduce animation work on low-power devices */
-@media (prefers-reduced-motion: reduce) {
-  .animated-bg * {
-    animation: none !important;
-    transition: none !important;
-  }
-}
+/* NOTE: Removed prefers-reduced-motion rule - Admin login animations
+   are essential for the futuristic design and should always play */
 
 /* ================= Animated Background ================= */
 .animated-bg {
@@ -254,8 +249,8 @@
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(40, 167, 69, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(40, 167, 69, 0.03) 1px, transparent 1px);
+    linear-gradient(rgba(40, 167, 69, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(40, 167, 69, 0.08) 1px, transparent 1px);
   background-size: 50px 50px;
   animation: gridMove 20s linear infinite;
   perspective: 500px;
@@ -348,16 +343,16 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  opacity: 0.5;
+  opacity: 0.8;
 }
 
 .circuit-path {
   fill: none;
   stroke: #28a745;
-  stroke-width: 2;
+  stroke-width: 3;
   stroke-dasharray: 500;
-  stroke-dashoffset: 500;
-  filter: drop-shadow(0 0 6px #28a745);
+  stroke-dashoffset: 0;
+  filter: drop-shadow(0 0 10px #28a745) drop-shadow(0 0 20px #28a745);
   animation: circuitDraw 4s ease-in-out infinite;
 }
 
@@ -441,14 +436,17 @@
 .data-stream {
   position: absolute;
   top: -100%;
-  width: 2px;
-  height: 100px;
+  width: 3px;
+  height: 150px;
   background: linear-gradient(to bottom,
       transparent,
-      #28a745 50%,
+      #28a745 30%,
+      #4ade80 50%,
+      #28a745 70%,
       transparent);
   animation: dataFlow 3s linear infinite;
-  filter: blur(1px);
+  filter: blur(0px);
+  box-shadow: 0 0 10px #28a745, 0 0 20px #28a745;
 }
 
 .data-stream::before {
@@ -529,15 +527,15 @@
 .gradient-orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.6;
+  filter: blur(60px);
+  opacity: 0.8;
   animation: orbFloat 15s ease-in-out infinite;
 }
 
 .orb-1 {
   width: 600px;
   height: 600px;
-  background: radial-gradient(circle, rgba(40, 167, 69, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(40, 167, 69, 0.5) 0%, rgba(40, 167, 69, 0.2) 40%, transparent 70%);
   top: -200px;
   left: -200px;
   animation-delay: 0s;
@@ -546,7 +544,7 @@
 .orb-2 {
   width: 500px;
   height: 500px;
-  background: radial-gradient(circle, rgba(32, 201, 151, 0.4) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(32, 201, 151, 0.5) 0%, rgba(32, 201, 151, 0.2) 40%, transparent 70%);
   bottom: -150px;
   right: -150px;
   animation-delay: -5s;
@@ -555,7 +553,7 @@
 .orb-3 {
   width: 400px;
   height: 400px;
-  background: radial-gradient(circle, rgba(102, 126, 234, 0.3) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(102, 126, 234, 0.4) 0%, rgba(102, 126, 234, 0.15) 40%, transparent 70%);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
