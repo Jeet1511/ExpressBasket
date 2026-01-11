@@ -3,16 +3,20 @@
 .face-capture-container {
     display: flex;
     flex-direction: column;
+    align-items: center;
+    justify-content: center;
     gap: 16px;
     width: 100%;
     max-width: 100%;
     margin: 0 auto;
+    text-align: center;
 }
 
 /* ============== CAMERA WRAPPER - CLEAN DARK STYLE ============== */
 .camera-wrapper {
     position: relative;
     width: 100%;
+    max-width: 360px;
     aspect-ratio: 4/3;
     background: linear-gradient(135deg, #0a0a0f, #1a1a2e);
     border-radius: 16px;
@@ -21,6 +25,7 @@
         0 15px 50px rgba(0, 0, 0, 0.5),
         0 0 20px rgba(40, 167, 69, 0.1);
     border: 2px solid rgba(40, 167, 69, 0.4);
+    margin: 0 auto;
 }
 
 /* Static corner frame - no animation */
